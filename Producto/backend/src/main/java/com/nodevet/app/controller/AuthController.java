@@ -4,6 +4,7 @@ import com.nodevet.app.dto.ForgotPasswordRequest;
 import com.nodevet.app.dto.LoginRequestDTO;
 import com.nodevet.app.dto.LoginResponseDTO;
 import com.nodevet.app.dto.ResetPasswordRequest;
+import com.nodevet.app.dto.VerifyCodeRequest; // <-- Importante añadir tu nuevo DTO
 import com.nodevet.app.security.JwtUtil;
 import com.nodevet.app.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
@@ -45,26 +46,35 @@ public class AuthController {
         }
     }
 
-    // PANTALLA 1: Solicitar recuperación de contraseña
+    // PANTALLA 1: Solicitar recuperación (Envía el correo con el código)
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
         try {
-            // Extraemos el correo desde el DTO
             String correo = request.getCorreo_usr();
-            
             usuarioService.generarTokenRecuperacion(correo);
             
             Map<String, String> response = new HashMap<>();
-            response.put("mensaje", "Si el correo existe, se ha enviado un enlace de recuperación.");
+            response.put("mensaje", "Si el correo existe, se ha enviado un código de recuperación.");
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            // Imprimimos el error en consola para depurar si algo sale mal
             e.printStackTrace(); 
-            
             Map<String, String> error = new HashMap<>();
             error.put("error", "Error al procesar la solicitud: " + e.getMessage());
             return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // PANTALLA 1 (Paso 2): Verificar si el código ingresado es correcto
+    @PostMapping("/verify-code")
+    public ResponseEntity<?> verifyCode(@RequestBody VerifyCodeRequest request) {
+        try {
+            // Validamos que el código coincida y no esté expirado
+            usuarioService.validarCodigoOTP(request.getCorreo_usr(), request.getCodigo());
+            
+            return ResponseEntity.ok(Map.of("mensaje", "Código validado exitosamente."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -72,8 +82,8 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         try {
-            // Usamos los datos del DTO
-            usuarioService.restablecerPassword(request.getToken(), request.getNueva_pass());
+            // Pasamos el correo, el código (como doble verificación) y la nueva contraseña
+            usuarioService.restablecerPassword(request.getCorreo_usr(), request.getCodigo(), request.getNueva_pass());
             
             return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada exitosamente."));
         } catch (Exception e) {

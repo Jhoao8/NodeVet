@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResetPasswordRequest {
+public class VerifyCodeRequest {
     private String correo_usr;
     private String codigo;
-    private String nueva_pass;
 }

@@ -9,52 +9,92 @@ import {
     KeyboardAvoidingView, 
     Platform,
     Image,
-    Alert, // Importante para feedback al usuario
-    ActivityIndicator // Para el estado de carga
+    ActivityIndicator,
+    Modal
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; 
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
-import axios from 'axios';
+import api from '@/src/api/axiosInstance';
 
 export const ForgotPassword = () => {
     const [email, setEmail] = useState('');
+    const [code, setCode] = useState(''); 
+    const [isCodeSent, setIsCodeSent] = useState(false); 
     const [loading, setLoading] = useState(false);
     const navigation = useNavigation<any>();
 
-    // 1. Logica de validacion en tiempo real
+    // Estados para el Modal
+    const [modalVisible, setModalVisible] = useState(false);
+    const [modalConfig, setModalConfig] = useState({
+        title: '',
+        message: '',
+        type: 'success'
+    });
+
+    // Función para invocar el Modal
+    const showModal = (title: string, message: string, type: 'success' | 'error' = 'success') => {
+        setModalConfig({ title, message, type });
+        setModalVisible(true);
+    };
+
+    // 1. Lógica de validación
     const validateEmail = (email: string) => {
         const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return regex.test(email);
     };
 
     const isEmailValid = validateEmail(email);
+    const isCodeValid = code.length === 6 && /^\d+$/.test(code);
 
-    // 2. Acción para enviar JSON al endpoint
+    // 2. Acción: Enviar correo para solicitar código
     const handleSendEmail = async () => {
         if (!isEmailValid) return;
 
         setLoading(true);
         try {
-            // Usar tu IP si pruebas en dispositivo fisico
-            const response = await axios.post('http://10.0.2.2:8080/api/auth/forgot-password', {
-                correo_usr: email // Coincide con tu DTO de Java
+            const response = await api.post('/auth/forgot-password', {
+                correo_usr: email 
             });
 
             if (response.status === 200) {
-                Alert.alert(
-                    "Enlace Enviado",
-                    "Si el correo existe en nuestro sistema, recibirás instrucciones en breve.",
-                    [{ text: "Entendido", onPress: () => navigation.goBack() }]
+                setIsCodeSent(true); 
+                setCode('');
+                showModal(
+                    "Código Enviado",
+                    "Revisa tu bandeja de entrada e ingresa el código de 6 dígitos.",
+                    "success"
                 );
             }
         } catch (error: any) {
             console.error(error);
-            // Manejo de error 400 que configuramos en el backend
-            const errorMsg = error.response?.data?.error || "No se pudo conectar con el servidor.";
-            Alert.alert("Error", errorMsg);
+            const errorMsg = error.response?.data?.error || "No se pudo conectar con el servidor o el correo no fue encontrado";
+            showModal("Error", errorMsg, "error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 3. Acción: Verificar el código ingresado
+    const handleVerifyCode = async () => {
+        if (!isCodeValid) return;
+
+        setLoading(true);
+        try {
+            const response = await api.post('/auth/verify-code', {
+                correo_usr: email,
+                codigo: code
+            });
+
+            if (response.status === 200) {
+                navigation.navigate('ResetPassword', { email: email, code: code });
+            }
+        } catch (error: any) {
+            console.error(error);
+            const errorMsg = error.response?.data?.error || "El código es incorrecto o ha expirado.";
+            showModal("Error", errorMsg, "error");
         } finally {
             setLoading(false);
         }
@@ -86,18 +126,17 @@ export const ForgotPassword = () => {
                     </View>
                 </View>
 
-                {/* Formulario */}
+                {/* Separador */}
                 <View style={styles.middleSection} />
                 
                 <Text style={styles.sectionTitle}>Recuperar Contraseña</Text>
     
-                {/* Input Email */}
+                {/* PASO 1: Ingresar Email*/}
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Email :</Text>
+                    <Text style={styles.label}>Correo :</Text>
                     <TextInput 
                         style={[
                             styles.input, 
-                            // Borde verde si es válido para dar feedback visual
                             isEmailValid && { borderColor: colors.lightGreen, borderWidth: 2 }
                         ]} 
                         placeholder="Ej. nombre@gmail.com"
@@ -106,29 +145,96 @@ export const ForgotPassword = () => {
                         autoCapitalize="none"
                         value={email}
                         onChangeText={setEmail}
-                        editable={!loading} // Bloquea el input mientras carga
+                        editable={!loading}
                     />
                 </View>
 
                 <View style={styles.bottomSection}>    
-                    {/* 3. Boton con activacion logica */}
                     <TouchableOpacity 
                         style={[
                             styles.primaryButton, 
-                            (!isEmailValid || loading) && { backgroundColor: '#A0A0A0', elevation: 0 } // Estilo desactivado
+                            (!isEmailValid || loading) && { backgroundColor: '#A0A0A0', elevation: 0 }
                         ]} 
                         onPress={handleSendEmail}
-                        disabled={!isEmailValid || loading} // Desactiva el boton fisicamente
+                        disabled={!isEmailValid || loading} 
                     >
                         {loading ? (
                             <ActivityIndicator color={colors.darkDGreen} />
                         ) : (
-                            <Text style={styles.primaryButtonText}>Enviar</Text>
+                            <Text style={styles.primaryButtonText}>Enviar Código</Text>
                         )}
                     </TouchableOpacity>
                 </View>
 
+                {/* PASO 2: Ingresar Código OTP */}
+                <View style={styles.dynamicSection}>
+                    <View style={styles.divider} />
+                    
+                    <View style={styles.inputGroup}>
+                        <Text style={styles.label}>Código de Verificación:</Text>
+                        <Text style={styles.subLabel}>Ingresa el código enviado a su correo</Text>
+                        <TextInput 
+                            style={[
+                                styles.input, 
+                                styles.codeInput, 
+                                isCodeValid && { borderColor: colors.lightGreen, borderWidth: 2 }
+                            ]} 
+                            placeholder="123456"
+                            placeholderTextColor={colors.darkGreen}
+                            keyboardType="number-pad"
+                            maxLength={6}
+                            value={code}
+                            onChangeText={setCode}
+                            editable={!loading}
+                        />
+                    </View>
+
+                    <View style={styles.bottomSection}>    
+                        <TouchableOpacity 
+                            style={[
+                                styles.primaryButton, 
+                                (!isCodeValid || loading) && { backgroundColor: '#A0A0A0', elevation: 0 }
+                            ]} 
+                            onPress={handleVerifyCode}
+                            disabled={!isCodeValid || loading} 
+                        >
+                            {loading && isCodeSent ? (
+                                <ActivityIndicator color={colors.darkDGreen} />
+                            ) : (
+                                <Text style={styles.primaryButtonText}>Verificar</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </View>
+
             </ScrollView>
+
+            {/* MODAL AGREGADO */}
+            <Modal
+                animationType="fade"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <Ionicons 
+                            name={modalConfig.type === 'error' ? 'alert-circle' : 'checkmark-circle'} 
+                            size={60} 
+                            color={modalConfig.type === 'error' ? '#FF6B6B' : colors.lightGreen} 
+                        />
+                        <Text style={styles.modalTitle}>{modalConfig.title}</Text>
+                        <Text style={styles.modalMessage}>{modalConfig.message}</Text>
+                        
+                        <TouchableOpacity 
+                            style={styles.modalButton} 
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <Text style={styles.primaryButtonText}>Aceptar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </KeyboardAvoidingView>
     );
 };
@@ -145,7 +251,6 @@ const styles = StyleSheet.create({
         paddingBottom: spacing.xxl, 
     },
     
-    // --- Estilos de Secciones ---
     headerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -156,14 +261,23 @@ const styles = StyleSheet.create({
     middleSection: {
         paddingVertical: spacing.lg,
         paddingHorizontal: spacing.sm,
-        marginTop: spacing.xxl
+        marginTop: spacing.md 
     },
     bottomSection: {
         marginTop: spacing.sm,
-        alignItems: 'center', // Centra los enlaces y el botón
+        alignItems: 'center',
+    },
+    dynamicSection: {
+        marginTop: spacing.xl,
+    },
+    divider: {
+        height: 1,
+        backgroundColor: colors.lightGreen,
+        opacity: 0.3,
+        marginBottom: spacing.xl,
+        marginHorizontal: spacing.lg,
     },
 
-    // --- Estilos de Componentes ---
     backButton: {
         width: 50,
         justifyContent: 'center',
@@ -175,9 +289,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: spacing.md,
-    },
-    rightSpacer: {
-        width: 50,
     },
     logoPlaceholder: {
         width: 50,
@@ -199,22 +310,22 @@ const styles = StyleSheet.create({
         fontSize: 24,
         color: colors.lightYellow,
         textAlign: 'center',
-        marginBottom: spacing.xl,
+        marginBottom: spacing.lg,
     },
     inputGroup: {
-        marginBottom: spacing.lg, // Un poco más de margen aquí porque son menos inputs que en registro
-    },
-    labelWithIcon: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        marginBottom: spacing.xs,
+        marginBottom: spacing.md, 
     },
     label: {
         fontFamily: typography.family.main.medium,
         fontSize: typography.size.md,
         color: colors.lightYellow,
         marginBottom: spacing.xs,
+    },
+    subLabel: {
+        fontFamily: typography.family.main.regular,
+        fontSize: typography.size.sm,
+        color: colors.lightGreen,
+        marginBottom: spacing.sm,
     },
     input: {
         backgroundColor: colors.lightYellow,
@@ -227,26 +338,14 @@ const styles = StyleSheet.create({
         fontSize: typography.size.md,
         color: colors.darkDGreen,
     },
-    linksContainer: {
-        alignItems: 'center',
-        marginBottom: spacing.xl, // Espacio entre los enlaces y el botón de Acceder
-        gap: spacing.sm, // Separa "He olvidado" de "Crear cuenta"
-    },
-    linkText: {
-        fontFamily: typography.family.main.regular,
-        fontSize: typography.size.sm,
-        color: colors.lightGreen,
-        textDecorationLine: 'underline',
-    },
-    linkTextBold: {
-        fontFamily: typography.family.main.semiBold,
-        fontSize: typography.size.md,
-        color: colors.lightYellow,
-        textDecorationLine: 'underline',
-        marginTop: spacing.xs,
+    codeInput: {
+        textAlign: 'center',
+        fontSize: typography.size.xl,
+        letterSpacing: 8, 
+        fontFamily: typography.family.main.bold,
     },
     primaryButton: {
-        backgroundColor: colors.lightGreen, // Usando el color verde de tu captura reciente
+        backgroundColor: colors.lightGreen, 
         paddingVertical: spacing.md,
         paddingHorizontal: spacing.xxl,
         borderRadius: 12,
@@ -257,6 +356,52 @@ const styles = StyleSheet.create({
     primaryButtonText: {
         fontFamily: typography.family.main.bold,
         color: colors.darkDGreen,
+        fontSize: typography.size.md,
+    },
+
+    // Estilos Modal
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '80%',
+        backgroundColor: colors.darkDGreen,
+        borderRadius: 20,
+        padding: spacing.xl,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: colors.lightGreen,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+    },
+    modalTitle: {
+        fontFamily: typography.family.main.bold,
         fontSize: typography.size.lg,
-        },
-})
+        color: colors.lightYellow,
+        marginTop: spacing.md,
+        textAlign: 'center',
+    },
+    modalMessage: {
+        fontFamily: typography.family.main.regular,
+        fontSize: typography.size.md,
+        color: colors.lightYellow,
+        marginTop: spacing.sm,
+        marginBottom: spacing.xl,
+        textAlign: 'center',
+        opacity: 0.9,
+    },
+    modalButton: {
+        backgroundColor: colors.lightGreen,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.xl,
+        borderRadius: 8,
+        width: '100%',
+        alignItems: 'center',
+    }
+});

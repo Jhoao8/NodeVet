@@ -52,12 +52,13 @@ public class SecurityConfig {
             )
 
             .authorizeHttpRequests(auth -> auth
-                // 1. Permitimos el login y el registro
+                // 1. Permitimos el login, registro y mantallas de recuperar contraseña
                 .requestMatchers(
                     "/api/auth/login", 
                     "/api/v1/usuarios/registro",
-                    "/api/auth/forgot-password", // Permite Pantalla 1
-                    "/api/auth/reset-password"   // Permite Pantalla 2
+                    "/api/auth/forgot-password",
+                    "/api/auth/verify-code",
+                    "/api/auth/reset-password"
                 ).permitAll()
                 
                 // 2. Mantenemos Swagger publico
