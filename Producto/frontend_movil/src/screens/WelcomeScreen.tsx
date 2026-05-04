@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: typography.family.main.bold,
     fontSize: 42,
-    color: colors.LightYellow,
+    color: colors.lightYellow,
   },
   subtitle: {
     fontFamily: typography.family.main.regular,
