@@ -11,17 +11,16 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    public void enviarCorreoRecuperacion(String destino, String token) {
+    public void enviarCorreoRecuperacion(String destino, String codigo) {
         SimpleMailMessage mensaje = new SimpleMailMessage();
         mensaje.setTo(destino);
-        mensaje.setSubject("Recuperación de Contraseña - NodeVet");
+        mensaje.setSubject("Código de Recuperación de Contraseña - NodeVet");
         
-        // Aqui construyes el enlace que usara el frontend mas adelante
-        String url = "http://localhost:3000/reset-password?token=" + token;
-        
+        // El cuerpo del correo ahora entrega el código directamente
         mensaje.setText("Hola,\n\nHas solicitado restablecer tu contraseña en NodeVet. " +
-                        "Haz clic en el siguiente enlace para continuar:\n" + url + 
-                        "\n\nEste enlace expirará en 1 hora.");
+                        "Tu código de verificación es:\n\n" + codigo + 
+                        "\n\nEste código expirará en 15 minutos.\n" +
+                        "Si no solicitaste este cambio, por favor ignora este correo.");
 
         mailSender.send(mensaje);
     }

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -38,39 +38,60 @@ public class UsuarioService implements UserDetailsService {
         return usuarioRepository.save(nuevoUsuario);
     }
 
-    // --- METODOS PARA RECUPERAR CONTRASEÑA ---
+    // --- METODOS PARA RECUPERAR CONTRASEÑA CON CÓDIGO (OTP) ---
 
     @Transactional
     public void generarTokenRecuperacion(String correo) {
         Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
                 .orElseThrow(() -> new RuntimeException("No se encontró un usuario con ese correo."));
 
-        // Generamos el token UUID
-        String token = UUID.randomUUID().toString();
-        usuario.setResetToken(token);
+        // Generamos un codigo numerico aleatorio de 6 dígitos
+        String codigoOTP = String.format("%06d", new Random().nextInt(999999));
+        usuario.setResetToken(codigoOTP);
         
-        // Expiracion de 1 hora
-        usuario.setTokenExpires(LocalDateTime.now().plusHours(1));
+        // Expiracion reducida a 15 minutos (Mejor práctica para códigos numéricos)
+        usuario.setTokenExpires(LocalDateTime.now().plusMinutes(15));
 
         usuarioRepository.save(usuario);
         
-        // ENVÍO REAL DE CORREO
-        // Esto cumple con el detalle de "instrucciones directas" de tu Trello
-        emailService.enviarCorreoRecuperacion(correo, token);
+        // ENVIO REAL DE CORREO
+        emailService.enviarCorreoRecuperacion(correo, codigoOTP);
         
-        System.out.println("DEBUG - Correo enviado a: " + correo);
+        System.out.println("DEBUG - Código " + codigoOTP + " enviado a: " + correo);
+    }
+
+    // Nuevo método solo para validar si el código es correcto antes de ir a la pantalla 2
+    @Transactional(readOnly = true)
+    public void validarCodigoOTP(String correo, String codigo) {
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+
+        if (usuario.getResetToken() == null || !usuario.getResetToken().equals(codigo)) {
+            throw new RuntimeException("El código ingresado es incorrecto.");
+        }
+
+        if (usuario.getTokenExpires().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("El código ha expirado. Por favor, solicita uno nuevo.");
+        }
     }
 
     @Transactional
-    public void restablecerPassword(String token, String nuevaPassword) {
-        // Validamos que el token exista y no haya expirado (Criterio: Validaciones tiempo real)
-        Usuario usuario = usuarioRepository.findByResetTokenAndTokenExpiresAfter(token, LocalDateTime.now())
-                .orElseThrow(() -> new RuntimeException("El enlace de recuperación es inválido o ha expirado."));
+    public void restablecerPassword(String correo, String codigo, String nuevaPassword) {
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
 
-        // Actualizamos la clave (Texto plano temporalmente por decisión de equipo)
+        // Doble validación por seguridad
+        if (usuario.getResetToken() == null || !usuario.getResetToken().equals(codigo)) {
+            throw new RuntimeException("El código es incorrecto.");
+        }
+        if (usuario.getTokenExpires().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("El código ha expirado.");
+        }
+
+        // Actualizamos la clave
         usuario.setPassUsr(nuevaPassword);
 
-        // UN SOLO USO: Limpiamos los campos inmediatamente para invalidar el link
+        // UN SOLO USO: Limpiamos los campos inmediatamente para invalidar el código
         usuario.setResetToken(null);
         usuario.setTokenExpires(null);
 
