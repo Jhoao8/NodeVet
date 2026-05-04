@@ -45,6 +45,12 @@ public class Usuario {
     @Column(name = "fec_creacion", nullable = false, updatable = false)
     private LocalDateTime fecCreacion;
 
+    @Column(name = "reset_token", length = 255)
+    private String resetToken;
+
+    @Column(name = "token_expires")
+    private LocalDateTime tokenExpires;
+
     // Antes de que se guarde por primera vez, asignamos la fecha actual
     @PrePersist
     protected void onCreate() {

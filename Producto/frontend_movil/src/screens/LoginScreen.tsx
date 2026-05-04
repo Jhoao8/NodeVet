@@ -61,69 +61,62 @@ const LoginScreen = () => {
 
             {/* Formulario */}
             <View style={styles.middleSection}>
-            
-            <Text style={styles.sectionTitle}>Iniciar sesión</Text>
-
-            {/* Input Email */}
-            <View style={styles.inputGroup}>
-                <Text style={styles.label}>Email :</Text>
-                <TextInput 
-                style={styles.input} 
-                placeholder="Ej. nombre@gmail.com"
-                placeholderTextColor={colors.darkGreen}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-                />
-            </View>
-
-            {/* Input Contraseña */}
-            <View style={styles.inputGroup}>
-                <View style={styles.labelWithIcon}>
-                <Text style={styles.label}>Contraseña</Text>
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons 
-                    name={showPassword ? "eye-off" : "eye"} 
-                    size={24} 
-                    color={colors.lightYellow} 
+                <Text style={styles.sectionTitle}>Iniciar sesión</Text>
+                {/* Input Email */}
+                <View style={styles.inputGroup}>
+                    <Text style={styles.label}>Email :</Text>
+                    <TextInput 
+                    style={styles.input} 
+                    placeholder="Ej. nombre@gmail.com"
+                    placeholderTextColor={colors.darkGreen}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    value={email}
+                    onChangeText={setEmail}
                     />
-                </TouchableOpacity>
                 </View>
-                <TextInput 
-                style={styles.input} 
-                placeholder="********"
-                placeholderTextColor={colors.darkGreen}
-                secureTextEntry={!showPassword} 
-                value={password}
-                onChangeText={setPassword}
-                />
+                {/* Input Contraseña */}
+                <View style={styles.inputGroup}>
+                    <View style={styles.labelWithIcon}>
+                        <Text style={styles.label}>Contraseña</Text>
+                        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                            <Ionicons 
+                            name={showPassword ? "eye-off" : "eye"} 
+                            size={24} 
+                            color={colors.lightYellow} 
+                            />
+                        </TouchableOpacity>
+                    </View>
+                    <TextInput 
+                    style={styles.input} 
+                    placeholder="********"
+                    placeholderTextColor={colors.darkGreen}
+                    secureTextEntry={!showPassword} 
+                    value={password}
+                    onChangeText={setPassword}
+                    />
+                </View>
             </View>
-
-            </View>
-
             {/* Enlances y botón */}
-            <View style={styles.bottomSection}>
-            
-            {/* Enlaces adicionales */}
-            <View style={styles.linksContainer}>
-                <TouchableOpacity onPress={() => console.log('Recuperar contraseña')}>
-                <Text style={styles.linkText}>He olvidado mi contraseña</Text>
-                </TouchableOpacity>
+            <View style={styles.bottomSection}>    
+                {/* Enlaces adicionales */}
+                <View style={styles.linksContainer}>
+                    <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                    <Text style={styles.linkText}>He olvidado mi contraseña</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.linkTextBold}>Crear Cuenta</Text>
+                    <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                    <Text style={styles.linkTextBold}>Crear Cuenta</Text>
+                    </TouchableOpacity>
+                </View>
+                {/* Botón Principal */}
+                <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
+                    <Text style={styles.primaryButtonText}>Acceder</Text>
                 </TouchableOpacity>
-            </View>
-
-            {/* Botón Principal */}
-            <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-                <Text style={styles.primaryButtonText}>Acceder</Text>
-            </TouchableOpacity>
             </View>
 
         </ScrollView>
-        </KeyboardAvoidingView>
+    </KeyboardAvoidingView>
     );
 };
 
