@@ -53,7 +53,12 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
                 // 1. Permitimos el login y el registro
-                .requestMatchers("/api/auth/login", "/api/v1/usuarios/registro").permitAll()
+                .requestMatchers(
+                    "/api/auth/login", 
+                    "/api/v1/usuarios/registro",
+                    "/api/auth/forgot-password", // Permite Pantalla 1
+                    "/api/auth/reset-password"   // Permite Pantalla 2
+                ).permitAll()
                 
                 // 2. Mantenemos Swagger publico
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()

@@ -10,11 +10,15 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class UsuarioService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
+    private final EmailService emailService;
 
     @Transactional
     public Usuario registrarUsuario(UsuarioRegistroDTO dto) {
@@ -26,16 +30,53 @@ public class UsuarioService implements UserDetailsService {
                 .nombreUsr(dto.getNombreUsr())
                 .apellidoUsr(dto.getApellidoUsr())
                 .correoUsr(dto.getCorreoUsr())
-                // GUARDAMOS LA CONTRASEÑA EN TEXTO PLANO (SIN ENCRIPTAR POR AHORA)
                 .passUsr(dto.getPassUsr()) 
                 .telefonoUsr(dto.getTelefonoUsr())
-                .estadoUsr(1) 
+                .estadoUsr(1)
                 .build();
 
         return usuarioRepository.save(nuevoUsuario);
     }
 
-    // Este es el metodo que Spring Security exige para buscar usuarios en el login
+    // --- METODOS PARA RECUPERAR CONTRASEÑA ---
+
+    @Transactional
+    public void generarTokenRecuperacion(String correo) {
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
+                .orElseThrow(() -> new RuntimeException("No se encontró un usuario con ese correo."));
+
+        // Generamos el token UUID
+        String token = UUID.randomUUID().toString();
+        usuario.setResetToken(token);
+        
+        // Expiracion de 1 hora
+        usuario.setTokenExpires(LocalDateTime.now().plusHours(1));
+
+        usuarioRepository.save(usuario);
+        
+        // ENVÍO REAL DE CORREO
+        // Esto cumple con el detalle de "instrucciones directas" de tu Trello
+        emailService.enviarCorreoRecuperacion(correo, token);
+        
+        System.out.println("DEBUG - Correo enviado a: " + correo);
+    }
+
+    @Transactional
+    public void restablecerPassword(String token, String nuevaPassword) {
+        // Validamos que el token exista y no haya expirado (Criterio: Validaciones tiempo real)
+        Usuario usuario = usuarioRepository.findByResetTokenAndTokenExpiresAfter(token, LocalDateTime.now())
+                .orElseThrow(() -> new RuntimeException("El enlace de recuperación es inválido o ha expirado."));
+
+        // Actualizamos la clave (Texto plano temporalmente por decisión de equipo)
+        usuario.setPassUsr(nuevaPassword);
+
+        // UN SOLO USO: Limpiamos los campos inmediatamente para invalidar el link
+        usuario.setResetToken(null);
+        usuario.setTokenExpires(null);
+
+        usuarioRepository.save(usuario);
+    }
+
     @Override
     public UserDetails loadUserByUsername(String correo) throws UsernameNotFoundException {
         Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
@@ -45,11 +86,10 @@ public class UsuarioService implements UserDetailsService {
             throw new RuntimeException("El usuario se encuentra inactivo.");
         }
 
-        // Convertimos el Usuario a UserDetails que entiende Spring Security
         return org.springframework.security.core.userdetails.User.builder()
                 .username(usuario.getCorreoUsr())
-                .password(usuario.getPassUsr()) // Spring comparará esto en texto plano
-                .roles("USER") // Por ahora le damos un rol genérico
+                .password(usuario.getPassUsr())
+                .roles("USER")
                 .build();
     }
 }

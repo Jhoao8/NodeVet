@@ -1,7 +1,9 @@
 package com.nodevet.app.controller;
 
+import com.nodevet.app.dto.ForgotPasswordRequest;
 import com.nodevet.app.dto.LoginRequestDTO;
 import com.nodevet.app.dto.LoginResponseDTO;
+import com.nodevet.app.dto.ResetPasswordRequest;
 import com.nodevet.app.security.JwtUtil;
 import com.nodevet.app.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,42 @@ public class AuthController {
             Map<String, Object> error = new HashMap<>();
             error.put("error", "Credenciales inválidas");
             return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+    // PANTALLA 1: Solicitar recuperación de contraseña
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            // Extraemos el correo desde el DTO
+            String correo = request.getCorreo_usr();
+            
+            usuarioService.generarTokenRecuperacion(correo);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("mensaje", "Si el correo existe, se ha enviado un enlace de recuperación.");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            // Imprimimos el error en consola para depurar si algo sale mal
+            e.printStackTrace(); 
+            
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Error al procesar la solicitud: " + e.getMessage());
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // PANTALLA 2: Establecer nueva contraseña
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        try {
+            // Usamos los datos del DTO
+            usuarioService.restablecerPassword(request.getToken(), request.getNueva_pass());
+            
+            return ResponseEntity.ok(Map.of("mensaje", "Contraseña actualizada exitosamente."));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 }
