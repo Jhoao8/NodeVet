@@ -5,7 +5,7 @@ export const colors = {
   darkGreen: '#416428',   // Verde Oscuro
   lightGreen: '#9EB57D', // Verde clarito
   lightBrown: '#C1AF85',    // Café bonito
-  LightYellow: '#FBEFBA', // Amarillo Crema
+  lightYellow: '#FBEFBA', // Amarillo Crema
 
   // Colores Estándar
     white: '#FFFFFF',

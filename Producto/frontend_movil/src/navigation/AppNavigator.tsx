@@ -1,10 +1,12 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import WelcomeScreen from '../screens/WelcomeScreen';
+import { NavigationContainer } from '@react-navigation/native';
+import AuthStack from './AuthStack';
 
 const AppNavigator = () => {
     return (
-        <WelcomeScreen/>
+    <NavigationContainer>
+        <AuthStack />
+    </NavigationContainer>
     );
 };
 
