@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { 
     View, 
     Text, 
@@ -8,26 +9,68 @@ import {
     ScrollView, 
     KeyboardAvoidingView, 
     Platform,
-    Image
+    Image,
+    Alert,
+    ActivityIndicator
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; 
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import api from '../api/axiosInstance';
 
 const LoginScreen = () => {
-  const navigation = useNavigation<any>(); // Usamos <any> para que reconozca navigate('Register')
+    const [loading, setLoading] = useState(false);
+    const navigation = useNavigation<any>(); // Usamos <any> para que reconozca navigate('Register')
 
     // Estados del formulario
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
 
-    const handleLogin = () => {
-        console.log('Iniciando sesión con:', { email });
-        // Aquí luego irá la lógica de autenticación
-    };
+    const handleLogin = async () => {
+    // Validación básica
+    if (!email || !password) {
+        Alert.alert('Campos incompletos', 'Por favor ingresa tu correo y contraseña.');
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+        // Axios une el baseURL (http://IP:8080/api) con esta ruta (/auth/login)
+        const response = await api.post('/auth/login', {
+            correoUsr: email,
+            passUsr: password
+        });
+
+        // Con Axios, los datos ya vienen parseados en response.data
+        console.log('Login exitoso:', response.data);
+        
+        // Navegamos al inicio
+        navigation.navigate('HomeScreen'); 
+
+    } catch (error: any) {
+        // Manejo de errores con Axios
+        if (error.response) {
+            // El servidor respondió, pero con un código de error (ej. 401, 404)
+            Alert.alert(
+                'Error de acceso', 
+                error.response.data.message || 'Credenciales incorrectas. Inténtalo de nuevo.'
+            );
+        } else if (error.request) {
+            // La petición se hizo, pero el servidor no respondió (Network Error)
+            console.error('Error de red:', error.request);
+            Alert.alert('Sin conexión', 'Revisa que tu backend esté corriendo y tu celular esté en el mismo Wi-Fi.');
+        } else {
+            // Algo más falló armando la petición
+            Alert.alert('Error', 'Ocurrió un error inesperado.');
+        }
+    } finally {
+        setLoading(false);
+    }
+};
 
     return (
         <KeyboardAvoidingView 
@@ -98,7 +141,19 @@ const LoginScreen = () => {
                 </View>
             </View>
             {/* Enlances y botón */}
-            <View style={styles.bottomSection}>    
+            <View style={styles.bottomSection}> 
+                {/* Botón Principal */}
+                <TouchableOpacity 
+                    style={styles.primaryButton} 
+                    onPress={handleLogin}
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <ActivityIndicator color={colors.white} />
+                    ) : (
+                        <Text style={styles.primaryButtonText}>Acceder</Text>
+                    )}
+                </TouchableOpacity>   
                 {/* Enlaces adicionales */}
                 <View style={styles.linksContainer}>
                     <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
@@ -109,10 +164,7 @@ const LoginScreen = () => {
                     <Text style={styles.linkTextBold}>Crear Cuenta</Text>
                     </TouchableOpacity>
                 </View>
-                {/* Botón Principal */}
-                <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-                    <Text style={styles.primaryButtonText}>Acceder</Text>
-                </TouchableOpacity>
+                
             </View>
 
         </ScrollView>
@@ -216,6 +268,7 @@ const styles = StyleSheet.create({
     },
     linksContainer: {
         alignItems: 'center',
+        marginTop: spacing.xl,
         marginBottom: spacing.xl, // Espacio entre los enlaces y el botón de Acceder
         gap: spacing.sm, // Separa "He olvidado" de "Crear cuenta"
     },
