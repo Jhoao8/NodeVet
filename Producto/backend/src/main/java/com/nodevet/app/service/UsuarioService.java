@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ public class UsuarioService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
     private final EmailService emailService;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public Usuario registrarUsuario(UsuarioRegistroDTO dto) {
@@ -30,7 +32,7 @@ public class UsuarioService implements UserDetailsService {
                 .nombreUsr(dto.getNombreUsr())
                 .apellidoUsr(dto.getApellidoUsr())
                 .correoUsr(dto.getCorreoUsr())
-                .passUsr(dto.getPassUsr()) 
+                .passUsr(passwordEncoder.encode(dto.getPassUsr()))
                 .telefonoUsr(dto.getTelefonoUsr())
                 .estadoUsr(1)
                 .build();
@@ -89,7 +91,7 @@ public class UsuarioService implements UserDetailsService {
         }
 
         // Actualizamos la clave
-        usuario.setPassUsr(nuevaPassword);
+        usuario.setPassUsr(passwordEncoder.encode(nuevaPassword));
 
         // UN SOLO USO: Limpiamos los campos inmediatamente para invalidar el código
         usuario.setResetToken(null);
