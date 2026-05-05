@@ -1,9 +1,12 @@
-export interface Usuario{
-    id_usuario: number;
-    nombre_usr: string;
-    apellido_usr: string;
-    correo_usr:string;
-    password: string;
-    password_2: string;
-    
+export interface Usuario {
+    idUsuario?: number;
+    nombreUsr: string;
+    apellidoUsr: string;
+    correoUsr: string;
+    passUsr: string;
+    telefonoUsr?: string;
+    confirmPassword?: string;
+    fotoUsr?: string;
+    estadoUsr?: number;
+    fecCreacion?: string;
 }
