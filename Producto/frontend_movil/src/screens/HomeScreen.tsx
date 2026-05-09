@@ -1,26 +1,26 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     View, 
     Text, 
     StyleSheet, 
     TouchableOpacity, 
     StatusBar,
-    ScrollView
+    ScrollView,
+    Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
-import { useAuth } from '../context/AuthContext'; // Importación vital para el Logout
+import { globalStyles } from '../style/GlobalStyle'; // IMPORTANTE: Agregado esto
+import { useAuth } from '../context/AuthContext';
 
 const HomeScreen = () => {
-    // Obtenemos la función signOut del estado global
     const { signOut } = useAuth();
 
     const handleLogout = async () => {
         try {
-            // Esto limpia la caché y cambia el stack de navegación automáticamente
             await signOut();
             console.log('Sesión cerrada correctamente');
         } catch (e) {
@@ -33,21 +33,36 @@ const HomeScreen = () => {
             <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
             
             <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-                {/* Cabecera con Botón de Logout */}
+                {/* Cabecera */}
                 <View style={styles.header}>
                     <View>
                         <Text style={styles.welcomeLabel}>Panel de Control</Text>
                         <Text style={styles.brandTitle}>NodeVet</Text>
                     </View>
-                    <TouchableOpacity onPress={handleLogout} style={styles.logoutCircle}>
-                        <Ionicons name="power" size={24} color={colors.red} />
+                    {/* Agregué el botón de logout que faltaba en tu código */}
+                    <TouchableOpacity onPress={handleLogout}>
+                        <Ionicons name="log-out-outline" size={28} color={colors.red} />
                     </TouchableOpacity>
                 </View>
 
-                {/* Card de Estado de Conexión */}
-                <View style={styles.statusCard}>
-                    <View style={styles.statusIconContainer}>
-                        <Ionicons name="server-outline" size={30} color={colors.darkGreen} />
+                <View style={globalStyles.card}>
+                    <Text style={globalStyles.cardEmptyText}>Sin citas registradas</Text>
+                </View>
+                
+                <View style={globalStyles.actionButtonsRow}>
+                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
+                        <Text style={globalStyles.outlineButtonTextSm}>Agendar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
+                        <Text style={globalStyles.outlineButtonTextSm}>Ver Citas</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* SECCIÓN: MIS MASCOTAS */}
+                <View style={globalStyles.sectionHeaderRow}>
+                    <View style={globalStyles.sectionTitleLeft}>
+                        <Ionicons name="paw-outline" size={24} color={colors.lightYellow} />
+                        <Text style={globalStyles.sectionTitle}>Mis mascotas</Text>
                     </View>
                     <View style={styles.statusTextContainer}>
                         <Text style={styles.statusTitle}>Servidor Backend</Text>
@@ -58,7 +73,6 @@ const HomeScreen = () => {
                     <View style={styles.activeDot} />
                 </View>
 
-                {/* Sección de Acciones Rápidas */}
                 <Text style={styles.sectionHeading}>Gestión Médica</Text>
                 
                 <View style={styles.grid}>
@@ -66,14 +80,42 @@ const HomeScreen = () => {
                         <View style={[styles.iconBox, { backgroundColor: colors.lightGreen }]}>
                             <Ionicons name="paw" size={28} color={colors.darkDGreen} />
                         </View>
-                        <Text style={styles.menuLabel}>Mascotas</Text>
+                        <Text style={styles.petDate}>05/11/2023</Text>
                     </TouchableOpacity>
+                </View>
 
-                    <TouchableOpacity style={styles.menuItem} onPress={() => alert('Próximamente')}>
-                        <View style={[styles.iconBox, { backgroundColor: colors.lightYellow }]}>
-                            <Ionicons name="calendar" size={28} color={colors.lightBrown} />
-                        </View>
-                        <Text style={styles.menuLabel}>Citas</Text>
+                <View style={globalStyles.actionButtonsRow}>
+                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
+                        <Text style={globalStyles.outlineButtonTextSm}>Ver todos</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* SECCIÓN: ORDENES MÉDICAS */}
+                <View style={globalStyles.sectionHeaderRow}>
+                    <View style={globalStyles.sectionTitleLeft}>
+                        <Ionicons name="document-text-outline" size={24} color={colors.lightYellow} />
+                        <Text style={globalStyles.sectionTitle}>Ordenes Médicas</Text>
+                    </View>
+                </View>
+
+                <View style={[globalStyles.card, { padding: 0 }]}>
+                    <View style={styles.tableHeaderRow}>
+                        <Text style={styles.tableHeaderText}>Veterinaria</Text>
+                        <Text style={styles.tableHeaderText}>Profesional</Text>
+                        <Text style={styles.tableHeaderText}>Tipo</Text>
+                        <Text style={styles.tableHeaderText}>Fecha</Text>
+                    </View>
+                    <View style={styles.tableDataRow}>
+                        <Text style={styles.tableDataText} numberOfLines={1}>VetSur</Text>
+                        <Text style={styles.tableDataText} numberOfLines={1}>Dr. Soto</Text>
+                        <Text style={styles.tableDataText} numberOfLines={1}>Exámen</Text>
+                        <Text style={styles.tableDataText}>20/12/23</Text>
+                    </View>
+                </View>
+
+                <View style={globalStyles.actionButtonsRow}>
+                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
+                        <Text style={globalStyles.outlineButtonTextSm}>Ver todo</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -99,80 +141,49 @@ const styles = StyleSheet.create({
     },
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: spacing.xl,
-        marginBottom: spacing.lg,
+        justifyContent: 'space-between',
+        paddingHorizontal: spacing.md,
+        paddingTop: spacing.xl,
+        paddingBottom: spacing.sm,
     },
     welcomeLabel: {
         fontFamily: typography.family.main.medium,
         fontSize: typography.size.sm,
         color: colors.lightGreen,
-        textTransform: 'uppercase',
     },
     brandTitle: {
         fontFamily: typography.family.main.bold,
-        fontSize: typography.size.xxl,
+        fontSize: 24,
         color: colors.darkDGreen,
-    },
-    logoutCircle: {
-        width: 45,
-        height: 45,
-        borderRadius: 22.5,
-        backgroundColor: '#FFF0F0',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    statusCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: colors.white,
-        padding: spacing.md,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: colors.lightYellow,
-        marginBottom: spacing.xl,
-        elevation: 3,
-        shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-    },
-    statusIconContainer: {
-        padding: spacing.sm,
-        backgroundColor: colors.lightYellow,
-        borderRadius: 12,
     },
     statusTextContainer: {
         flex: 1,
-        marginLeft: spacing.md,
+        marginLeft: 10,
     },
     statusTitle: {
-        fontFamily: typography.family.main.semiBold,
-        fontSize: typography.size.md,
+        fontSize: 12,
+        fontWeight: 'bold',
         color: colors.darkGreen,
     },
     statusSubtitle: {
-        fontFamily: typography.family.main.regular,
-        fontSize: typography.size.xs,
-        color: colors.lightBrown,
+        fontSize: 10,
+        color: colors.darkGreen,
     },
     activeDot: {
         width: 10,
         height: 10,
         borderRadius: 5,
-        backgroundColor: colors.green,
+        backgroundColor: '#4CAF50',
     },
     sectionHeading: {
-        fontFamily: typography.family.main.bold,
-        fontSize: typography.size.lg,
-        color: colors.darkDGreen,
-        marginBottom: spacing.md,
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginVertical: 10,
     },
     grid: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: spacing.xl,
     },
     menuItem: {
         width: '47%',
@@ -184,32 +195,49 @@ const styles = StyleSheet.create({
         borderColor: '#F0F0F0',
     },
     iconBox: {
-        width: 60,
-        height: 60,
-        borderRadius: 15,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: spacing.sm,
+        padding: 10,
+        borderRadius: 10,
+        marginBottom: 5,
     },
-    menuLabel: {
-        fontFamily: typography.family.main.medium,
-        fontSize: typography.size.md,
+    petDate: {
+        fontSize: 12,
         color: colors.darkGreen,
     },
-    supportBanner: {
-        backgroundColor: colors.darkGreen,
+    tableHeaderRow: {
         flexDirection: 'row',
-        padding: spacing.md,
-        borderRadius: 12,
+        backgroundColor: '#f0f0f0',
+        padding: 10,
+        borderTopLeftRadius: 10,
+        borderTopRightRadius: 10,
+    },
+    tableHeaderText: {
+        flex: 1,
+        fontWeight: 'bold',
+        fontSize: 12,
+        textAlign: 'center',
+    },
+    tableDataRow: {
+        flexDirection: 'row',
+        padding: 10,
+    },
+    tableDataText: {
+        flex: 1,
+        fontSize: 12,
+        textAlign: 'center',
+    },
+    supportBanner: {
+        flexDirection: 'row',
+        backgroundColor: colors.darkGreen,
+        padding: 15,
+        borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: spacing.md,
+        marginTop: 20,
     },
     supportText: {
-        fontFamily: typography.family.main.medium,
-        fontSize: typography.size.md,
         color: colors.white,
-        marginLeft: spacing.sm,
+        marginLeft: 10,
+        fontWeight: 'bold',
     }
 });
 
