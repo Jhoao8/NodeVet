@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; 
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import api from '../api/axiosInstance';
-import { globalStyles } from '../style/GlobalStyle'; // <-- Ajusta la ruta
+import { colors } from '../../theme/colors';
+import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import api from '../../api/axiosInstance';
+import { useAuth } from '../../context/AuthContext';
 
 const LoginScreen = () => {
     const [loading, setLoading] = useState(false);
@@ -15,32 +16,36 @@ const LoginScreen = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
 
+    const { signIn } = useAuth();
+
     const handleLogin = async () => {
+        if (!email || !password) {
+            Alert.alert('Campos incompletos', 'Por favor ingresa tu correo y contraseña.');
+            return;
+        }
         if (!email || !password) {
             Alert.alert('Campos incompletos', 'Por favor ingresa tu correo y contraseña.');
             return;
         }
 
         setLoading(true);
-
         try {
             const response = await api.post('/auth/login', {
                 correoUsr: email,
                 passUsr: password
             });
 
-            console.log('Login exitoso:', response.data);
-            navigation.navigate('HomeScreen'); 
+            const token = response.data.token; 
+
+            if (token) {
+                // Ya no usas AsyncStorage directo aquí, usas signIn del contexto
+                await signIn(token); 
+                console.log('Login exitoso y estado global actualizado');
+                // NO necesitas navigation.navigate, el AppNavigator cambiará solo
+            }
 
         } catch (error: any) {
-            if (error.response) {
-                Alert.alert('Error de acceso', error.response.data.message || 'Credenciales incorrectas. Inténtalo de nuevo.');
-            } else if (error.request) {
-                console.error('Error de red:', error.request);
-                Alert.alert('Sin conexión', 'Revisa que tu backend esté corriendo y tu celular esté en el mismo Wi-Fi.');
-            } else {
-                Alert.alert('Error', 'Ocurrió un error inesperado.');
-            }
+            Alert.alert('Error', 'Credenciales incorrectas o problema de servidor.');
         } finally {
             setLoading(false);
         }
@@ -59,15 +64,13 @@ const LoginScreen = () => {
                         <Ionicons name="chevron-back" size={32} color={colors.lightYellow} />
                     </TouchableOpacity>
 
-                    <View style={globalStyles.headerRow}>
-                        <View style={globalStyles.logoPlaceholder}>
-                            <Image 
-                                source={require('../../assets/images/Logo.png')} 
-                                style={globalStyles.logo}
-                                resizeMode="contain" 
-                            />
-                        </View>
-                        <Text style={globalStyles.mainTitle}>NodeVet</Text>
+                <View style={styles.headerRow}>
+                    <View style={styles.logoPlaceholder}>
+                        <Image 
+                            source={require('@/assets/images/Logo.png')} 
+                            style={styles.logo}
+                            resizeMode="contain" 
+                        />
                     </View>
                     
                     <View style={globalStyles.rightSpacer} />

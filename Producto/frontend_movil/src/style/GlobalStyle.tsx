@@ -3,7 +3,6 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 
-
 export const globalStyles = StyleSheet.create({
 
 //════════════════════════════════════════════//
@@ -45,8 +44,23 @@ export const globalStyles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.md,
   },
-
-  /* Contenedor del logo (50×50) */
+  headerSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.darkDGreen,
+    paddingBottom: 32, // spacing.xxl
+    paddingTop: 24, // spacing.xl
+    marginBottom: 20
+  },
+  iconButton: {
+    width: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  rightSpacer: {
+    width: 50,
+  },
   logoPlaceholder: {
     width: 50,
     height: 50,

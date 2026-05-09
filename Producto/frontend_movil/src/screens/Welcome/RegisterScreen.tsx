@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; 
-import { colors } from '../theme/colors';
-import api from '../api/axiosInstance'; 
-import { globalStyles } from '../style/GlobalStyle'; // <-- Ajusta la ruta
+import { colors } from '../../theme/colors';
+import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import api from '../../api/axiosInstance'; // Importamos tu instancia de Axios
 
 const RegisterScreen = () => {
     const navigation = useNavigation<any>();
@@ -74,8 +75,8 @@ const RegisterScreen = () => {
                 <View style={globalStyles.headerRow}>
                     <View style={globalStyles.logoPlaceholder}>
                         <Image 
-                            source={require('../../assets/images/Logo.png')} 
-                            style={globalStyles.logo}
+                            source={require('@/assets/images/Logo.png')} 
+                            style={styles.logo}
                             resizeMode="contain" 
                         />
                     </View>

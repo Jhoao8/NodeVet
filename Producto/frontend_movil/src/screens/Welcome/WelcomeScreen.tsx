@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import { globalStyles } from '../style/GlobalStyle'; // <-- Ajusta la ruta si es necesario
+import { colors } from '../../theme/colors';
+import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import { globalStyles } from '@/src/style/GlobalStyle';
 
 const WelcomeScreen = ({ navigation }: any) => {
   return (
@@ -11,9 +11,9 @@ const WelcomeScreen = ({ navigation }: any) => {
       {/* Área del Logo / Ilustración */}
       <View style={styles.logoContainer}>
         <Image
-          source={require('../../assets/images/Logo.png')}
-          style={styles.logo}
-          resizeMode='contain'  
+      source={require('@/assets/images/Logo.png')}                        // Logo temporal
+      style={styles.logo}
+      resizeMode='contain'  
         />
         <Text style={styles.title}>NodeVet</Text>
         <Text style={styles.subtitle}>Cuidando a los que más quieres</Text>
