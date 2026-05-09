@@ -12,4 +12,8 @@ export const colors = {
     black: '#000000',
     red: '#D32F2F',   
     green: '#388E3C',
+
+  // Estados de validación
+  error: '#FF6B6B',    // Validaciones de error
+  disabled: '#A0A0A0', // Botones deshabilitados
 };
