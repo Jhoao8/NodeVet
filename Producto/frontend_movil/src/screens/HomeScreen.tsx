@@ -4,30 +4,36 @@ import {
     Text, 
     StyleSheet, 
     TouchableOpacity, 
-    SafeAreaView,
     StatusBar,
     ScrollView
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import { useAuth } from '../context/AuthContext'; // Importación vital para el Logout
 
 const HomeScreen = () => {
-    const navigation = useNavigation<any>();
+    // Obtenemos la función signOut del estado global
+    const { signOut } = useAuth();
 
-    const handleLogout = () => {
-        // En una integración real, aquí limpiarías el storage (JWT/Sesión)
-        navigation.replace('Login'); 
+    const handleLogout = async () => {
+        try {
+            // Esto limpia la caché y cambia el stack de navegación automáticamente
+            await signOut();
+            console.log('Sesión cerrada correctamente');
+        } catch (e) {
+            console.error("Error al cerrar sesión", e);
+        }
     };
 
     return (
         <SafeAreaView style={styles.mainContainer}>
             <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
             
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                {/* Cabecera */}
+            <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+                {/* Cabecera con Botón de Logout */}
                 <View style={styles.header}>
                     <View>
                         <Text style={styles.welcomeLabel}>Panel de Control</Text>
@@ -46,7 +52,7 @@ const HomeScreen = () => {
                     <View style={styles.statusTextContainer}>
                         <Text style={styles.statusTitle}>Servidor Backend</Text>
                         <Text style={styles.statusSubtitle}>
-                            IP: {process.env.EXPO_PUBLIC_DEVELOPER_IP || 'No definida'}
+                            IP: {process.env.EXPO_PUBLIC_DEVELOPER_IP || 'Conectado'}
                         </Text>
                     </View>
                     <View style={styles.activeDot} />
@@ -56,7 +62,7 @@ const HomeScreen = () => {
                 <Text style={styles.sectionHeading}>Gestión Médica</Text>
                 
                 <View style={styles.grid}>
-                    <TouchableOpacity style={styles.menuItem} onPress={() => alert('Próximamente')}>
+                    <TouchableOpacity style={styles.menuItem} onPress={() => alert('Navegando a Mascotas...')}>
                         <View style={[styles.iconBox, { backgroundColor: colors.lightGreen }]}>
                             <Ionicons name="paw" size={28} color={colors.darkDGreen} />
                         </View>
@@ -71,7 +77,7 @@ const HomeScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Sugerencia "Wildcard": Botón de Soporte Rápido */}
+                {/* Banner de Soporte */}
                 <TouchableOpacity style={styles.supportBanner}>
                     <Ionicons name="help-buoy-outline" size={22} color={colors.white} />
                     <Text style={styles.supportText}>¿Necesitas ayuda técnica?</Text>
@@ -89,12 +95,13 @@ const styles = StyleSheet.create({
     },
     scrollContainer: {
         padding: spacing.md,
+        paddingBottom: spacing.xxl,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginTop: spacing.xxl,
+        marginTop: spacing.xl,
         marginBottom: spacing.lg,
     },
     welcomeLabel: {
@@ -125,7 +132,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.lightYellow,
         marginBottom: spacing.xl,
-        // Sombra suave para elevación
         elevation: 3,
         shadowColor: colors.black,
         shadowOffset: { width: 0, height: 2 },
@@ -174,6 +180,8 @@ const styles = StyleSheet.create({
         padding: spacing.md,
         borderRadius: 20,
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#F0F0F0',
     },
     iconBox: {
         width: 60,

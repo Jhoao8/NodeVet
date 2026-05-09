@@ -14,10 +14,10 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; 
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import api from '../api/axiosInstance'; // Importamos tu instancia de Axios
+import { colors } from '../../theme/colors';
+import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import api from '../../api/axiosInstance'; // Importamos tu instancia de Axios
 
 const RegisterScreen = () => {
     const navigation = useNavigation<any>();
@@ -102,7 +102,7 @@ const RegisterScreen = () => {
                 <View style={styles.headerRow}>
                     <View style={styles.logoPlaceholder}>
                         <Image 
-                            source={require('../../assets/images/Logo.png')} 
+                            source={require('@/assets/images/Logo.png')} 
                             style={styles.logo}
                             resizeMode="contain" 
                         />

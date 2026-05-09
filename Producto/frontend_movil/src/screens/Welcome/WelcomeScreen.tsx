@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
+import { colors } from '../../theme/colors';
+import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 
 const WelcomeScreen = ({ navigation }: any) => {
   return (
@@ -10,7 +10,7 @@ const WelcomeScreen = ({ navigation }: any) => {
       {/* Área del Logo / Ilustración */}
       <View style={styles.logoContainer}>
         <Image
-      source={require('../../assets/images/Logo.png')}                        // Logo temporal
+      source={require('@/assets/images/Logo.png')}                        // Logo temporal
       style={styles.logo}
       resizeMode='contain'  
         />

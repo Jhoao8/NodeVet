@@ -1,8 +1,8 @@
 import { StyleSheet } from 'react-native';
 
-import { colors } from '../theme/colors'
-import { spacing } from '../theme/spacing'
-import { typography } from '../theme/typography'
+import { colors } from '@/src/theme/colors'
+import { spacing } from '@/src/theme/spacing'
+import { typography } from '@/src/theme/typography'
 
 export const globalStyles = StyleSheet.create({
 
@@ -33,6 +33,15 @@ export const globalStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 16, // spacing.md
+  },
+  headerSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.darkDGreen,
+    paddingBottom: 32, // spacing.xxl
+    paddingTop: 24, // spacing.xl
+    marginBottom: 20
   },
   iconButton: {
     width: 50,

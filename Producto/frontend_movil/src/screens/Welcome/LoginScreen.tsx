@@ -15,10 +15,11 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; 
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import api from '../api/axiosInstance';
+import { colors } from '../../theme/colors';
+import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import api from '../../api/axiosInstance';
+import { useAuth } from '../../context/AuthContext';
 
 const LoginScreen = () => {
     const [loading, setLoading] = useState(false);
@@ -29,48 +30,36 @@ const LoginScreen = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
 
+    const { signIn } = useAuth();
+
     const handleLogin = async () => {
-    // Validación básica
-    if (!email || !password) {
-        Alert.alert('Campos incompletos', 'Por favor ingresa tu correo y contraseña.');
-        return;
-    }
-
-    setLoading(true);
-
-    try {
-        // Axios une el baseURL (http://IP:8080/api) con esta ruta (/auth/login)
-        const response = await api.post('/auth/login', {
-            correoUsr: email,
-            passUsr: password
-        });
-
-        // Con Axios, los datos ya vienen parseados en response.data
-        console.log('Login exitoso:', response.data);
-        
-        // Navegamos al inicio
-        navigation.navigate('HomeScreen'); 
-
-    } catch (error: any) {
-        // Manejo de errores con Axios
-        if (error.response) {
-            // El servidor respondió, pero con un código de error (ej. 401, 404)
-            Alert.alert(
-                'Error de acceso', 
-                error.response.data.message || 'Credenciales incorrectas. Inténtalo de nuevo.'
-            );
-        } else if (error.request) {
-            // La petición se hizo, pero el servidor no respondió (Network Error)
-            console.error('Error de red:', error.request);
-            Alert.alert('Sin conexión', 'Revisa que tu backend esté corriendo y tu celular esté en el mismo Wi-Fi.');
-        } else {
-            // Algo más falló armando la petición
-            Alert.alert('Error', 'Ocurrió un error inesperado.');
+        if (!email || !password) {
+            Alert.alert('Campos incompletos', 'Por favor ingresa tu correo y contraseña.');
+            return;
         }
-    } finally {
-        setLoading(false);
-    }
-};
+
+        setLoading(true);
+        try {
+            const response = await api.post('/auth/login', {
+                correoUsr: email,
+                passUsr: password
+            });
+
+            const token = response.data.token; 
+
+            if (token) {
+                // Ya no usas AsyncStorage directo aquí, usas signIn del contexto
+                await signIn(token); 
+                console.log('Login exitoso y estado global actualizado');
+                // NO necesitas navigation.navigate, el AppNavigator cambiará solo
+            }
+
+        } catch (error: any) {
+            Alert.alert('Error', 'Credenciales incorrectas o problema de servidor.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <KeyboardAvoidingView 
@@ -91,7 +80,7 @@ const LoginScreen = () => {
                 <View style={styles.headerRow}>
                     <View style={styles.logoPlaceholder}>
                         <Image 
-                            source={require('../../assets/images/Logo.png')} 
+                            source={require('@/assets/images/Logo.png')} 
                             style={styles.logo}
                             resizeMode="contain" 
                         />
