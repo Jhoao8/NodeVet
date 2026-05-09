@@ -45,16 +45,19 @@ public class Usuario {
     @Column(name = "fec_creacion", nullable = false, updatable = false)
     private LocalDateTime fecCreacion;
 
-    @Column(name = "reset_token", length = 255)
-    private String resetToken;
+    @Column(name = "fec_actualizacion")
+    private LocalDateTime fecActualizacion;
 
-    @Column(name = "token_expires")
-    private LocalDateTime tokenExpires;
-
-    // Antes de que se guarde por primera vez, asignamos la fecha actual
+    // Se ejecuta al crear el usuario por primera vez
     @PrePersist
     protected void onCreate() {
         fecCreacion = LocalDateTime.now();
+        fecActualizacion = LocalDateTime.now();
     }
 
+    // Se ejecuta automáticamente cada vez que modificas un dato del usuario
+    @PreUpdate
+    protected void onUpdate() {
+        fecActualizacion = LocalDateTime.now();
+    }
 }
