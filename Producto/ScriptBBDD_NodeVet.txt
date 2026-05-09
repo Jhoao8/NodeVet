@@ -1,0 +1,227 @@
+-- ========================================================
+-- BASE DE DATOS: NODEVET
+-- ========================================================
+CREATE DATABASE IF NOT EXISTS nodevet_db;
+USE nodevet_db;
+
+-- ========================================================
+-- 1. TABLAS INDEPENDIENTES Y DICCIONARIOS (Sin dependencias)
+-- ========================================================
+CREATE TABLE AUDITORIA (
+    id_log INT AUTO_INCREMENT PRIMARY KEY,
+    tabla_afectada VARCHAR(100) NOT NULL,
+    id_reg_afectado INT NOT NULL,
+    accion VARCHAR(100) NOT NULL,
+    id_responsable INT NOT NULL,
+    fec_evento TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE TABLE ESPECIALIDAD (
+    id_esp INT AUTO_INCREMENT PRIMARY KEY,
+    nom_esp VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE ESTADO_RESERVA (
+    id_est_reserva INT AUTO_INCREMENT PRIMARY KEY,
+    nom_est_reserva VARCHAR(15) NOT NULL
+);
+
+CREATE TABLE BLOQUE_HORARIO (
+    id_bloque INT AUTO_INCREMENT PRIMARY KEY,
+    fec_hr_inicio DATETIME NOT NULL,
+    fec_hr_fin DATETIME NOT NULL
+);
+
+CREATE TABLE VALOR (
+    id_valor INT AUTO_INCREMENT PRIMARY KEY,
+    monto INT NOT NULL
+);
+
+CREATE TABLE ESTADO_PAGO (
+    id_est_pago INT AUTO_INCREMENT PRIMARY KEY,
+    nom_est_pago VARCHAR(15) NOT NULL
+);
+
+CREATE TABLE TIPO_ARCHIVO (
+    id_tipo_archivo INT AUTO_INCREMENT PRIMARY KEY,
+    nom_tipo_archivo VARCHAR(15) NOT NULL
+);
+
+CREATE TABLE SERVICIO (
+    id_serv INT AUTO_INCREMENT PRIMARY KEY
+);
+
+CREATE TABLE VACUNA (
+    id_vac INT AUTO_INCREMENT PRIMARY KEY,
+    nom_vacuna VARCHAR(50) NOT NULL,
+    laboratorio VARCHAR(20) NOT NULL,
+    lote VARCHAR(50) NOT NULL,
+    fecha_aplic DATE NOT NULL,
+    serie INT NOT NULL
+);
+
+CREATE TABLE TIPO_EXAMEN (
+    id_tipo_exam INT AUTO_INCREMENT PRIMARY KEY,
+    nom_tipo_exam VARCHAR(50) NOT NULL
+);
+
+-- ========================================================
+-- 2. TABLAS PRINCIPALES (Usuarios y Perfiles)
+-- ========================================================
+CREATE TABLE USUARIO (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_usr VARCHAR(75) NOT NULL,
+    apellido_usr VARCHAR(75) NOT NULL,
+    correo_usr VARCHAR(150) UNIQUE NOT NULL,
+    pass_usr VARCHAR(255) NOT NULL,
+    telefono_usr VARCHAR(12) NULL,
+    foto_usr VARCHAR(255) NULL,
+    estado_usr TINYINT(1) DEFAULT 1 NOT NULL,
+    fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE CODIGO_VERIFICACION (
+    id_codigo INT AUTO_INCREMENT PRIMARY KEY,
+    codigo VARCHAR(6) NOT NULL,
+    fec_expiracion TIMESTAMP NOT NULL,
+    id_usuario INT UNIQUE NOT NULL,
+    fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT fk_codigo_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+);
+
+CREATE TABLE ADMIN (
+    id_admin INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    nivel_acceso INT NOT NULL,
+    CONSTRAINT fk_admin_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+);
+
+CREATE TABLE TUTOR (
+    id_tutor INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    CONSTRAINT fk_tutor_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+);
+
+CREATE TABLE VETERINARIO (
+    id_vet INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    run_vet INT NOT NULL,
+    dv_vet VARCHAR(1) NOT NULL,
+    CONSTRAINT fk_vet_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+);
+
+CREATE TABLE VET_ESP (
+    id_vet INT NOT NULL,
+    id_esp INT NOT NULL,
+    PRIMARY KEY (id_vet, id_esp),
+    CONSTRAINT fk_vetesp_vet FOREIGN KEY (id_vet) REFERENCES VETERINARIO(id_vet) ON DELETE CASCADE,
+    CONSTRAINT fk_vetesp_esp FOREIGN KEY (id_esp) REFERENCES ESPECIALIDAD(id_esp) ON DELETE CASCADE
+);
+
+-- ========================================================
+-- 3. TABLAS DE NEGOCIO (Mascotas, Reservas, Consultas, etc.)
+-- ========================================================
+CREATE TABLE MASCOTA (
+    id_mascota INT AUTO_INCREMENT PRIMARY KEY,
+    id_tutor INT NOT NULL,
+    nom_mascota VARCHAR(50) NOT NULL,
+    especie VARCHAR(50) NOT NULL,
+    raza VARCHAR(50) NULL,
+    sexo CHAR(1) NULL,
+    fec_nac DATE NULL,
+    fec_nac_est TINYINT(1) DEFAULT 0,
+    peso DECIMAL(5,2) NULL,
+    estado_masc TINYINT(1) DEFAULT 1 NOT NULL,
+    fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_mascota_tutor FOREIGN KEY (id_tutor) REFERENCES TUTOR(id_tutor) ON DELETE CASCADE
+);
+
+CREATE TABLE RESERVA (
+    id_reserva INT AUTO_INCREMENT PRIMARY KEY,
+    id_mascota INT NOT NULL,
+    id_vet INT NOT NULL,
+    id_bloque INT NOT NULL,
+    id_valor INT NOT NULL,
+    mot_res VARCHAR(255) NOT NULL,
+    id_est_res INT NOT NULL,
+    fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_res_mascota FOREIGN KEY (id_mascota) REFERENCES MASCOTA(id_mascota),
+    CONSTRAINT fk_res_vet FOREIGN KEY (id_vet) REFERENCES VETERINARIO(id_vet),
+    CONSTRAINT fk_res_bloque FOREIGN KEY (id_bloque) REFERENCES BLOQUE_HORARIO(id_bloque),
+    CONSTRAINT fk_res_valor FOREIGN KEY (id_valor) REFERENCES VALOR(id_valor),
+    CONSTRAINT fk_res_estado FOREIGN KEY (id_est_res) REFERENCES ESTADO_RESERVA(id_est_reserva)
+);
+
+CREATE TABLE CONSULTA (
+    id_consulta INT AUTO_INCREMENT PRIMARY KEY,
+    id_reserva INT UNIQUE NOT NULL,
+    id_valor INT NOT NULL,
+    notas TEXT,
+    diagnostico TEXT,
+    indicacion_receta TEXT,
+    is_deleted TINYINT(1) DEFAULT 0 NOT NULL,
+    fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_cons_reserva FOREIGN KEY (id_reserva) REFERENCES RESERVA(id_reserva),
+    CONSTRAINT fk_cons_valor FOREIGN KEY (id_valor) REFERENCES VALOR(id_valor)
+);
+
+CREATE TABLE ARCHIVO_ADJUNTO (
+    id_archivo_adjunto INT AUTO_INCREMENT PRIMARY KEY,
+    id_consulta INT NOT NULL,
+    id_tipo_archivo INT NOT NULL,
+    nom_archivo VARCHAR(255) NOT NULL,
+    archivo_url VARCHAR(500) NOT NULL,
+    CONSTRAINT fk_adj_consulta FOREIGN KEY (id_consulta) REFERENCES CONSULTA(id_consulta) ON DELETE CASCADE,
+    CONSTRAINT fk_adj_tipo FOREIGN KEY (id_tipo_archivo) REFERENCES TIPO_ARCHIVO(id_tipo_archivo)
+);
+
+CREATE TABLE PAGO (
+    id_pago INT AUTO_INCREMENT PRIMARY KEY,
+    id_reserva INT NOT NULL,
+    monto INT NOT NULL,
+    id_est_pago INT NOT NULL,
+    cod_transaccion VARCHAR(100) NOT NULL,
+    fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT fk_pago_reserva FOREIGN KEY (id_reserva) REFERENCES RESERVA(id_reserva),
+    CONSTRAINT fk_pago_estado FOREIGN KEY (id_est_pago) REFERENCES ESTADO_PAGO(id_est_pago)
+);
+
+-- ========================================================
+-- 4. TABLAS DE SERVICIOS Y EXÁMENES INTERMEDIAS
+-- ========================================================
+CREATE TABLE VAL_SERV (
+    id_valor INT NOT NULL,
+    id_serv INT NOT NULL,
+    PRIMARY KEY (id_valor, id_serv),
+    CONSTRAINT fk_valserv_valor FOREIGN KEY (id_valor) REFERENCES VALOR(id_valor) ON DELETE CASCADE,
+    CONSTRAINT fk_valserv_serv FOREIGN KEY (id_serv) REFERENCES SERVICIO(id_serv) ON DELETE CASCADE
+);
+
+CREATE TABLE VAC_SERV (
+    id_vac INT NOT NULL,
+    id_serv INT NOT NULL,
+    PRIMARY KEY (id_vac, id_serv),
+    CONSTRAINT fk_vacserv_vac FOREIGN KEY (id_vac) REFERENCES VACUNA(id_vac) ON DELETE CASCADE,
+    CONSTRAINT fk_vacserv_serv FOREIGN KEY (id_serv) REFERENCES SERVICIO(id_serv) ON DELETE CASCADE
+);
+
+CREATE TABLE EXAMEN (
+    id_examen INT AUTO_INCREMENT PRIMARY KEY,
+    id_tipo_exam INT NOT NULL,
+    nom_exam VARCHAR(50) NOT NULL,
+    fec_exam DATE NOT NULL,
+    result_exam TEXT NOT NULL,
+    CONSTRAINT fk_exam_tipo FOREIGN KEY (id_tipo_exam) REFERENCES TIPO_EXAMEN(id_tipo_exam)
+);
+
+CREATE TABLE EXAM_SERV (
+    id_exam INT NOT NULL,
+    id_serv INT NOT NULL,
+    PRIMARY KEY (id_exam, id_serv),
+    CONSTRAINT fk_examserv_exam FOREIGN KEY (id_exam) REFERENCES EXAMEN(id_examen) ON DELETE CASCADE,
+    CONSTRAINT fk_examserv_serv FOREIGN KEY (id_serv) REFERENCES SERVICIO(id_serv) ON DELETE CASCADE
+);
