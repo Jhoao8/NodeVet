@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     View, 
     Text, 
@@ -6,202 +6,269 @@ import {
     TouchableOpacity, 
     SafeAreaView,
     StatusBar,
-    ScrollView
+    ScrollView,
+    Image
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
+import { globalStyles } from '../style/GlobalStyle'; // <-- Ajusta la ruta
 
 const HomeScreen = () => {
-    const navigation = useNavigation<any>();
-
-    const handleLogout = () => {
-        // En una integración real, aquí limpiarías el storage (JWT/Sesión)
-        navigation.replace('Login'); 
-    };
+    // Variable para el nombre del dueño (Próximamente vendrá del Backend / Contexto / AsyncStorage)
+    const [userName, setUserName] = useState('[Nombre del Dueño]');
 
     return (
-        <SafeAreaView style={styles.mainContainer}>
-            <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
+        <SafeAreaView style={globalStyles.container}>
+            <StatusBar barStyle="light-content" backgroundColor={colors.darkDGreen} />
             
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
-                {/* Cabecera */}
-                <View style={styles.header}>
-                    <View>
-                        <Text style={styles.welcomeLabel}>Panel de Control</Text>
-                        <Text style={styles.brandTitle}>NodeVet</Text>
+            {/* Cabecera (Ajustada para Dashboard, no usamos la global porque es muy grande) */}
+            <View style={styles.topBar}>
+                <View style={styles.topBarLeft}>
+                    <View style={styles.miniLogoPlaceholder}>
+                        <Image 
+                            source={require('../../assets/images/Logo.png')} 
+                            style={globalStyles.logo}
+                            resizeMode="contain" 
+                        />
                     </View>
-                    <TouchableOpacity onPress={handleLogout} style={styles.logoutCircle}>
-                        <Ionicons name="power" size={24} color={colors.red} />
-                    </TouchableOpacity>
+                    <Text style={styles.topBarTitle}>NodeVet</Text>
                 </View>
-
-                {/* Card de Estado de Conexión */}
-                <View style={styles.statusCard}>
-                    <View style={styles.statusIconContainer}>
-                        <Ionicons name="server-outline" size={30} color={colors.darkGreen} />
-                    </View>
-                    <View style={styles.statusTextContainer}>
-                        <Text style={styles.statusTitle}>Servidor Backend</Text>
-                        <Text style={styles.statusSubtitle}>
-                            IP: {process.env.EXPO_PUBLIC_DEVELOPER_IP || 'No definida'}
-                        </Text>
-                    </View>
-                    <View style={styles.activeDot} />
-                </View>
-
-                {/* Sección de Acciones Rápidas */}
-                <Text style={styles.sectionHeading}>Gestión Médica</Text>
-                
-                <View style={styles.grid}>
-                    <TouchableOpacity style={styles.menuItem} onPress={() => alert('Próximamente')}>
-                        <View style={[styles.iconBox, { backgroundColor: colors.lightGreen }]}>
-                            <Ionicons name="paw" size={28} color={colors.darkDGreen} />
-                        </View>
-                        <Text style={styles.menuLabel}>Mascotas</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.menuItem} onPress={() => alert('Próximamente')}>
-                        <View style={[styles.iconBox, { backgroundColor: colors.lightYellow }]}>
-                            <Ionicons name="calendar" size={28} color={colors.lightBrown} />
-                        </View>
-                        <Text style={styles.menuLabel}>Citas</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Sugerencia "Wildcard": Botón de Soporte Rápido */}
-                <TouchableOpacity style={styles.supportBanner}>
-                    <Ionicons name="help-buoy-outline" size={22} color={colors.white} />
-                    <Text style={styles.supportText}>¿Necesitas ayuda técnica?</Text>
+                <TouchableOpacity>
+                    <Ionicons name="notifications-outline" size={28} color={colors.lightYellow} />
                 </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={globalStyles.scrollContainer} showsVerticalScrollIndicator={false}>
+                
+                {/* Saludo dinámico */}
+                <Text style={styles.greetingText}>Bienvenido, {userName}</Text>
+                
+                {/* Reutilizamos el divider del globalStyle */}
+                <View style={globalStyles.divider} />
+
+                {/* ─── SECCIÓN: PRÓXIMAS CITAS ─── */}
+                <View style={globalStyles.sectionHeaderRow}>
+                    <View style={globalStyles.sectionTitleLeft}>
+                        <Ionicons name="calendar-outline" size={24} color={colors.lightYellow} />
+                        <Text style={globalStyles.sectionTitle}>Próximas citas:</Text>
+                    </View>
+                </View>
+
+                <View style={globalStyles.card}>
+                    <Text style={globalStyles.cardEmptyText}>Sin citas registradas</Text>
+                </View>
+                
+                <View style={globalStyles.actionButtonsRow}>
+                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
+                        <Text style={globalStyles.outlineButtonTextSm}>Agendar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
+                        <Text style={globalStyles.outlineButtonTextSm}>Ver Citas</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* ─── SECCIÓN: MIS MASCOTAS ─── */}
+                <View style={globalStyles.sectionHeaderRow}>
+                    <View style={globalStyles.sectionTitleLeft}>
+                        <Ionicons name="paw-outline" size={24} color={colors.lightYellow} />
+                        <Text style={globalStyles.sectionTitle}>Mis mascotas</Text>
+                    </View>
+                    <Text style={globalStyles.sectionSubtitle}>Últ. chequeo</Text>
+                </View>
+
+                <View style={globalStyles.card}>
+                    {/* Mascota 1 */}
+                    <View style={styles.petRow}>
+                        <View style={styles.petInfoLeft}>
+                            <MaterialCommunityIcons name="dog" size={28} color={colors.lightYellow} />
+                            <Text style={styles.petName}>Max</Text>
+                            <MaterialCommunityIcons name="gender-male" size={20} color={colors.lightYellow} />
+                        </View>
+                        <Text style={styles.petDate}>12/04/2023</Text>
+                    </View>
+                    
+                    <View style={styles.innerDivider} />
+
+                    {/* Mascota 2 */}
+                    <View style={styles.petRow}>
+                        <View style={styles.petInfoLeft}>
+                            <MaterialCommunityIcons name="cat" size={28} color={colors.lightYellow} />
+                            <Text style={styles.petName}>Luna</Text>
+                            <MaterialCommunityIcons name="gender-female" size={20} color={colors.lightYellow} />
+                        </View>
+                        <Text style={styles.petDate}>05/11/2023</Text>
+                    </View>
+                </View>
+
+                <View style={globalStyles.actionButtonsRow}>
+                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
+                        <Text style={globalStyles.outlineButtonTextSm}>Ver todos</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* ─── SECCIÓN: ORDENES MÉDICAS ─── */}
+                <View style={globalStyles.sectionHeaderRow}>
+                    <View style={globalStyles.sectionTitleLeft}>
+                        <Ionicons name="document-text-outline" size={24} color={colors.lightYellow} />
+                        <Text style={globalStyles.sectionTitle}>Ordenes Médicas</Text>
+                    </View>
+                </View>
+
+                <View style={[globalStyles.card, { padding: 0 }]}>
+                    {/* Header de la Tabla */}
+                    <View style={styles.tableHeaderRow}>
+                        <Text style={styles.tableHeaderText}>Veterinaria</Text>
+                        <Text style={styles.tableHeaderText}>Profesional</Text>
+                        <Text style={styles.tableHeaderText}>Tipo</Text>
+                        <Text style={styles.tableHeaderText}>Fecha</Text>
+                    </View>
+                    {/* Fila de Datos */}
+                    <View style={styles.tableDataRow}>
+                        <Text style={styles.tableDataText} numberOfLines={1}>VetSur</Text>
+                        <Text style={styles.tableDataText} numberOfLines={1}>Dr. Soto</Text>
+                        <Text style={styles.tableDataText} numberOfLines={1}>Exámen</Text>
+                        <Text style={styles.tableDataText}>20/12/23</Text>
+                    </View>
+                </View>
+
+                <View style={globalStyles.actionButtonsRow}>
+                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
+                        <Text style={globalStyles.outlineButtonTextSm}>Ver todo</Text>
+                    </TouchableOpacity>
+                </View>
 
             </ScrollView>
+
+            {/* ─── BOTTOM TAB BAR ─── */}
+            <View style={styles.bottomTabBar}>
+                <TouchableOpacity style={styles.tabItem}>
+                    <Ionicons name="paw-outline" size={28} color={colors.darkGreen} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem}>
+                    <Ionicons name="document-text-outline" size={28} color={colors.darkGreen} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem}>
+                    {/* Home Activo */}
+                    <Ionicons name="home" size={32} color={colors.lightYellow} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem}>
+                    <MaterialCommunityIcons name="calendar-plus" size={28} color={colors.darkGreen} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.tabItem}>
+                    <Ionicons name="person-outline" size={28} color={colors.darkGreen} />
+                </TouchableOpacity>
+            </View>
+
         </SafeAreaView>
     );
 };
 
+// ─── Estilos locales para detalles muy específicos del HomeScreen ───
 const styles = StyleSheet.create({
-    mainContainer: {
-        flex: 1,
-        backgroundColor: colors.white,
-    },
-    scrollContainer: {
-        padding: spacing.md,
-    },
-    header: {
+    topBar: {
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        marginTop: spacing.xxl,
-        marginBottom: spacing.lg,
+        paddingHorizontal: spacing.xl,
+        paddingTop: spacing.xxl,
+        paddingBottom: spacing.sm,
     },
-    welcomeLabel: {
-        fontFamily: typography.family.main.medium,
-        fontSize: typography.size.sm,
-        color: colors.lightGreen,
-        textTransform: 'uppercase',
-    },
-    brandTitle: {
-        fontFamily: typography.family.main.bold,
-        fontSize: typography.size.xxl,
-        color: colors.darkDGreen,
-    },
-    logoutCircle: {
-        width: 45,
-        height: 45,
-        borderRadius: 22.5,
-        backgroundColor: '#FFF0F0',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    statusCard: {
+    topBarLeft: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: colors.white,
-        padding: spacing.md,
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: colors.lightYellow,
-        marginBottom: spacing.xl,
-        // Sombra suave para elevación
-        elevation: 3,
-        shadowColor: colors.black,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
+        gap: spacing.sm,
     },
-    statusIconContainer: {
-        padding: spacing.sm,
-        backgroundColor: colors.lightYellow,
-        borderRadius: 12,
+    miniLogoPlaceholder: {
+        width: 35,
+        height: 35,
     },
-    statusTextContainer: {
-        flex: 1,
-        marginLeft: spacing.md,
-    },
-    statusTitle: {
+    topBarTitle: {
         fontFamily: typography.family.main.semiBold,
-        fontSize: typography.size.md,
-        color: colors.darkGreen,
-    },
-    statusSubtitle: {
-        fontFamily: typography.family.main.regular,
-        fontSize: typography.size.xs,
-        color: colors.lightBrown,
-    },
-    activeDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: colors.green,
-    },
-    sectionHeading: {
-        fontFamily: typography.family.main.bold,
         fontSize: typography.size.lg,
-        color: colors.darkDGreen,
-        marginBottom: spacing.md,
+        color: colors.lightYellow,
     },
-    grid: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: spacing.xl,
-    },
-    menuItem: {
-        width: '47%',
-        backgroundColor: '#F9FBF9',
-        padding: spacing.md,
-        borderRadius: 20,
-        alignItems: 'center',
-    },
-    iconBox: {
-        width: 60,
-        height: 60,
-        borderRadius: 15,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: spacing.sm,
-    },
-    menuLabel: {
-        fontFamily: typography.family.main.medium,
-        fontSize: typography.size.md,
-        color: colors.darkGreen,
-    },
-    supportBanner: {
-        backgroundColor: colors.darkGreen,
-        flexDirection: 'row',
-        padding: spacing.md,
-        borderRadius: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
+    greetingText: {
+        fontFamily: typography.family.main.bold,
+        fontSize: 26,
+        color: colors.lightYellow,
+        textAlign: 'center',
         marginTop: spacing.md,
     },
-    supportText: {
-        fontFamily: typography.family.main.medium,
+    
+    // Lista de Mascotas
+    petRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: spacing.xs,
+    },
+    petInfoLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: spacing.sm,
+        flex: 1,
+    },
+    petName: {
+        fontFamily: typography.family.main.semiBold,
         fontSize: typography.size.md,
-        color: colors.white,
-        marginLeft: spacing.sm,
+        color: colors.lightYellow,
+    },
+    petDate: {
+        fontFamily: typography.family.main.regular,
+        fontSize: typography.size.sm,
+        color: colors.lightYellow,
+    },
+    innerDivider: {
+        height: 1,
+        backgroundColor: colors.lightGreen,
+        opacity: 0.3,
+        marginVertical: spacing.sm,
+    },
+    
+    // Tabla Ordenes Médicas
+    tableHeaderRow: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        borderBottomColor: colors.darkGreen,
+        paddingVertical: spacing.sm,
+        paddingHorizontal: spacing.xs,
+    },
+    tableHeaderText: {
+        flex: 1,
+        fontFamily: typography.family.main.semiBold,
+        fontSize: 12,
+        color: colors.darkGreen, // Texto sutil para cabecera
+        textAlign: 'center',
+    },
+    tableDataRow: {
+        flexDirection: 'row',
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.xs,
+    },
+    tableDataText: {
+        flex: 1,
+        fontFamily: typography.family.main.regular,
+        fontSize: 12,
+        color: colors.lightYellow,
+        textAlign: 'center',
+    },
+
+    // Bottom Navigation Bar
+    bottomTabBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        backgroundColor: colors.darkDGreen, // Fondo oscuro
+        borderTopWidth: 1,
+        borderTopColor: colors.darkGreen,
+        paddingVertical: spacing.md,
+        paddingBottom: 25, 
+    },
+    tabItem: {
+        alignItems: 'center',
+        justifyContent: 'center',
     }
 });
 
