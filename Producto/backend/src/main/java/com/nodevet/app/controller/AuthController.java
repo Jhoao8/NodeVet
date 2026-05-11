@@ -4,7 +4,7 @@ import com.nodevet.app.dto.ForgotPasswordRequest;
 import com.nodevet.app.dto.LoginRequestDTO;
 import com.nodevet.app.dto.LoginResponseDTO;
 import com.nodevet.app.dto.ResetPasswordRequest;
-import com.nodevet.app.dto.VerifyCodeRequest; // <-- Importante añadir tu nuevo DTO
+import com.nodevet.app.dto.VerifyCodeRequest; 
 import com.nodevet.app.security.JwtUtil;
 import com.nodevet.app.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
