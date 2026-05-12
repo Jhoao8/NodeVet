@@ -200,6 +200,94 @@ export const globalStyles = StyleSheet.create({
     elevation: 2,
   },
 
+//════════════════════════════════════════════//
+//           Registrar Mascota                //
+//════════════════════════════════════════════//
+
+  /* Contenedores para imágenes / Upload de fotos */
+  imagePicker: { 
+    height: 140,
+    width: 140,
+    backgroundColor: colors.white, 
+    marginVertical: spacing.md, 
+    borderRadius: 15, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.lightGreen
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover'
+  },
+  imagePlaceholder: { alignItems: 'center' },
+  imageText: { color: colors.darkGreen, marginTop: spacing.xs },
+  
+  /* Etiquetas para fondos claros */
+  darkLabel: { 
+    fontFamily: typography.family.main.medium,
+    color: colors.darkDGreen, 
+    fontSize: typography.size.sm, 
+    fontWeight: '600', 
+    marginTop: spacing.sm, 
+    marginBottom: spacing.xs 
+  },
+  
+  /* Inputs para fondos claros */
+  lightInput: { 
+    backgroundColor: colors.white, 
+    borderRadius: 10, 
+    padding: spacing.md, 
+    color: colors.darkDGreen,
+    borderWidth: 1,
+    borderColor: colors.lightGreen
+  },
+
+  /* Selector de fecha (DatePicker) */
+  dateSelector: { 
+    flexDirection: 'row', 
+    backgroundColor: colors.white, 
+    borderRadius: 10, 
+    padding: spacing.md, 
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.lightGreen
+  },
+  dateText: { marginLeft: 10, color: colors.darkDGreen, fontSize: 16 },
+
+  /* Radio Buttons */
+  radioGroup: { flexDirection: 'row', gap: 10 },
+  radioButton: { 
+    flex: 1, 
+    borderWidth: 1, 
+    borderColor: colors.darkGreen, 
+    borderRadius: 10, 
+    padding: spacing.md, 
+    alignItems: 'center',
+    backgroundColor: colors.white
+  },
+  radioSelected: { backgroundColor: colors.lightGreen, borderColor: colors.lightGreen },
+  radioText: { color: colors.darkGreen, fontWeight: '600' },
+  radioTextSelected: { color: colors.darkDGreen },
+
+  /* Checkboxes */
+  checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+  checkbox: { 
+    width: 22, 
+    height: 22, 
+    borderWidth: 2, 
+    borderColor: colors.darkGreen, 
+    borderRadius: 6, 
+    marginRight: 10, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    backgroundColor: colors.white
+  },
+  checkboxChecked: { backgroundColor: colors.lightGreen, borderColor: colors.lightGreen },
+  checkboxLabel: { color: colors.darkDGreen, fontWeight: '500' },
+
   /* Texto del botón primario */
   primaryButtonText: {
     fontFamily: typography.family.main.bold,

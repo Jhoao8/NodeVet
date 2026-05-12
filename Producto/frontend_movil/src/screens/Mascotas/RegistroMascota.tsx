@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   View, Text, TextInput, TouchableOpacity, StyleSheet, 
-  Alert, ScrollView, Image, ActivityIndicator, Platform 
+  Alert, ScrollView, Image, ActivityIndicator, Platform,
+  Modal, FlatList
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -9,6 +10,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '@/src/api/axiosInstance';
 import { colors } from '@/src/theme/colors';
 import { globalStyles } from '@/src/style/GlobalStyle';
+import { dashboardStyles } from '@/src/style/DashboardStyle';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function RegistroMascota() {
@@ -18,6 +20,9 @@ export default function RegistroMascota() {
   
   const [date, setDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
+  const [showEspecieModal, setShowEspecieModal] = useState(false);
+
+  const ESPECIES = ['Perro', 'Gato', 'Ave', 'Roedor', 'Reptil', 'Otro'];
 
   const [form, setForm] = useState({
     nomMascota: '',
@@ -127,30 +132,30 @@ export default function RegistroMascota() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
+    <ScrollView style={[globalStyles.scrollContainer, dashboardStyles.lightBackground]}>
+      <TouchableOpacity style={globalStyles.imagePicker} onPress={pickImage}>
         {image ? (
-          <Image source={{ uri: image }} style={styles.previewImage} />
+          <Image source={{ uri: image }} style={globalStyles.previewImage} />
         ) : (
-          <View style={styles.imagePlaceholder}>
+          <View style={globalStyles.imagePlaceholder}>
             <Ionicons name="camera" size={40} color={colors.darkGreen} />
-            <Text style={styles.imageText}>Subir foto (Opcional)</Text>
+            <Text style={globalStyles.imageText}>Subir foto (Opcional)</Text>
           </View>
         )}
       </TouchableOpacity>
 
-      <View style={styles.formCard}>
-        <Text style={styles.label}>Nombre de la mascota</Text>
+      <View>
+        <Text style={globalStyles.darkLabel}>Nombre de la mascota</Text>
         <TextInput 
-          style={styles.input} 
+          style={globalStyles.lightInput} 
           placeholder="Ej: Jhoao" 
           onChangeText={(v) => setForm({...form, nomMascota: v})} 
         />
 
-        <Text style={styles.label}>Fecha de Nacimiento</Text>
-        <TouchableOpacity style={styles.dateSelector} onPress={() => setShowPicker(true)}>
+        <Text style={globalStyles.darkLabel}>Fecha de Nacimiento</Text>
+        <TouchableOpacity style={globalStyles.dateSelector} onPress={() => setShowPicker(true)}>
           <Ionicons name="calendar-outline" size={20} color={colors.darkDGreen} />
-          <Text style={styles.dateText}>
+          <Text style={globalStyles.dateText}>
             {date.toLocaleDateString('es-ES')}
           </Text>
         </TouchableOpacity>
@@ -166,45 +171,52 @@ export default function RegistroMascota() {
         )}
 
         <TouchableOpacity 
-          style={styles.checkboxContainer} 
+          style={globalStyles.checkboxContainer} 
           onPress={() => setForm({...form, fecNacEst: form.fecNacEst === 0 ? 1 : 0})}
         >
-          <View style={[styles.checkbox, form.fecNacEst === 1 && styles.checkboxChecked]}>
+          <View style={[globalStyles.checkbox, form.fecNacEst === 1 && globalStyles.checkboxChecked]}>
             {form.fecNacEst === 1 && <Ionicons name="checkmark" size={16} color={colors.darkDGreen} />}
           </View>
-          <Text style={styles.checkboxLabel}>¿La fecha es estimada?</Text>
+          <Text style={globalStyles.checkboxLabel}>¿Es fecha es estimada?</Text>
         </TouchableOpacity>
 
-        <View style={styles.row}>
+        <View style={{ flexDirection: 'row' }}>
           <View style={{ flex: 1, marginRight: 10 }}>
-            <Text style={styles.label}>Especie</Text>
-            <TextInput style={styles.input} placeholder="Perro..." onChangeText={(v) => setForm({...form, especie: v})} />
+            <Text style={globalStyles.darkLabel}>Especie</Text>
+            <TouchableOpacity 
+              style={globalStyles.lightInput} 
+              onPress={() => setShowEspecieModal(true)}
+            >
+              <Text style={{ color: form.especie ? colors.darkDGreen : '#A0A0A0' }}>
+                {form.especie || 'Seleccionar...'}
+              </Text>
+            </TouchableOpacity>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Raza</Text>
-            <TextInput style={styles.input} placeholder="Mestizo..." onChangeText={(v) => setForm({...form, raza: v})} />
+            <Text style={globalStyles.darkLabel}>Raza</Text>
+            <TextInput style={globalStyles.lightInput} placeholder="Mestizo..." onChangeText={(v) => setForm({...form, raza: v})} />
           </View>
         </View>
 
-        <Text style={styles.label}>Sexo</Text>
-        <View style={styles.radioGroup}>
+        <Text style={globalStyles.darkLabel}>Sexo</Text>
+        <View style={globalStyles.radioGroup}>
           <TouchableOpacity 
-            style={[styles.radioButton, form.sexo === 1 && styles.radioSelected]} 
+            style={[globalStyles.radioButton, form.sexo === 1 && globalStyles.radioSelected]} 
             onPress={() => setForm({...form, sexo: 1})}
           >
-            <Text style={[styles.radioText, form.sexo === 1 && styles.radioTextSelected]}>Macho</Text>
+            <Text style={[globalStyles.radioText, form.sexo === 1 && globalStyles.radioTextSelected]}>Macho</Text>
           </TouchableOpacity>
           <TouchableOpacity 
-            style={[styles.radioButton, form.sexo === 0 && styles.radioSelected]} 
+            style={[globalStyles.radioButton, form.sexo === 0 && globalStyles.radioSelected]} 
             onPress={() => setForm({...form, sexo: 0})}
           >
-            <Text style={[styles.radioText, form.sexo === 0 && styles.radioTextSelected]}>Hembra</Text>
+            <Text style={[globalStyles.radioText, form.sexo === 0 && globalStyles.radioTextSelected]}>Hembra</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.label}>Peso (Kg)</Text>
+        <Text style={globalStyles.darkLabel}>Peso (Kg)</Text>
         <TextInput 
-          style={styles.input} 
+          style={globalStyles.lightInput} 
           placeholder="0.0" 
           keyboardType="numeric" 
           onChangeText={(v) => setForm({...form, peso: v})} 
@@ -222,29 +234,39 @@ export default function RegistroMascota() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Modal para Seleccionar Especie */}
+      <Modal
+        visible={showEspecieModal}
+        transparent={true}
+        animationType="fade"
+      >
+        <TouchableOpacity 
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}
+          activeOpacity={1}
+          onPress={() => setShowEspecieModal(false)}
+        >
+          <View style={{ width: '80%', backgroundColor: colors.white, borderRadius: 12, padding: 20 }}>
+            <Text style={[globalStyles.darkLabel, { textAlign: 'center', fontSize: 18, marginBottom: 15 }]}>Selecciona la especie</Text>
+            <FlatList
+              data={ESPECIES}
+              keyExtractor={(item) => item}
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  style={{ paddingVertical: 15, borderBottomWidth: 1, borderColor: colors.lightGreen }}
+                  onPress={() => {
+                    setForm({ ...form, especie: item });
+                    setShowEspecieModal(false);
+                  }}
+                >
+                  <Text style={{ color: colors.darkDGreen, textAlign: 'center', fontSize: 16 }}>{item}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.darkDGreen },
-  imagePicker: { height: 160, backgroundColor: colors.lightYellow, margin: 20, borderRadius: 15, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
-  previewImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  imagePlaceholder: { alignItems: 'center' },
-  imageText: { color: colors.darkGreen, marginTop: 5 },
-  formCard: { paddingHorizontal: 20 },
-  label: { color: colors.lightYellow, fontSize: 14, fontWeight: '600', marginTop: 12, marginBottom: 5 },
-  input: { backgroundColor: colors.white, borderRadius: 10, padding: 12, color: colors.darkDGreen },
-  dateSelector: { flexDirection: 'row', backgroundColor: colors.white, borderRadius: 10, padding: 12, alignItems: 'center' },
-  dateText: { marginLeft: 10, color: colors.darkDGreen, fontSize: 16 },
-  row: { flexDirection: 'row' },
-  radioGroup: { flexDirection: 'row', gap: 10 },
-  radioButton: { flex: 1, borderWidth: 1, borderColor: colors.lightGreen, borderRadius: 10, padding: 12, alignItems: 'center' },
-  radioSelected: { backgroundColor: colors.lightGreen },
-  radioText: { color: colors.lightGreen, fontWeight: '600' },
-  radioTextSelected: { color: colors.darkDGreen },
-  checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  checkbox: { width: 22, height: 22, borderWidth: 2, borderColor: colors.lightGreen, borderRadius: 6, marginRight: 10, justifyContent: 'center', alignItems: 'center' },
-  checkboxChecked: { backgroundColor: colors.lightGreen },
-  checkboxLabel: { color: colors.lightYellow },
-});
