@@ -11,7 +11,9 @@ import com.nodevet.app.service.MascotaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,5 +57,21 @@ public class MascotaController {
         List<Mascota> lista = mascotaRepository.findByTutor_IdTutorAndEstadoMasc(tutor.getIdTutor(), 1);
         
         return ResponseEntity.ok(lista);
+    }
+
+    @PutMapping("/actualizar/{id}")
+    public ResponseEntity<?> actualizar(@PathVariable Integer id, @RequestBody MascotaRequestDTO dto) {
+        mascotaService.modificarMascota(id, dto);
+        Map<String, String> response = new HashMap<>();
+        response.put("mensaje", "Mascota actualizada correctamente");
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/eliminar/{id}")
+    public ResponseEntity<?> eliminar(@PathVariable Integer id) {
+        mascotaService.borrarMascota(id);
+        Map<String, String> response = new HashMap<>();
+        response.put("mensaje", "Mascota eliminada exitosamente");
+        return ResponseEntity.ok(response);
     }
 }

@@ -93,7 +93,7 @@ export const globalStyles = StyleSheet.create({
   },
 
   /* Espaciador derecho que equilibra el backButton */
-  right_Spacer: {
+  rightSpace: {
     width: 50,
   },
 

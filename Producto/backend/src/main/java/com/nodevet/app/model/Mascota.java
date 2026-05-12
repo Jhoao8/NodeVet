@@ -21,7 +21,6 @@ public class Mascota {
     @Column(name = "id_mascota")
     private Integer idMascota;
 
-    // Aquí está la relación con el Tutor
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tutor", nullable = false)
     private Tutor tutor;
@@ -35,20 +34,23 @@ public class Mascota {
     @Column(length = 50)
     private String raza;
 
-    @Column(length = 1)
-    private String sexo;
+    @Column(name = "sexo")
+    private Integer sexo; 
 
     @Column(name = "fec_nac")
     private LocalDate fecNac;
 
     @Builder.Default
     @Column(name = "est_fec_nac", nullable = false)
-    private Integer estFecNac = 0; // 1 si es estimada, 0 si es exacta
+    private Integer estFecNac = 0;
 
     @Column(precision = 5, scale = 2)
     private BigDecimal peso;
 
+    @Column(name = "imagen_mascota", columnDefinition = "TEXT")
+    private String imagenMascota;
+
     @Builder.Default
     @Column(name = "estado_masc", nullable = false)
-    private Integer estadoMasc = 1; // Para el Soft Delete a futuro
+    private Integer estadoMasc = 1; 
 }

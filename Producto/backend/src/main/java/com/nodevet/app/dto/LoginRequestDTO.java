@@ -6,4 +6,5 @@ import lombok.Data;
 public class LoginRequestDTO {
     private String correoUsr;
     private String passUsr;
+    private boolean isMobile;
 }
