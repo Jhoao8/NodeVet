@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { globalStyles } from '@/src/style/GlobalStyle'
 import api from '../../api/axiosInstance'; // Importamos tu instancia de Axios
 
 const RegisterScreen = () => {
@@ -76,7 +77,7 @@ const RegisterScreen = () => {
                     <View style={globalStyles.logoPlaceholder}>
                         <Image 
                             source={require('@/assets/images/Logo.png')} 
-                            style={styles.logo}
+                            style={globalStyles.logo}
                             resizeMode="contain" 
                         />
                     </View>

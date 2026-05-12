@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { globalStyles } from '../../style/GlobalStyle';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
 
@@ -23,16 +24,13 @@ const LoginScreen = () => {
             Alert.alert('Campos incompletos', 'Por favor ingresa tu correo y contraseña.');
             return;
         }
-        if (!email || !password) {
-            Alert.alert('Campos incompletos', 'Por favor ingresa tu correo y contraseña.');
-            return;
-        }
 
         setLoading(true);
         try {
             const response = await api.post('/auth/login', {
                 correoUsr: email,
-                passUsr: password
+                passUsr: password,
+                isMobile: true // esto activa la expiracion extendida en el backend
             });
 
             const token = response.data.token; 
@@ -57,23 +55,23 @@ const LoginScreen = () => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <ScrollView contentContainerStyle={globalStyles.scrollContainer} showsVerticalScrollIndicator={false}>
-                
                 {/* Cabecera */}
                 <View style={globalStyles.headerContainer}>
                     <TouchableOpacity style={globalStyles.backButton} onPress={() => navigation.goBack()}>
                         <Ionicons name="chevron-back" size={32} color={colors.lightYellow} />
                     </TouchableOpacity>
 
-                <View style={styles.headerRow}>
-                    <View style={styles.logoPlaceholder}>
-                        <Image 
-                            source={require('@/assets/images/Logo.png')} 
-                            style={styles.logo}
-                            resizeMode="contain" 
-                        />
+                    <View style={globalStyles.headerRow}>
+                        <View style={globalStyles.logoPlaceholder}>
+                            <Image 
+                                source={require('@/assets/images/Logo.png')} 
+                                style={globalStyles.logo}
+                                resizeMode="contain" 
+                            />
+                        </View>
+                        
+                        <View style={globalStyles.rightSpacer} />
                     </View>
-                    
-                    <View style={globalStyles.rightSpacer} />
                 </View>
 
                 {/* Formulario */}

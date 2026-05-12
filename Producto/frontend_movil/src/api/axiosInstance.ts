@@ -11,6 +11,7 @@ const api = axios.create({
     }
 });
 
+// Interceptor de peticion
 api.interceptors.request.use(
     async (config) => {
         try {
@@ -27,6 +28,35 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Interceptor de Respuesta
+api.interceptors.response.use(
+    async (response) => {
+        // Buscamos el header que configuramos en Spring Boot
+        const newToken = response.headers['new-token'];
+
+        if (newToken) {
+            try {
+                // Si el servidor nos mandó un token fresco, lo guardamos
+                await AsyncStorage.setItem('userToken', newToken);
+                console.log("Sesión renovada automáticamente por 30 días más.");
+            } catch (error) {
+                console.error("Error al guardar el nuevo token renovado:", error);
+            }
+        }
+        return response;
+    },
+    async (error) => {
+        // Si el servidor responde 401 (Unauthorized), significa que los 30 días pasaron
+        // sin que el usuario abriera la app. En ese caso, limpiamos todo.
+        if (error.response && error.response.status === 401) {
+            console.warn("La sesión ha expirado (pasaron más de 30 días).");
+            await AsyncStorage.removeItem('userToken');
+            // Aquí el AuthContext detectará que el token es null y mandará al Login automáticamente
+        }
         return Promise.reject(error);
     }
 );
