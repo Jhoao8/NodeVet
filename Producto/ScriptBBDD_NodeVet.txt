@@ -1,7 +1,8 @@
 -- ========================================================
 -- BASE DE DATOS: NODEVET
 -- ========================================================
-CREATE DATABASE IF NOT EXISTS nodevet_db;
+DROP DATABASE IF EXISTS nodevet_db;
+CREATE DATABASE nodevet_db;
 USE nodevet_db;
 
 -- ========================================================
@@ -72,10 +73,10 @@ CREATE TABLE USUARIO (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombre_usr VARCHAR(75) NOT NULL,
     apellido_usr VARCHAR(75) NOT NULL,
-    correo_usr VARCHAR(150) UNIQUE NOT NULL,
+    correo_usr VARCHAR(100) UNIQUE NOT NULL,
     pass_usr VARCHAR(255) NOT NULL,
     telefono_usr VARCHAR(12) NULL,
-    foto_usr VARCHAR(255) NULL,
+    foto_usr MEDIUMTEXT NULL,
     estado_usr TINYINT(1) DEFAULT 1 NOT NULL,
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -128,13 +129,15 @@ CREATE TABLE MASCOTA (
     nom_mascota VARCHAR(50) NOT NULL,
     especie VARCHAR(50) NOT NULL,
     raza VARCHAR(50) NULL,
-    sexo CHAR(1) NULL,
+    sexo INT NULL, 
     fec_nac DATE NULL,
     fec_nac_est TINYINT(1) DEFAULT 0,
     peso DECIMAL(5,2) NULL,
+    imagen_mascota MEDIUMTEXT NULL,
     estado_masc TINYINT(1) DEFAULT 1 NOT NULL,
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
     CONSTRAINT fk_mascota_tutor FOREIGN KEY (id_tutor) REFERENCES TUTOR(id_tutor) ON DELETE CASCADE
 );
 
