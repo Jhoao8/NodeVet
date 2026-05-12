@@ -30,12 +30,20 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO dto) {
         try {
+            // 1. Autenticación estándar
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(dto.getCorreoUsr(), dto.getPassUsr())
             );
 
+            // 2. Cargar detalles del usuario
             UserDetails userDetails = usuarioService.loadUserByUsername(dto.getCorreoUsr());
-            String jwt = jwtUtil.generateToken(userDetails.getUsername());
+
+            // 3. Lógica de expiración diferenciada (App vs Web)
+            // Si isMobile es true, usamos 30 días; si no, 8 horas.
+            long expiracion = dto.isMobile() ? JwtUtil.EXPIRE_MOBILE : JwtUtil.EXPIRE_WEB;
+
+            // 4. Generar el token con el tiempo correspondiente
+            String jwt = jwtUtil.generateToken(userDetails.getUsername(), expiracion);
 
             return ResponseEntity.ok(new LoginResponseDTO(jwt));
 

@@ -22,18 +22,8 @@ public class MascotaService {
 
     @Transactional
     public Mascota registrarMascota(MascotaRequestDTO dto) {
-        
-        // 1. Obtener el correo del usuario logueado desde el token JWT
-        String correoUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        Tutor tutor = obtenerTutorActual();
 
-        // 2. Buscar al Usuario y luego a su Tutor
-        Usuario usuario = usuarioRepository.findByCorreoUsr(correoUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-                
-        Tutor tutor = tutorRepository.findByUsuario(usuario)
-                .orElseThrow(() -> new RuntimeException("El usuario no tiene un perfil de Tutor válido"));
-
-        // 3. Crear la mascota y asociarla AUTOMÁTICAMENTE al tutor
         Mascota nuevaMascota = Mascota.builder()
                 .tutor(tutor)
                 .nomMascota(dto.getNomMascota())
@@ -43,9 +33,42 @@ public class MascotaService {
                 .fecNac(dto.getFecNac())
                 .estFecNac(dto.getEstFecNac() != null ? dto.getEstFecNac() : 0)
                 .peso(dto.getPeso())
+                .imagenMascota(dto.getImagenMascota()) // Guardamos la URL de Cloudinary
                 .estadoMasc(1)
                 .build();
 
         return mascotaRepository.save(nuevaMascota);
+    }
+
+    @Transactional
+    public Mascota modificarMascota(Integer id, MascotaRequestDTO dto) {
+        Mascota mascota = mascotaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Mascota no encontrada"));
+
+        mascota.setNomMascota(dto.getNomMascota());
+        mascota.setEspecie(dto.getEspecie());
+        mascota.setRaza(dto.getRaza());
+        mascota.setSexo(dto.getSexo());
+        mascota.setPeso(dto.getPeso());
+        mascota.setFecNac(dto.getFecNac());
+        mascota.setEstFecNac(dto.getEstFecNac());        
+        if (dto.getImagenMascota() != null) {
+            mascota.setImagenMascota(dto.getImagenMascota());
+        }
+
+        return mascotaRepository.save(mascota);
+    }
+
+    @Transactional
+    public void borrarMascota(Integer id) {
+        mascotaRepository.softDelete(id);
+    }
+
+    private Tutor obtenerTutorActual() {
+        String correoUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correoUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        return tutorRepository.findByUsuario(usuario)
+                .orElseThrow(() -> new RuntimeException("Perfil de Tutor no válido"));
     }
 }

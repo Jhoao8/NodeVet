@@ -51,25 +51,23 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         // 3. Si hay un usuario en el token, pero aún no está autenticado en Spring Security
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            
-            // Cargamos los datos del usuario desde la base de datos
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-            // 4. Validar el token
             if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
                 
-                // Creamos el objeto de autenticación de Spring
+                // --- LÓGICA DE REINICIO DE 30 DÍAS ---
+                // Generamos un token fresquito con otros 30 días
+                String newToken = jwtUtil.refreshToken(jwt, JwtUtil.EXPIRE_MOBILE);                // Lo enviamos en la respuesta. El frontend deberá guardarlo.
+                response.setHeader("New-Token", newToken);
+                // Exponemos el header para que CORS no lo bloquee en el navegador/app
+                response.setHeader("Access-Control-Expose-Headers", "New-Token");
+                
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
-                
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                
-                // 5. Establecemos la autenticación en el contexto de seguridad
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
         }
-        
-        // 6. Dejar que la petición continúe su camino hacia el controlador
         chain.doFilter(request, response);
     }
 }
