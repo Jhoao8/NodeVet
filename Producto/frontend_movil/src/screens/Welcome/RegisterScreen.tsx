@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import { globalStyles } from '@/src/style/GlobalStyle';
 import api from '../../api/axiosInstance'; // Importamos tu instancia de Axios
 
 const RegisterScreen = () => {
@@ -21,14 +22,120 @@ const RegisterScreen = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    // Estados para errores de validación
+    const [nombreError, setNombreError] = useState('');
+    const [apellidoError, setApellidoError] = useState('');
+    const [celularError, setCelularError] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+    const [passwordMatchError, setPasswordMatchError] = useState('');
+
+    // Validar nombre
+    const validateNombre = (text: string) => {
+        setNombre(text);
+        if (!text) {
+            setNombreError('');
+        } else if (text.length < 3) {
+            setNombreError('Mínimo 3 caracteres');
+        } else {
+            setNombreError('');
+        }
+    };
+
+    // Validar apellido
+    const validateApellido = (text: string) => {
+        setApellido(text);
+        if (!text) {
+            setApellidoError('');
+        } else if (text.length < 3) {
+            setApellidoError('Mínimo 3 caracteres');
+        } else {
+            setApellidoError('');
+        }
+    };
+
+    // Validar celular
+    const validateCelular = (text: string) => {
+        setCelular(text);
+        if (!text) {
+            setCelularError('');
+        } else if (!text.startsWith('9')) {
+            setCelularError('Debe empezar con 9');
+        } else if (text.length !== 9) {
+            setCelularError('Debe tener 9 dígitos (9 + 8 números)');
+        } else {
+            setCelularError('');
+        }
+    };
+
+    // Validar email
+    const validateEmail = (text: string) => {
+        setEmail(text);
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!text) {
+            setEmailError('');
+        } else if (!emailRegex.test(text)) {
+            setEmailError('Email inválido (formato: ejemplo@dominio.com)');
+        } else {
+            setEmailError('');
+        }
+    };
+
+    // Validar contraseña
+    const validatePassword = (text: string) => {
+        setPassword(text);
+        const errors: string[] = [];
+
+        if (text.length > 0) {
+            if (text.length < 6) {
+                errors.push('Mínimo 6 caracteres');
+            }
+            if (!/[A-Z]/.test(text)) {
+                errors.push('Al menos 1 mayúscula');
+            }
+            if (!/[a-z]/.test(text)) {
+                errors.push('Al menos 1 minúscula');
+            }
+            if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(text)) {
+                errors.push('Al menos 1 carácter especial (!@#$%...)');
+            }
+        }
+
+        setPasswordErrors(errors);
+
+        // Validar coincidencia de contraseñas
+        if (confirmPassword && text !== confirmPassword) {
+            setPasswordMatchError('Las contraseñas no coinciden');
+        } else {
+            setPasswordMatchError('');
+        }
+    };
+
+    // Validar confirmación de contraseña
+    const validateConfirmPassword = (text: string) => {
+        setConfirmPassword(text);
+        if (password && text !== password) {
+            setPasswordMatchError('Las contraseñas no coinciden');
+        } else {
+            setPasswordMatchError('');
+        }
+    };
+
+    // Capitalizar primer carácter
+    const capitalizeFirst = (text: string) => {
+        return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+    };
+
     const handleRegister = async () => {
-        if (!nombre || !apellido || !celular || !email || !password) {
+        // Validar todos los campos
+        if (!nombre || !apellido || !celular || !email || !password || !confirmPassword) {
             Alert.alert('Campos incompletos', 'Por favor, llena todos los campos.');
             return;
         }
 
-        if (password !== confirmPassword) {
-            Alert.alert('Error', 'Las contraseñas no coinciden.');
+        // Validar que no haya errores
+        if (nombreError || apellidoError || celularError || emailError || passwordErrors.length > 0 || passwordMatchError) {
+            Alert.alert('Validación incompleta', 'Por favor, corrige los errores en los campos.');
             return;
         }
 
@@ -36,8 +143,8 @@ const RegisterScreen = () => {
 
         try {
             const payload = {
-                nombreUsr: nombre,
-                apellidoUsr: apellido,
+                nombreUsr: capitalizeFirst(nombre),
+                apellidoUsr: capitalizeFirst(apellido),
                 correoUsr: email,
                 passUsr: password,
                 telefonoUsr: `+56${celular}`,
@@ -63,9 +170,17 @@ const RegisterScreen = () => {
     return (
         <KeyboardAvoidingView 
             style={globalStyles.container} 
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
         >
-            <ScrollView contentContainerStyle={globalStyles.scrollContainer} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+                contentContainerStyle={{
+                    flexGrow: 1,
+                    padding: spacing.xl,
+                    paddingTop: spacing.lg,
+                }}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+            >
             
             <View style={globalStyles.headerContainer}>
                 <TouchableOpacity style={globalStyles.backButton} onPress={() => navigation.goBack()}>
@@ -76,7 +191,7 @@ const RegisterScreen = () => {
                     <View style={globalStyles.logoPlaceholder}>
                         <Image 
                             source={require('@/assets/images/Logo.png')} 
-                            style={styles.logo}
+                            style={globalStyles.logo}
                             resizeMode="contain" 
                         />
                     </View>
@@ -97,8 +212,9 @@ const RegisterScreen = () => {
                             placeholder="Ej. Amelia"
                             placeholderTextColor={colors.darkGreen}
                             value={nombre}
-                            onChangeText={setNombre}
+                            onChangeText={validateNombre}
                         />
+                        {nombreError && <Text style={styles.errorText}>{nombreError}</Text>}
                     </View>
                     <View style={globalStyles.halfColumn}>
                         <Text style={globalStyles.label}>Apellido:</Text>
@@ -107,8 +223,9 @@ const RegisterScreen = () => {
                             placeholder="Ej. Pérez"
                             placeholderTextColor={colors.darkGreen}
                             value={apellido}
-                            onChangeText={setApellido}
+                            onChangeText={validateApellido}
                         />
+                        {apellidoError && <Text style={styles.errorText}>{apellidoError}</Text>}
                     </View>
                 </View>
 
@@ -123,9 +240,10 @@ const RegisterScreen = () => {
                             keyboardType="phone-pad"
                             maxLength={9}
                             value={celular}
-                            onChangeText={setCelular}
+                            onChangeText={validateCelular}
                         />
                     </View>
+                    {celularError && <Text style={styles.errorText}>{celularError}</Text>}
                 </View>
 
                 <View style={globalStyles.inputGroup}>
@@ -137,8 +255,9 @@ const RegisterScreen = () => {
                         keyboardType="email-address"
                         autoCapitalize="none"
                         value={email}
-                        onChangeText={setEmail}
+                        onChangeText={validateEmail}
                     />
+                    {emailError && <Text style={styles.errorText}>{emailError}</Text>}
                 </View>
 
                 <View style={globalStyles.inputGroup}>
@@ -154,8 +273,15 @@ const RegisterScreen = () => {
                         placeholderTextColor={colors.darkGreen}
                         secureTextEntry={!showPassword} 
                         value={password}
-                        onChangeText={setPassword}
+                        onChangeText={validatePassword}
                     />
+                    {passwordErrors.length > 0 && (
+                        <View style={styles.errorContainer}>
+                            {passwordErrors.map((error, index) => (
+                                <Text key={index} style={styles.errorText}>• {error}</Text>
+                            ))}
+                        </View>
+                    )}
                 </View>
 
                 <View style={globalStyles.inputGroup}>
@@ -171,8 +297,9 @@ const RegisterScreen = () => {
                         placeholderTextColor={colors.darkGreen}
                         secureTextEntry={!showConfirmPassword} 
                         value={confirmPassword}
-                        onChangeText={setConfirmPassword}
+                        onChangeText={validateConfirmPassword}
                     />
+                    {passwordMatchError && <Text style={styles.errorText}>{passwordMatchError}</Text>}
                 </View>
             </View>
 
@@ -199,6 +326,15 @@ const styles = StyleSheet.create({
     },
     localCreateButton: {
         alignSelf: 'center', // Para complementar el primaryButtonCentered global
+    },
+    errorText: {
+        color: '#FF6B6B',
+        fontSize: typography.size.sm,
+        marginTop: spacing.xs,
+        fontFamily: typography.family.main.medium,
+    },
+    errorContainer: {
+        marginTop: spacing.xs,
     }
 });
 

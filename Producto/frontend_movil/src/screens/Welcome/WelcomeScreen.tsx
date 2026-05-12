@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { globalStyles } from '@/src/style/GlobalStyle';
 
-const WelcomeScreen = ({ navigation }: any) => {
+const WelcomeScreen = () => {
+  const navigation = useNavigation<any>();
   return (
     <View style={[globalStyles.container, styles.localContainer]}>
       {/* Área del Logo / Ilustración */}

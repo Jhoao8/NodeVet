@@ -7,6 +7,7 @@ import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
+import { globalStyles } from '@/src/style/GlobalStyle';
 
 const LoginScreen = () => {
     const [loading, setLoading] = useState(false);
@@ -15,6 +16,7 @@ const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    
 
     const { signIn } = useAuth();
 
@@ -63,14 +65,16 @@ const LoginScreen = () => {
                     <TouchableOpacity style={globalStyles.backButton} onPress={() => navigation.goBack()}>
                         <Ionicons name="chevron-back" size={32} color={colors.lightYellow} />
                     </TouchableOpacity>
-
-                <View style={styles.headerRow}>
-                    <View style={styles.logoPlaceholder}>
-                        <Image 
-                            source={require('@/assets/images/Logo.png')} 
-                            style={styles.logo}
-                            resizeMode="contain" 
-                        />
+                    
+                    <View style={globalStyles.headerRow}>
+                        <View style={globalStyles.logoPlaceholder}>
+                            <Image 
+                                source={require('@/assets/images/Logo.png')} 
+                                style={globalStyles.logo}
+                                resizeMode="contain" 
+                            />
+                        </View>
+                        <Text style={globalStyles.mainTitle}>NodeVet</Text>
                     </View>
                     
                     <View style={globalStyles.rightSpacer} />

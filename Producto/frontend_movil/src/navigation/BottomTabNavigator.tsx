@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context'; // <-- 1. Importamos esto
 import MascotasScreen from '../screens/Mascotas/MascotasScreen';
 import HomeScreen from '../screens/HomeScreen';
 import { colors } from '@/src/theme/colors';
@@ -9,6 +10,9 @@ import { colors } from '@/src/theme/colors';
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabNavigator() {
+  // 2. Obtenemos las medidas dinámicas del celular donde corre la app
+  const insets = useSafeAreaInsets(); 
+
   return (
     <Tab.Navigator
       initialRouteName="Home" 
@@ -21,8 +25,10 @@ export default function BottomTabNavigator() {
           backgroundColor: colors.darkDGreen,
           borderTopWidth: 0,
           paddingTop: 10,
-          height: Platform.OS === 'ios' ? 90 : 70,
-          paddingBottom: Platform.OS === 'ios' ? 30 : 10,
+          // 3. Altura base (ej. 60) + el espacio exacto que ocupa la barra del sistema
+          height: 60 + insets.bottom,
+          // 4. Agregamos el paddingBottom dinámico. Si no hay barra nativa grande, dejamos 10px de gracia
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
         },
       }}
     >
@@ -54,7 +60,7 @@ export default function BottomTabNavigator() {
         component={HomeScreen}
         options={{
           tabBarIcon: ({ color }) => (
-            <Ionicons name="home-outline" color={color} size={28} />
+            <Ionicons name={color === colors.lightYellow ? "home" : "home-outline"} color={color} size={28} />
           ),
         }}
       />

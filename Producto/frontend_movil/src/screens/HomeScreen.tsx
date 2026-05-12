@@ -1,244 +1,101 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    View, 
-    Text, 
-    StyleSheet, 
-    TouchableOpacity, 
-    StatusBar,
-    ScrollView,
-    Image
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+
+// Importación de estilos y tema
+import { globalStyles } from '@/src/style/GlobalStyle';
+import { dashboardStyles } from '@/src/style/DashboardStyle';
 import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import { globalStyles } from '../style/GlobalStyle'; // IMPORTANTE: Agregado esto
-import { useAuth } from '../context/AuthContext';
+import DashboardHeader from '../components/DashboardHeader';
 
 const HomeScreen = () => {
-    const { signOut } = useAuth();
-
-    const handleLogout = async () => {
-        try {
-            await signOut();
-            console.log('Sesión cerrada correctamente');
-        } catch (e) {
-            console.error("Error al cerrar sesión", e);
-        }
-    };
+    const navigation = useNavigation<any>();
 
     return (
-        <SafeAreaView style={styles.mainContainer}>
-            <StatusBar barStyle="dark-content" backgroundColor={colors.white} />
+        <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
             
-            <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-                {/* Cabecera */}
-                <View style={styles.header}>
-                    <View>
-                        <Text style={styles.welcomeLabel}>Panel de Control</Text>
-                        <Text style={styles.brandTitle}>NodeVet</Text>
-                    </View>
-                    {/* Agregué el botón de logout que faltaba en tu código */}
-                    <TouchableOpacity onPress={handleLogout}>
-                        <Ionicons name="log-out-outline" size={28} color={colors.red} />
-                    </TouchableOpacity>
+            {/* ════ USAMOS EL NUEVO COMPONENTE ════ */}
+            <DashboardHeader />
+
+            {/* ════ CONTENIDO SCROLLEABLE ════ */}
+            <ScrollView 
+                contentContainerStyle={globalStyles.scrollContainer} 
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Saludo */}
+                <View style={dashboardStyles.greetingContainer}>
+                    <Text style={[dashboardStyles.greetingText, dashboardStyles.darkText]}>Bienvenido</Text>
+                    <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider]} />
                 </View>
 
-                <View style={globalStyles.card}>
-                    <Text style={globalStyles.cardEmptyText}>Sin citas registradas</Text>
+                {/* 1. SECCIÓN: Próximas citas */}
+                <View style={globalStyles.sectionHeaderRow}>
+                    <View style={globalStyles.sectionTitleLeft}>
+                        <Ionicons name="calendar" size={24} color={colors.darkGreen} />
+                        <Text style={[globalStyles.sectionTitle, dashboardStyles.darkText]}>Próximas citas:</Text>
+                    </View>
+                </View>
+                
+                <View style={dashboardStyles.flatCard}>
+                    <Text style={[globalStyles.cardEmptyText, dashboardStyles.darkSubText]}>Sin citas registradas</Text>
                 </View>
                 
                 <View style={globalStyles.actionButtonsRow}>
-                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
-                        <Text style={globalStyles.outlineButtonTextSm}>Agendar</Text>
+                    <TouchableOpacity style={dashboardStyles.flatFilledButtonSm}>
+                        <Text style={dashboardStyles.filledButtonTextSm}>Agendar</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
-                        <Text style={globalStyles.outlineButtonTextSm}>Ver Citas</Text>
+                    <TouchableOpacity style={dashboardStyles.flatFilledButtonSm}>
+                        <Text style={dashboardStyles.filledButtonTextSm}>Ver Citas</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* SECCIÓN: MIS MASCOTAS */}
+                {/* 2. SECCIÓN: Mis mascotas */}
                 <View style={globalStyles.sectionHeaderRow}>
                     <View style={globalStyles.sectionTitleLeft}>
-                        <Ionicons name="paw-outline" size={24} color={colors.lightYellow} />
-                        <Text style={globalStyles.sectionTitle}>Mis mascotas</Text>
+                        <Ionicons name="paw" size={24} color={colors.darkGreen} />
+                        <Text style={[globalStyles.sectionTitle, dashboardStyles.darkText]}>Mis mascotas</Text>
                     </View>
-                    <View style={styles.statusTextContainer}>
-                        <Text style={styles.statusTitle}>Servidor Backend</Text>
-                        <Text style={styles.statusSubtitle}>
-                            IP: {process.env.EXPO_PUBLIC_DEVELOPER_IP || 'Conectado'}
-                        </Text>
-                    </View>
-                    <View style={styles.activeDot} />
+                    <Text style={[globalStyles.sectionSubtitle, dashboardStyles.darkSubText]}>Últ. chequeo</Text>
                 </View>
 
-                <Text style={styles.sectionHeading}>Gestión Médica</Text>
-                
-                <View style={styles.grid}>
-                    <TouchableOpacity style={styles.menuItem} onPress={() => alert('Navegando a Mascotas...')}>
-                        <View style={[styles.iconBox, { backgroundColor: colors.lightGreen }]}>
-                            <Ionicons name="paw" size={28} color={colors.darkDGreen} />
-                        </View>
-                        <Text style={styles.petDate}>05/11/2023</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={globalStyles.actionButtonsRow}>
-                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
-                        <Text style={globalStyles.outlineButtonTextSm}>Ver todos</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* SECCIÓN: ORDENES MÉDICAS */}
-                <View style={globalStyles.sectionHeaderRow}>
-                    <View style={globalStyles.sectionTitleLeft}>
-                        <Ionicons name="document-text-outline" size={24} color={colors.lightYellow} />
-                        <Text style={globalStyles.sectionTitle}>Ordenes Médicas</Text>
-                    </View>
-                </View>
-
-                <View style={[globalStyles.card, { padding: 0 }]}>
-                    <View style={styles.tableHeaderRow}>
-                        <Text style={styles.tableHeaderText}>Veterinaria</Text>
-                        <Text style={styles.tableHeaderText}>Profesional</Text>
-                        <Text style={styles.tableHeaderText}>Tipo</Text>
-                        <Text style={styles.tableHeaderText}>Fecha</Text>
-                    </View>
-                    <View style={styles.tableDataRow}>
-                        <Text style={styles.tableDataText} numberOfLines={1}>VetSur</Text>
-                        <Text style={styles.tableDataText} numberOfLines={1}>Dr. Soto</Text>
-                        <Text style={styles.tableDataText} numberOfLines={1}>Exámen</Text>
-                        <Text style={styles.tableDataText}>20/12/23</Text>
+                <View style={dashboardStyles.flatCard}>
+                    <View style={dashboardStyles.emptyCardContent}>
+                        <Ionicons name="paw" size={48} color={colors.lightGreen} />
+                        <Text style={[globalStyles.cardEmptyText, dashboardStyles.darkSubText]}>No tienes mascotas registradas aún</Text>
                     </View>
                 </View>
 
                 <View style={globalStyles.actionButtonsRow}>
-                    <TouchableOpacity style={globalStyles.outlineButtonSm}>
-                        <Text style={globalStyles.outlineButtonTextSm}>Ver todo</Text>
+                    <TouchableOpacity style={dashboardStyles.flatFilledButtonSm}>
+                        <Text style={dashboardStyles.filledButtonTextSm}>Ver todos</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* Banner de Soporte */}
-                <TouchableOpacity style={styles.supportBanner}>
-                    <Ionicons name="help-buoy-outline" size={22} color={colors.white} />
-                    <Text style={styles.supportText}>¿Necesitas ayuda técnica?</Text>
-                </TouchableOpacity>
+                {/* 3. SECCIÓN: Órdenes Médicas */}
+                <View style={globalStyles.sectionHeaderRow}>
+                    <View style={globalStyles.sectionTitleLeft}>
+                        <Ionicons name="document-text" size={24} color={colors.darkGreen} />
+                        <Text style={[globalStyles.sectionTitle, dashboardStyles.darkText]}>Ordenes Médicas</Text>
+                    </View>
+                </View>
+
+                <View style={dashboardStyles.flatCard}>
+                    <View style={dashboardStyles.emptyCardContent}>
+                        <Ionicons name="medical" size={48} color={colors.lightGreen} />
+                        <Text style={[globalStyles.cardEmptyText, dashboardStyles.darkSubText]}>Sin órdenes médicas recientes</Text>
+                    </View>
+                </View>
+
+                <View style={globalStyles.actionButtonsRow}>
+                    <TouchableOpacity style={dashboardStyles.flatFilledButtonSm}>
+                        <Text style={dashboardStyles.filledButtonTextSm}>Ver todo</Text>
+                    </TouchableOpacity>
+                </View>
 
             </ScrollView>
-        </SafeAreaView>
+        </View>
     );
 };
-
-const styles = StyleSheet.create({
-    mainContainer: {
-        flex: 1,
-        backgroundColor: colors.white,
-    },
-    scrollContainer: {
-        padding: spacing.md,
-        paddingBottom: spacing.xxl,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: spacing.md,
-        paddingTop: spacing.xl,
-        paddingBottom: spacing.sm,
-    },
-    welcomeLabel: {
-        fontFamily: typography.family.main.medium,
-        fontSize: typography.size.sm,
-        color: colors.lightGreen,
-    },
-    brandTitle: {
-        fontFamily: typography.family.main.bold,
-        fontSize: 24,
-        color: colors.darkDGreen,
-    },
-    statusTextContainer: {
-        flex: 1,
-        marginLeft: 10,
-    },
-    statusTitle: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: colors.darkGreen,
-    },
-    statusSubtitle: {
-        fontSize: 10,
-        color: colors.darkGreen,
-    },
-    activeDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: '#4CAF50',
-    },
-    sectionHeading: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginVertical: 10,
-    },
-    grid: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    menuItem: {
-        width: '47%',
-        backgroundColor: '#F9FBF9',
-        padding: spacing.md,
-        borderRadius: 20,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#F0F0F0',
-    },
-    iconBox: {
-        padding: 10,
-        borderRadius: 10,
-        marginBottom: 5,
-    },
-    petDate: {
-        fontSize: 12,
-        color: colors.darkGreen,
-    },
-    tableHeaderRow: {
-        flexDirection: 'row',
-        backgroundColor: '#f0f0f0',
-        padding: 10,
-        borderTopLeftRadius: 10,
-        borderTopRightRadius: 10,
-    },
-    tableHeaderText: {
-        flex: 1,
-        fontWeight: 'bold',
-        fontSize: 12,
-        textAlign: 'center',
-    },
-    tableDataRow: {
-        flexDirection: 'row',
-        padding: 10,
-    },
-    tableDataText: {
-        flex: 1,
-        fontSize: 12,
-        textAlign: 'center',
-    },
-    supportBanner: {
-        flexDirection: 'row',
-        backgroundColor: colors.darkGreen,
-        padding: 15,
-        borderRadius: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 20,
-    },
-    supportText: {
-        color: colors.white,
-        marginLeft: 10,
-        fontWeight: 'bold',
-    }
-});
 
 export default HomeScreen;

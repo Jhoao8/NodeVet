@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Asumiendo que usas iconos
-import { globalStyles } from '../theme/globalStyles'; // Tu archivo de estilos globales
+import { globalStyles } from '../style/GlobalStyle'; // Tu archivo de estilos globales
 
 interface HeaderProps {
     onBackPress?: () => void;
