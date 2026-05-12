@@ -1,10 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, RefreshControl } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, RefreshControl, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/src/theme/colors';
 import { globalStyles } from '@/src/style/GlobalStyle';
 import api from '@/src/api/axiosInstance';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import DashboardHeader from '@/src/components/DashboardHeader';
+import { dashboardStyles } from '@/src/style/DashboardStyle';
+import { PetCard } from '@/src/components/PetCard';
 
 export default function MascotasScreen() {
     // Definimos la navegación para que el botón funcione
@@ -40,37 +43,43 @@ export default function MascotasScreen() {
     }, []);
 
     return (
-        <SafeAreaView style={styles.safeArea}>
-            <View style={globalStyles.headerSection}>
-                <Text style={styles.title}>Mis Mascotas</Text>
+        <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
+            <DashboardHeader />
+            <View style={dashboardStyles.greetingContainer}>
+                <Text style={[dashboardStyles.greetingText, dashboardStyles.darkText]}>Mis Mascotas</Text>
+                <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider]} />
             </View>
             <View style={styles.content}>
-                <ScrollView 
-                    refreshControl={
-                        <RefreshControl 
-                            refreshing={refreshing} 
-                            onRefresh={onRefresh} 
-                            tintColor={colors.darkGreen} 
-                        />
-                    }
-                >
-                    {loading ? (
-                        <ActivityIndicator size="large" color={colors.darkGreen} style={{ marginTop: 20 }} />
-                    ) : (
-                        <View>
-                            {mascotas.map((mascota: any) => (
-                                <TouchableOpacity 
-                                    key={mascota.idMascota} 
-                                    style={styles.itemContainer}
-                                    onPress={() => navigation.navigate('DetalleMascota', { mascota })}
-                                >
-                                    <Text style={styles.petName}>{mascota.nomMascota}</Text>
-                                    <Text style={styles.petInfo}>{mascota.especie}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-                    )}
-                </ScrollView>
+                {loading ? (
+                    <ActivityIndicator size="large" color={colors.darkGreen} style={{ marginTop: 20 }} />
+                ) : (
+                    <FlatList
+                        data={mascotas}
+                        keyExtractor={(item: any) => item.idMascota.toString()}
+                        numColumns={2}
+                        showsVerticalScrollIndicator={false}
+                        refreshControl={
+                            <RefreshControl 
+                                refreshing={refreshing} 
+                                onRefresh={onRefresh} 
+                                tintColor={colors.darkGreen} 
+                            />
+                        }
+                        renderItem={({ item }: { item: any }) => (
+                            <PetCard 
+                                id={item.idMascota}
+                                nombreMasc={item.nomMascota} 
+                                fotoUrl={item.imagenMascota}
+                                sexo={item.sexo}
+                                especie={item.especie} 
+                                onPress={() => navigation.navigate('DetalleMascota', { mascota: item })}
+                            />
+                        )}
+                        // Espaciado interno para que no quede pegado a los bordes
+                        contentContainerStyle={{ paddingBottom: 20 }}
+                        columnWrapperStyle={{ justifyContent: 'space-between' }}
+                    />
+                )}
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity
                         style={globalStyles.primaryButton}
@@ -80,7 +89,8 @@ export default function MascotasScreen() {
                     </TouchableOpacity>
                 </View>
             </View>
-        </SafeAreaView>
+        </View>
+        
     );
 }
 

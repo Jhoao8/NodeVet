@@ -8,7 +8,6 @@ import { typography } from '../../theme/typography';
 import { globalStyles } from '../../style/GlobalStyle';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
-import { globalStyles } from '@/src/style/GlobalStyle';
 
 const LoginScreen = () => {
     const [loading, setLoading] = useState(false);
