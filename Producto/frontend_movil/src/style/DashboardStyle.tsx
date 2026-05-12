@@ -1,139 +1,123 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 
 export const dashboardStyles = StyleSheet.create({
-// ─── Contenedores Principales ──────────────────────────────────────────────
-mainContainer: {
-    flex: 1,
-    backgroundColor: colors.white, // Fondo claro para el dashboard
-},
-scrollContainer: {
-    flexGrow: 1,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.xxl,
-},
-
-// ─── Header Principal (Top) ────────────────────────────────────────────────
-headerContainer: {
+    
+// ════════ HEADER DEL DASHBOARD ════════
+header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.md,
-    backgroundColor: colors.white,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40, 
+    paddingBottom: spacing.lg,
+    backgroundColor: colors.darkDGreen,
 },
-headerLeft: {
+headerLogoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
 },
-logoPlaceholder: {
-    width: 40,
-    height: 40,
-},
-logo: {
-    width: '100%',
-    height: '100%',
+headerLogo: {
+    width: 35,
+    height: 35,
 },
 headerTitle: {
     fontFamily: typography.family.main.bold,
-    fontSize: typography.size.lg,
-    color: colors.darkDGreen,
+    fontSize: 24,
+    color: colors.lightYellow,
+},
+bellIcon: {
+    padding: spacing.xs,
 },
 
-// ─── Saludo ────────────────────────────────────────────────────────────────
+// ════════ SALUDO (GREETING) ════════
+greetingContainer: {
+    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.lg,
+},
 greetingText: {
-    fontFamily: typography.family.main.medium,
-    fontSize: 22,
-    color: colors.darkDGreen,
+    fontFamily: typography.family.main.semiBold,
+    fontSize: typography.size.xl, 
+    color: colors.lightYellow,
     textAlign: 'center',
-    marginTop: spacing.md,
+    marginBottom: spacing.sm,
 },
 greetingDivider: {
     height: 1,
-    backgroundColor: colors.darkGreen,
-    opacity: 0.3,
-    marginVertical: spacing.md,
-    marginHorizontal: spacing.xl,
+    backgroundColor: colors.lightGreen,
+    width: '100%',
+    opacity: 0.5,
 },
 
-// ─── Títulos de Sección ────────────────────────────────────────────────────
-sectionHeader: {
-    flexDirection: 'row',
+// ════════ TARJETAS VACÍAS (EMPTY STATES) ════════
+emptyCardContent: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-    marginTop: spacing.lg,
-},
-sectionTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-},
-sectionTitle: {
-    fontFamily: typography.family.main.bold,
-    fontSize: 20,
-    color: colors.darkDGreen,
-},
-sectionSubtitle: {
-    fontFamily: typography.family.main.medium,
-    fontSize: typography.size.sm,
-    color: '#8A9A8A', // Gris verdoso claro
+    justifyContent: 'center',
+    paddingVertical: spacing.lg,
+    gap: spacing.sm, 
 },
 
-// ─── Tarjetas (Cards) ──────────────────────────────────────────────────────
-card: {
-    backgroundColor: colors.white,
-    borderWidth: 1.5,
-    borderColor: colors.darkGreen,
-    borderRadius: 8,
-    padding: spacing.md,
-},
-emptyCardText: {
-    fontFamily: typography.family.main.regular,
-    fontSize: typography.size.md,
-    color: '#B0C0B0', // Texto grisáceo para estados vacíos
-    textAlign: 'center',
-    paddingVertical: spacing.sm,
-},
-
-// ─── Botones de Acción (Pequeños, delineados) ──────────────────────────────
-actionButtonsRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-},
-outlineButton: {
-    borderWidth: 1.5,
-    borderColor: colors.darkDGreen,
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.white,
-},
-outlineButtonText: {
-    fontFamily: typography.family.main.semiBold,
-    fontSize: typography.size.sm,
-    color: colors.darkDGreen,
-},
-
-// ─── Mockup del Bottom Tab Bar ─────────────────────────────────────────────
-bottomTabBar: {
+// ════════ BARRA DE NAVEGACIÓN (FOOTER) ════════
+bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: colors.white,
+    backgroundColor: colors.darkDGreen,
     borderTopWidth: 1,
-    borderTopColor: '#E0EAE0',
-    paddingVertical: spacing.md,
-    paddingBottom: 25, // Ajuste para área segura en iOS
+    borderTopColor: colors.lightGreen,
+    paddingTop: spacing.md,
+    paddingBottom: Platform.OS === 'ios' ? 30 : spacing.md, 
 },
-tabItem: {
+navItem: {
     alignItems: 'center',
     justifyContent: 'center',
+    padding: spacing.xs,
+},
+
+// ════════ FONDOS Y TEXTOS (TEMA CLARO INVERTIDO) ════════
+lightBackground: {
+    backgroundColor: colors.lightYellow, 
+},
+darkText: {
+    color: colors.darkDGreen, 
+    marginBottom: 0, 
+},
+darkSubText: {
+    color: colors.darkGreen, 
+    fontWeight: '500', 
+},
+darkDivider: {
+    backgroundColor: colors.darkGreen,
+    opacity: 0.3, 
+},
+
+// ════════ TARJETAS FLAT (SIN SOMBRAS) ════════
+flatCard: {
+    backgroundColor: 'transparent', 
+    borderRadius: 12,
+    padding: spacing.md,
+    marginBottom: spacing.md,
+    borderWidth: 1.5, 
+    borderColor: colors.darkGreen,
+    alignItems: 'center', 
+},
+
+// ════════ BOTONES FLAT (SIN SOMBRAS) ════════
+flatFilledButtonSm: {
+    backgroundColor: colors.lightGreen, 
+    borderRadius: 8,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1, 
+    borderColor: colors.darkGreen,
+},
+filledButtonTextSm: {
+    fontFamily: typography.family.main.bold, 
+    fontSize: typography.size.sm,
+    color: colors.darkDGreen, 
 }
+
 });

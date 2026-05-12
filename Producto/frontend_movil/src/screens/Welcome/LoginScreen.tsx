@@ -8,6 +8,7 @@ import { typography } from '../../theme/typography';
 import { globalStyles } from '../../style/GlobalStyle';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
+import { globalStyles } from '@/src/style/GlobalStyle';
 
 const LoginScreen = () => {
     const [loading, setLoading] = useState(false);
@@ -16,6 +17,7 @@ const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    
 
     const { signIn } = useAuth();
 
@@ -69,7 +71,7 @@ const LoginScreen = () => {
                                 resizeMode="contain" 
                             />
                         </View>
-                        
+                        <Text style={globalStyles.mainTitle}>NodeVet</Text>
                         <View style={globalStyles.rightSpacer} />
                     </View>
                 </View>
