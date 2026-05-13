@@ -1,9 +1,19 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { colors } from '@/src/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
+import { globalStyles } from '@/src/style/GlobalStyle';
+import EditarMascota from './EditarMascota';
 
-export default function DetalleMascotaScreen({ route }: any) {
+const DetailItem = ({ icon, label, value }: any) => (
+    <View style={styles.item}>
+        <Ionicons name={icon} size={20} color={colors.lightGreen} />
+        <Text style={styles.itemLabel}>{label}</Text>
+        <Text style={styles.itemValue}>{value}</Text>
+    </View>
+);
+
+export default function DetalleMascotaScreen({ route, navigation }: any) {
     const { mascota } = route.params;
 
     return (
@@ -30,9 +40,9 @@ export default function DetalleMascotaScreen({ route }: any) {
 
                 <View style={styles.detailRow}>
                     <DetailItem 
-                        icon="male-female" 
+                        icon={mascota.sexo === 1 ? 'male' : 'female'}
                         label="Sexo" 
-                        value={mascota.sexo === 1 ? 'Macho' : 'Hembra'} 
+                        value={mascota.sexo === 1 ? 'Macho' : 'Hembra'}
                     />
                     <DetailItem 
                         icon="fitness" 
@@ -54,20 +64,17 @@ export default function DetalleMascotaScreen({ route }: any) {
                     />
                 </View>
             </View>
+            <View style={{position: 'absolute', top: 10, right: 10}}>
+                <TouchableOpacity style={globalStyles.iconButton} onPress={() => navigation.navigate('EditarMascota', { mascota })}>
+                    <Ionicons name='pencil' color={colors.lightYellow} size={20}/>
+                </TouchableOpacity>
+            </View>
         </ScrollView>
     );
 }
 
-const DetailItem = ({ icon, label, value }: any) => (
-    <View style={styles.item}>
-        <Ionicons name={icon} size={20} color={colors.lightGreen} />
-        <Text style={styles.itemLabel}>{label}</Text>
-        <Text style={styles.itemValue}>{value}</Text>
-    </View>
-);
-
 const styles = StyleSheet.create({
-    container: { 
+    container: {
         flex: 1, 
         backgroundColor: colors.darkDGreen 
     },

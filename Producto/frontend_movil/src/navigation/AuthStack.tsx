@@ -8,6 +8,7 @@ import { ForgotPassword } from '../screens/ForgotPassword/ForgotPassword';
 import { ResetPassword } from '../screens/ForgotPassword/ResetPassword';
 import BottomTabNavigator from './BottomTabNavigator';
 import RegistroMascotaScreen from '../screens/Mascotas/RegistroMascota';
+import EditarMascota from '../screens/Mascotas/EditarMascota';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +22,7 @@ const AuthStack = () => {
       <Stack.Screen name="ResetPassword" component={ResetPassword} />
       <Stack.Screen name="Main" component={BottomTabNavigator} />
       <Stack.Screen name="RegistroMascota" component={RegistroMascotaScreen} />
+      <Stack.Screen name="EditarMascota" component={EditarMascota} />
     </Stack.Navigator>
   );
 };
