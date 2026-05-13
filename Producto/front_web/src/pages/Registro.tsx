@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import '../styles/Auth.css';
 
@@ -13,6 +14,7 @@ export default function Registro() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -42,7 +44,7 @@ export default function Registro() {
       });
       console.log('Registro exitoso:', response.data);
       alert('Usuario registrado exitosamente');
-      window.location.href = '/login';
+      navigate('/login');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al registrar');
     } finally {
@@ -109,7 +111,8 @@ export default function Registro() {
           </button>
         </form>
         
-        <p><a href="/login">¿Ya tienes cuenta? Inicia sesión</a></p>
+        <p><Link to="/login">¿Ya tienes cuenta? Inicia sesión</Link></p>
+        <p><Link to="/home">Volver al inicio</Link></p>
       </div>
     </div>
   );

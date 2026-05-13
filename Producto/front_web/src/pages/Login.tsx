@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import '../styles/Auth.css';
 
@@ -7,6 +8,7 @@ export default function Login() {
   const [passUsr, setPassUsr] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -15,10 +17,27 @@ export default function Login() {
 
     try {
       const response = await api.post('/auth/login', { correoUsr, passUsr });
-      console.log('Login exitoso:', response.data);
-      localStorage.setItem('token', response.data.jwt);
+      console.log('Login exitoso - Respuesta completa:', response.data);
+      
+      // Verificar qué campo contiene el token
+      const token = response.data.jwt || response.data.token || response.data.access_token;
+      
+      if (!token) {
+        setError('No se recibió token de autenticación. Verifica la respuesta del servidor.');
+        console.error('Token no encontrado en respuesta:', response.data);
+        return;
+      }
+      
+      localStorage.setItem('token', token);
+      console.log('Token guardado en localStorage:', token);
       alert('Sesión iniciada');
+      
+      // Pequeño delay para asegurar que el token esté guardado
+      setTimeout(() => {
+        navigate('/dashboard/tutor');
+      }, 100);
     } catch (err: any) {
+      console.error('Error en login:', err.response?.data || err.message);
       setError(err.response?.data?.error || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
@@ -51,7 +70,9 @@ export default function Login() {
           </button>
         </form>
         
-        <p><a href="/registro">¿No tienes cuenta? Regístrate</a></p>
+        <p><Link to="/registro">¿No tienes cuenta? Regístrate</Link></p>
+        <p><Link to="/recuperar/solicitud">¿Olvidaste tu contraseña?</Link></p>
+        <p><Link to="/home">Volver al inicio</Link></p>
       </div>
     </div>
   );
