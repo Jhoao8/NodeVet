@@ -3,13 +3,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DEVELOPER_IP = process.env.EXPO_PUBLIC_DEVELOPER_IP || "localhost";
 
+// Crear CancelToken para cancelar peticiones pendientes
+let cancelSource = axios.CancelToken.source();
+
 const api = axios.create({
     baseURL: `http://${DEVELOPER_IP}:8080/api`, 
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',
-    }
+    },
+    cancelToken: cancelSource.token,
 });
+
+// Función para cancelar todas las peticiones pendientes (se llamará al logout)
+export const cancelAllRequests = () => {
+    cancelSource.cancel('Peticiones canceladas al cerrar sesión');
+    cancelSource = axios.CancelToken.source();
+    api.defaults.cancelToken = cancelSource.token;
+};
 
 // Interceptor de peticion
 api.interceptors.request.use(

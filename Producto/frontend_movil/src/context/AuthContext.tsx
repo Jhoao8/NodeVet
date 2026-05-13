@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { cancelAllRequests } from '../api/axiosInstance';
 
 
 interface AuthContextData {
@@ -36,8 +37,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     const signOut = async () => {
-        setUserToken(null);
-        await AsyncStorage.removeItem('userToken');
+        try {
+            // Cancelar todas las peticiones pendientes
+            cancelAllRequests();
+            
+            // Limpiar el token
+            setUserToken(null);
+            await AsyncStorage.removeItem('userToken');
+        } catch (error) {
+            console.error('Error en signOut:', error);
+            throw error;
+        }
     };
 
     return (

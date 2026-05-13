@@ -2,15 +2,18 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context'; // <-- 1. Importamos esto
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Importación de pantallas
 import MascotasScreen from '../screens/Mascotas/MascotasScreen';
 import HomeScreen from '../screens/HomeScreen';
+import ProfileScreen from '@/src/screens/Perfil/ProfileScreen'; //<-- 1. Importamos la nueva pantalla
+
 import { colors } from '@/src/theme/colors';
 
 const Tab = createBottomTabNavigator();
 
 export default function BottomTabNavigator() {
-  // 2. Obtenemos las medidas dinámicas del celular donde corre la app
   const insets = useSafeAreaInsets(); 
 
   return (
@@ -25,9 +28,7 @@ export default function BottomTabNavigator() {
           backgroundColor: colors.darkDGreen,
           borderTopWidth: 0,
           paddingTop: 10,
-          // 3. Altura base (ej. 60) + el espacio exacto que ocupa la barra del sistema
           height: 60 + insets.bottom,
-          // 4. Agregamos el paddingBottom dinámico. Si no hay barra nativa grande, dejamos 10px de gracia
           paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
         },
       }}
@@ -46,7 +47,7 @@ export default function BottomTabNavigator() {
       {/* Posición 2: Ordenes */}
       <Tab.Screen
         name="Ordenes"
-        component={HomeScreen}
+        component={HomeScreen} // Placeholder
         options={{
           tabBarIcon: ({ color }) => (
             <Ionicons name="document-text-outline" color={color} size={28} />
@@ -68,7 +69,7 @@ export default function BottomTabNavigator() {
       {/* Posición 4: Agenda */}
       <Tab.Screen
         name="Agenda"
-        component={HomeScreen}
+        component={HomeScreen} // Placeholder
         options={{
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="calendar-plus" color={color} size={28} />
@@ -79,10 +80,11 @@ export default function BottomTabNavigator() {
       {/* Posición 5: Perfil */}
       <Tab.Screen
         name="Perfil"
-        component={HomeScreen}
+        component={ProfileScreen} // <-- 2. Asignamos la pantalla aquí
         options={{
           tabBarIcon: ({ color }) => (
-            <Ionicons name="person-outline" color={color} size={28} />
+            // Agregamos la lógica para que el ícono se rellene cuando está activo
+            <Ionicons name={color === colors.lightYellow ? "person" : "person-outline"} color={color} size={28} />
           ),
         }}
       />

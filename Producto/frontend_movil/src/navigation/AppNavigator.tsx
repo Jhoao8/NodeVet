@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack'; // ¡Ahora sí lo encontrará!
+import { createStackNavigator } from '@react-navigation/stack';
 import AuthStack from './AuthStack';
 import BottomTabNavigator from './BottomTabNavigator';
 import RegistroMascotaScreen from '@/src/screens/Mascotas/RegistroMascota';

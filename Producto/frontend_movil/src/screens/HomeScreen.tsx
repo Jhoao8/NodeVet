@@ -1,13 +1,14 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
-// Importación de estilos y tema
 import { globalStyles } from '@/src/style/GlobalStyle';
 import { dashboardStyles } from '@/src/style/DashboardStyle';
 import { colors } from '../theme/colors';
+
 import DashboardHeader from '../components/DashboardHeader';
+import PetSummaryList from '../components/PetSummaryList/PetSummaryList';
 
 const HomeScreen = () => {
     const navigation = useNavigation<any>();
@@ -15,10 +16,8 @@ const HomeScreen = () => {
     return (
         <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
             
-            {/* ════ USAMOS EL NUEVO COMPONENTE ════ */}
             <DashboardHeader />
 
-            {/* ════ CONTENIDO SCROLLEABLE ════ */}
             <ScrollView 
                 contentContainerStyle={globalStyles.scrollContainer} 
                 showsVerticalScrollIndicator={false}
@@ -59,15 +58,16 @@ const HomeScreen = () => {
                     <Text style={[globalStyles.sectionSubtitle, dashboardStyles.darkSubText]}>Últ. chequeo</Text>
                 </View>
 
-                <View style={dashboardStyles.flatCard}>
-                    <View style={dashboardStyles.emptyCardContent}>
-                        <Ionicons name="paw" size={48} color={colors.lightGreen} />
-                        <Text style={[globalStyles.cardEmptyText, dashboardStyles.darkSubText]}>No tienes mascotas registradas aún</Text>
-                    </View>
+                {/* El componente PetSummaryList hace todo el trabajo aquí adentro */}
+                <View style={[dashboardStyles.flatCard, { padding: 0 }]}>
+                    <PetSummaryList />
                 </View>
 
                 <View style={globalStyles.actionButtonsRow}>
-                    <TouchableOpacity style={dashboardStyles.flatFilledButtonSm}>
+                    <TouchableOpacity 
+                        style={dashboardStyles.flatFilledButtonSm}
+                        onPress={() => navigation.navigate('Mascotas')}
+                    >
                         <Text style={dashboardStyles.filledButtonTextSm}>Ver todos</Text>
                     </TouchableOpacity>
                 </View>
