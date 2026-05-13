@@ -55,8 +55,11 @@ export const globalStyles = StyleSheet.create({
   },
   iconButton: {
     width: 50,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: colors.darkGreen,
+    borderRadius: 50,
   },
   rightSpacer: {
     width: 50,
@@ -208,6 +211,18 @@ export const globalStyles = StyleSheet.create({
   imagePicker: { 
     height: 140,
     width: 140,
+    backgroundColor: colors.white, 
+    marginVertical: spacing.md, 
+    borderRadius: 15, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.lightGreen
+  },
+  imagePickerBig: { 
+    height: 220,
+    width: 300,
     backgroundColor: colors.white, 
     marginVertical: spacing.md, 
     borderRadius: 15, 

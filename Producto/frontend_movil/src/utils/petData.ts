@@ -8,7 +8,7 @@ export const PET_DATA: Record<EspecieMascota, string[]> = {
     'Bulldog Francés', 'Bulldog Inglés', 'Caniche (Poodle)', 'Chihuahua', 
     'Cocker Spaniel', 'Dachshund (Teckel)', 'Dóberman', 'Dogo Argentino', 
     'Golden Retriever', 'Gran Danés', 'Labrador Retriever', 'Mastín', 
-    'Mestizo', 'Ovejero Alemán', 'Pug', 'Rottweiler', 'San Bernardo', 
+    'Mestizo', 'Pastor Alemán', 'Pug', 'Rottweiler', 'San Bernardo', 
     'Schnauzer', 'Shih Tzu', 'Terrier', 'Yorkshire Terrier'
   ],
   Gato: [

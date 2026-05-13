@@ -8,6 +8,7 @@ import RegistroMascotaScreen from '@/src/screens/Mascotas/RegistroMascota';
 import { colors } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import DetalleMascotaScreen from '../screens/Mascotas/DetalleMascotaScreen';
+import EditarMascota from '../screens/Mascotas/EditarMascota';
 
 const Stack = createStackNavigator();
 
@@ -43,10 +44,20 @@ const AppNavigator = () => {
                         component={DetalleMascotaScreen} 
                         options={{ 
                             headerShown: true, 
-                            title: 'Ficha Clínica',
+                            title: 'Detalle Mascota',
                             headerStyle: { backgroundColor: colors.darkDGreen },
                             headerTintColor: colors.lightYellow 
                         }} 
+                    />
+                    <Stack.Screen 
+                        name="EditarMascota"
+                        component={EditarMascota}
+                        options={{
+                            headerShown: true,
+                            title: 'Editar Mascota',
+                            headerStyle: { backgroundColor: colors.darkDGreen },
+                            headerTintColor: colors.lightYellow
+                        }}
                     />
                 </Stack.Navigator>
                 
