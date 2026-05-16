@@ -57,7 +57,7 @@ export default function SeleccionDia() {
         <div className="header-content">
           <h1 style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</h1>
           <nav className="nav-tabs">
-            <button className="nav-tab">One</button>
+            <button className="nav-tab" onClick={() => navigate('/dashboard/tutor')}>Dashboard</button>
             <button className="nav-tab">Two</button>
             <button className="nav-tab">Three</button>
           </nav>
@@ -65,7 +65,7 @@ export default function SeleccionDia() {
             <button className="btn-outline" onClick={() => navigate('/agendarCita')}>Reserva Online</button>
             {token ? (
               <button className="btn-primary" onClick={() => navigate('/dashboard/tutor')}>
-                Dashboard
+                Perfil
               </button>
             ) : (
               <button className="btn-primary" onClick={() => navigate('/login')}>

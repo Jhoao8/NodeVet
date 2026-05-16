@@ -19,7 +19,7 @@ export default function RequestPassword() {
     setSuccess('');
 
     try {
-      await api.post('/auth/forgot-password', { correoUsr: correo });
+      await api.post('/auth/forgot-password', { correo_usr: correo });
       setSuccess('Se ha enviado un código de verificación a tu correo');
       setCodigoEnviado(true);
     } catch (err: any) {
@@ -35,11 +35,12 @@ export default function RequestPassword() {
     setError('');
 
     try {
-      const response = await api.post('/auth/verify-code', {
-        correoUsr: correo,
+      await api.post('/auth/verify-code', {
+        correo_usr: correo,
         codigo,
       });
-      localStorage.setItem('resetToken', response.data.token);
+      localStorage.setItem('resetCorreo', correo);
+      localStorage.setItem('resetCodigo', codigo);
       navigate('/recuperar/restablecer');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Código inválido');
@@ -52,7 +53,7 @@ export default function RequestPassword() {
     setLoading(true);
     setError('');
     try {
-      await api.post('/auth/forgot-password', { correoUsr: correo });
+      await api.post('/auth/forgot-password', { correo_usr: correo });
       setSuccess('Código reenviado a tu correo');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al reenviar el código');

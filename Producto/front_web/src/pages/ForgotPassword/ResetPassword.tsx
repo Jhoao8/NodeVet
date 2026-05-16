@@ -27,13 +27,16 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      const resetToken = localStorage.getItem('resetToken');
+      const resetCorreo = localStorage.getItem('resetCorreo');
+      const resetCodigo = localStorage.getItem('resetCodigo');
       await api.post('/auth/reset-password', {
-        token: resetToken,
-        newPassword: nuevaPassword,
+        correo_usr: resetCorreo,
+        codigo: resetCodigo,
+        nueva_pass: nuevaPassword,
       });
       
-      localStorage.removeItem('resetToken');
+      localStorage.removeItem('resetCorreo');
+      localStorage.removeItem('resetCodigo');
       alert('Contraseña restablecida exitosamente');
       navigate('/login');
     } catch (err: any) {

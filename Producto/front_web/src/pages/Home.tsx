@@ -14,7 +14,7 @@ export default function Home() {
             <h1>NodeVet</h1>
           </div>
           <nav className="nav-tabs">
-            <button className="nav-tab">One</button>
+            <button className="nav-tab" onClick={() => navigate('/dashboard/tutor')}>Dashboard</button>
             <button className="nav-tab">Two</button>
             <button className="nav-tab">Three</button>
             <button className="nav-tab">One</button>
@@ -27,7 +27,7 @@ export default function Home() {
             </button>
             {token ? (
               <button className="btn-primary" onClick={() => navigate('/dashboard/tutor')}>
-                Dashboard
+                Perfil
               </button>
             ) : (
               <button className="btn-primary" onClick={() => navigate('/login')}>

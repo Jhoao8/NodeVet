@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
+import PetCard from '../../components/PetCard';
+import type { Mascota } from '../../components/PetCard/PetCard.types';
 import '../../styles/Dashboard.css';
-
-interface Mascota {
-  idMascota: number;
-  nomMascota: string;
-}
+import '../../styles/DashboardMascotas.css';
 
 interface Cita {
   id: string;
@@ -28,8 +26,8 @@ export default function DashboardTutor() {
   const navigate = useNavigate();
   const [usuario, setUsuario] = useState({ nombre: 'Usuario' });
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
-  const [proximasCitas, setProximasCitas] = useState<Cita[]>([]);
-  const [ultimosControles, setUltimosControles] = useState<Control[]>([]);
+  const [proximasCitas] = useState<Cita[]>([]);
+  const [ultimosControles] = useState<Control[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -58,6 +56,27 @@ export default function DashboardTutor() {
     fetchData();
   }, [navigate]);
 
+  const handleEditMascota = (mascota: Mascota) => {
+    navigate('/agregar-mascota', { state: { mascota, isEditing: true } });
+  };
+
+  const handleDeleteMascota = async (id: number) => {
+    try {
+      await api.delete(`/v1/mascotas/eliminar/${id}`);
+      setMascotas(mascotas.filter(m => m.idMascota !== id));
+      alert('Mascota eliminada correctamente');
+    } catch (error: any) {
+      console.error('Error al eliminar la mascota:', error);
+      alert('Error al eliminar la mascota');
+    }
+  };
+
+  const handlePetCardClick = (mascota: Mascota) => {
+    // Aquí puedes navegar a la página de detalles de la mascota
+    console.log('Ver detalles de:', mascota.nomMascota);
+    // navigate(`/mascota/${mascota.idMascota}`);
+  };
+
   return (
     <div className="dashboard-container">
       {/* Header */}
@@ -80,8 +99,8 @@ export default function DashboardTutor() {
         <aside className="sidebar">
           <h3>Menú</h3>
           <nav className="sidebar-nav">
-            <button className="nav-item active">🏠 Home</button>
-            <button className="nav-item">👤 Perfil</button>
+            <button className="nav-item active">👤 Perfil</button>
+            <button className="nav-item">🏠 Home</button>
             <button className="nav-item">🐾 Mascotas</button>
             <button className="nav-item">📅 Citas</button>
             <button className="nav-item">🏥 Control Médico</button>
@@ -161,21 +180,41 @@ export default function DashboardTutor() {
                 <button className="btn-link">Ver Más</button>
               </section>
 
-              {/* Mascotas */}
-              <section className="dashboard-section">
-                <h3>Mascotas</h3>
-                <div className="mascotas-grid">
-                  {mascotas.map((mascota) => (
-                    <div key={mascota.idMascota} className="mascota-card">
-                      <div className="mascota-image"></div>
-                      <p>{mascota.nomMascota}</p>
-                    </div>
-                  ))}
-                  <div className="mascota-card add-mascota" onClick={() => navigate('/agregar-mascota')}>
-                    <div className="mascota-image">+</div>
-                    <p>Agregar Mascota</p>
-                  </div>
+              {/* Mascotas - PetCards */}
+              <section className="dashboard-section mascotas-section">
+                <div className="mascotas-header">
+                  <h2>Mis Mascotas</h2>
+                  <button 
+                    className="btn-add-mascota"
+                    onClick={() => navigate('/agregar-mascota')}
+                  >
+                    + Agregar Mascota
+                  </button>
                 </div>
+                
+                {mascotas.length === 0 ? (
+                  <div className="no-mascotas">
+                    <p>No tienes mascotas registradas aún</p>
+                    <button 
+                      className="btn-primary"
+                      onClick={() => navigate('/agregar-mascota')}
+                    >
+                      Agregar tu primera mascota
+                    </button>
+                  </div>
+                ) : (
+                  <div className="pet-cards-grid">
+                    {mascotas.map((mascota) => (
+                      <PetCard
+                        key={mascota.idMascota}
+                        mascota={mascota}
+                        onEdit={handleEditMascota}
+                        onDelete={handleDeleteMascota}
+                        onClick={() => handlePetCardClick(mascota)}
+                      />
+                    ))}
+                  </div>
+                )}
               </section>
             </>
           )}
