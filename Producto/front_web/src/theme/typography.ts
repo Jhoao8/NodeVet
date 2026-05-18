@@ -1,7 +1,14 @@
 // Typography Configuration
+// Aligned with frontend mobile design system
 export const typography = {
   family: {
-    main: 'Fredoka, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+    main: {
+      regular: 'Fredoka, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+      light: 'Fredoka, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+      medium: 'Fredoka, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+      semiBold: 'Fredoka, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+      bold: 'Fredoka, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+    },
     display: 'Fredoka, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
     monospace: '"Courier New", monospace',
   },

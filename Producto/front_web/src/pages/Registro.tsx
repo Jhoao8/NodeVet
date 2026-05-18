@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import '../styles/Auth.css';
+import Logo from '../assets/images/Logo.png';
 
 export default function Registro() {
   const [formData, setFormData] = useState({
@@ -55,7 +56,11 @@ export default function Registro() {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h1>Crear Cuenta</h1>
+        <div className="auth-logo-container">
+          <img src={Logo} alt="NodeVet Logo" className="auth-logo" />
+          <h1>NodeVet</h1>
+        </div>
+        <h2>Crear Cuenta</h2>
         {error && <div className="error">{error}</div>}
         
         <form onSubmit={handleSubmit}>

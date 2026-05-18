@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import '../styles/Home.css';
+import Logo from '../assets/images/Logo.png';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -10,7 +11,8 @@ export default function Home() {
       {/* Header */}
       <header className="home-header">
         <div className="header-content">
-          <div className="logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>
+          <div className="logo" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '12px' }} onClick={() => navigate('/home')}>
+            <img src={Logo} alt="NodeVet Logo" style={{ width: '40px', height: '40px' }} />
             <h1>NodeVet</h1>
           </div>
           <nav className="nav-tabs">

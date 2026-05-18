@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
 import '../styles/Auth.css';
+import Logo from '../assets/images/Logo.png';
 
 export default function Login() {
   const [correoUsr, setCorreoUsr] = useState('');
@@ -47,7 +48,11 @@ export default function Login() {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h1>Iniciar Sesión</h1>
+        <div className="auth-logo-container">
+          <img src={Logo} alt="NodeVet Logo" className="auth-logo" />
+          <h1>NodeVet</h1>
+        </div>
+        <h2>Iniciar Sesión</h2>
         {error && <div className="error">{error}</div>}
         
         <form onSubmit={handleLogin}>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import '../../styles/ForgotPassword.css';
+import Logo from '../../assets/images/Logo.png';
 
 export default function RequestPassword() {
   const navigate = useNavigate();
@@ -14,14 +15,19 @@ export default function RequestPassword() {
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const emailToSubmit = correo.trim();
+    if (!emailToSubmit) return;
+
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
-      await api.post('/auth/forgot-password', { correo_usr: correo });
+      await api.post('/auth/forgot-password', { correo_usr: emailToSubmit });
       setSuccess('Se ha enviado un código de verificación a tu correo');
       setCodigoEnviado(true);
+      setCorreo(emailToSubmit);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al enviar el código');
     } finally {
@@ -31,19 +37,29 @@ export default function RequestPassword() {
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const codeToSubmit = codigo.trim();
+    const emailToSubmit = correo.trim();
+
+    if (!codeToSubmit || codeToSubmit.length !== 6 || !/^\d+$/.test(codeToSubmit)) {
+      setError('El código debe contener 6 dígitos numéricos');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
       await api.post('/auth/verify-code', {
-        correo_usr: correo,
-        codigo,
+        correo_usr: emailToSubmit,
+        codigo: codeToSubmit,
       });
-      localStorage.setItem('resetCorreo', correo);
-      localStorage.setItem('resetCodigo', codigo);
+      localStorage.setItem('resetCorreo', emailToSubmit);
+      localStorage.setItem('resetCodigo', codeToSubmit);
+      setCodigo(codeToSubmit);
       navigate('/recuperar/restablecer');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Código inválido');
+      setError(err.response?.data?.error || 'Código inválido o expirado');
     } finally {
       setLoading(false);
     }
@@ -52,8 +68,9 @@ export default function RequestPassword() {
   const handleResendCode = async () => {
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
-      await api.post('/auth/forgot-password', { correo_usr: correo });
+      await api.post('/auth/forgot-password', { correo_usr: correo.trim() });
       setSuccess('Código reenviado a tu correo');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al reenviar el código');
@@ -65,6 +82,10 @@ export default function RequestPassword() {
   return (
     <div className="auth-container">
       <div className="forgot-password-box">
+        <div className="auth-logo-container">
+          <img src={Logo} alt="NodeVet Logo" className="auth-logo" />
+          <h1>NodeVet</h1>
+        </div>
         <h2>Recuperar Contraseña</h2>
         
         {error && <div className="error-message">{error}</div>}

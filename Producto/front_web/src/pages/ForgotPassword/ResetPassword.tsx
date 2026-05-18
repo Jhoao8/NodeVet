@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import '../../styles/ForgotPassword.css';
+import Logo from '../../assets/images/Logo.png';
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -29,6 +30,13 @@ export default function ResetPassword() {
     try {
       const resetCorreo = localStorage.getItem('resetCorreo');
       const resetCodigo = localStorage.getItem('resetCodigo');
+      
+      if (!resetCorreo || !resetCodigo) {
+        setError('Faltan datos de recuperación. Por favor, solicita un nuevo código.');
+        setLoading(false);
+        return;
+      }
+
       await api.post('/auth/reset-password', {
         correo_usr: resetCorreo,
         codigo: resetCodigo,
@@ -49,6 +57,10 @@ export default function ResetPassword() {
   return (
     <div className="auth-container">
       <div className="forgot-password-box">
+        <div className="auth-logo-container">
+          <img src={Logo} alt="NodeVet Logo" className="auth-logo" />
+          <h1>NodeVet</h1>
+        </div>
         <h2>Establecer Nueva Contraseña</h2>
         <p className="info-text">
           Por favor, ingresa tu nueva contraseña dos veces para confirmarla.

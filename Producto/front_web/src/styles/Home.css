@@ -27,6 +27,7 @@
   font-weight: var(--font-weight-bold);
   color: var(--color-light-yellow);
   margin: 0;
+  font-family: var(--font-main);
 }
 
 .nav-tabs {
