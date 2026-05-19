@@ -28,6 +28,27 @@ export default function Registro() {
     e.preventDefault();
     setError('');
 
+    const pass = formData.passUsr;
+    const passErrors: string[] = [];
+
+    if (pass.length < 6) {
+      passErrors.push('mínimo 6 caracteres');
+    }
+    if (!/[A-Z]/.test(pass)) {
+      passErrors.push('al menos 1 mayúscula');
+    }
+    if (!/[a-z]/.test(pass)) {
+      passErrors.push('al menos 1 minúscula');
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pass)) {
+      passErrors.push('al menos 1 carácter especial');
+    }
+
+    if (passErrors.length > 0) {
+      setError('Contraseña inválida: ' + passErrors.join(', '));
+      return;
+    }
+
     if (formData.passUsr !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
       return;
