@@ -13,7 +13,7 @@ import java.util.function.Function;
 public class JwtUtil {
 
     // Cambiamos a una llave basada en una semilla fija para que los tokens sobrevivan a reinicios del servidor
-    private static final String SECRET_SEED = "TuPalabraSecretaSuperSeguraParaNodeVet2026_Portafolio"; 
+    private static final String SECRET_SEED = "PalabraSecretaSuperSeguraParaNodeVet2026_Portafolio"; 
     private static final Key SECRET_KEY = Keys.hmacShaKeyFor(SECRET_SEED.getBytes());
     
     // Constantes para facilitar el uso en el Controller y Filtro (en milisegundos)
