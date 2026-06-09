@@ -7,14 +7,15 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class UsuarioRegistroDTO {
+public class AdminRegistroDTO {
+    // Datos para la entidad Usuario
     private String nombreUsr;
     private String apellidoUsr;
     private String correoUsr;
     private String passUsr;
     private String telefonoUsr;
-    private String fotoUsr; // Opcional: URL de la foto de perfil
+    private String fotoUsr; // Opcional
 
-    // Nota: Campos como estadoUsr, fecCreacion y fecActualizacion no se incluyen aquí
-    // porque son gestionados internamente por el servidor al crear el usuario.
+    // Datos para la entidad Admin
+    private String nivelAcceso; // Ej: "SUPER_ADMIN", "MODERADOR", etc.
 }
