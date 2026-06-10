@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, RefreshControl, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/src/theme/colors';
 import { globalStyles } from '@/src/style/GlobalStyle';
 import api from '@/src/api/axiosInstance';
@@ -8,8 +7,10 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import DashboardHeader from '@/src/components/DashboardHeader';
 import { dashboardStyles } from '@/src/style/DashboardStyle';
 import { PetCard } from '@/src/components/PetCard';
+import { useAuth } from '@/src/context/AuthContext';
 
 export default function MascotasScreen() {
+    const { userToken } = useAuth();
     // Definimos la navegación para que el botón funcione
     const navigation = useNavigation<any>();
 
@@ -18,11 +19,23 @@ export default function MascotasScreen() {
     const [refreshing, setRefreshing] = useState(false);
 
     const fetchMascotas = async () => {
+        if(!userToken){
+            setMascotas([]);
+            setLoading(false);
+            setRefreshing(false);
+            return;
+        }
+
         try {
             const response = await api.get('/v1/mascotas/listar');
-            setMascotas(response.data);
-        } catch (error) {
-            console.error("Error al obtener mascotas:", error);
+            setMascotas(response.data || []);
+        } catch (error: any) {
+            // Silenciar errores 401 (sin token válido) y 404 (no encontrado)
+            // En estos casos, simplemente mostramos lista vacía sin loguear
+            if (error.response?.status !== 401 && error.response?.status !== 404) {
+                // Solo loguear si es un error diferente a 401 o 404
+                console.error("Error al obtener mascotas:", error.message);
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -34,13 +47,13 @@ export default function MascotasScreen() {
     useFocusEffect(
         useCallback(() => {
             fetchMascotas();
-        }, [])
+        }, [userToken])
     );
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         fetchMascotas();
-    }, []);
+    }, [userToken]);
 
     return (
         <View style={[globalStyles.container, dashboardStyles.lightBackground]}>

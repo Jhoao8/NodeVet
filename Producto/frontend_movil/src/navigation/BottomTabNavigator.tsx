@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Importación de pantallas
 import MascotasScreen from '../screens/Mascotas/MascotasScreen';
 import HomeScreen from '../screens/HomeScreen';
-import ProfileScreen from '@/src/screens/Perfil/ProfileScreen'; //<-- 1. Importamos la nueva pantalla
+import ProfileStack from './ProfileStack';
 
 import { colors } from '@/src/theme/colors';
 
@@ -80,7 +80,7 @@ export default function BottomTabNavigator() {
       {/* Posición 5: Perfil */}
       <Tab.Screen
         name="Perfil"
-        component={ProfileScreen} // <-- 2. Asignamos la pantalla aquí
+        component={ProfileStack} // <-- Usamos ProfileStack para manejar ProfileScreen y EditProfileScreen
         options={{
           tabBarIcon: ({ color }) => (
             // Agregamos la lógica para que el ícono se rellene cuando está activo

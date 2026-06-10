@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { 
   View, Text, TextInput, TouchableOpacity, 
-  Alert, ScrollView, Image, ActivityIndicator 
+  ScrollView, Image, ActivityIndicator 
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import api from '@/src/api/axiosInstance';
 import { colors } from '@/src/theme/colors';
 import { globalStyles } from '@/src/style/GlobalStyle';
 import { Ionicons } from '@expo/vector-icons';
+import { useCustomAlert } from '@/src/components/CustomAlert';
 
 export default function EditarMascota({ route, navigation }: any) {
   // Extraemos la mascota que nos pasó DetalleMascotaScreen
   const { mascota } = route.params;
+  const { showAlert, AlertComponent } = useCustomAlert();
 
   const [nomMascota, setNomMascota] = useState(mascota.nomMascota || '');
   const [peso, setPeso] = useState(mascota.peso?.toString() || '');
@@ -56,7 +58,7 @@ export default function EditarMascota({ route, navigation }: any) {
 
   const handleEditar = async () => {
     if (!nomMascota) {
-      Alert.alert("Campos obligatorios", "Por favor ingresa el nombre de la mascota.");
+      showAlert("Campos obligatorios", "Por favor ingresa el nombre de la mascota.");
       return;
     }
 
@@ -70,7 +72,7 @@ export default function EditarMascota({ route, navigation }: any) {
         if (nuevaUrl) {
           imageUrl = nuevaUrl;
         } else {
-          Alert.alert("Error de imagen", "No se pudo subir la nueva foto.");
+          showAlert("Error de imagen", "No se pudo subir la nueva foto.");
           setLoading(false);
           return;
         }
@@ -86,12 +88,12 @@ export default function EditarMascota({ route, navigation }: any) {
       // Se envía la petición PUT a la ruta confirmada en el backend
       await api.put(`/v1/mascotas/actualizar/${mascota.idMascota}`, payload);
       
-      Alert.alert("¡Éxito!", `Datos actualizados correctamente.`);
+      showAlert("¡Éxito!", `Datos actualizados correctamente.`);
       navigation.goBack(); // Regresamos a la pantalla de detalles
       
     } catch (error) {
       console.error("Error al actualizar:", error);
-      Alert.alert("Error", "No se pudo actualizar la mascota.");
+      showAlert("Error", "No se pudo actualizar la mascota.");
     } finally {
       setLoading(false);
     }

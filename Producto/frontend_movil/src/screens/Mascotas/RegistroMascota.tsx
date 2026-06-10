@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   View, Text, TextInput, TouchableOpacity, StyleSheet, 
-  Alert, ScrollView, Image, ActivityIndicator, Platform,
+  ScrollView, Image, ActivityIndicator, Platform,
   Modal, FlatList
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -13,9 +13,11 @@ import { globalStyles } from '@/src/style/GlobalStyle';
 import { dashboardStyles } from '@/src/style/DashboardStyle';
 import { Ionicons } from '@expo/vector-icons';
 import { PET_DATA, EspecieMascota } from '@/src/utils/petData';
+import { useCustomAlert } from '@/src/components/CustomAlert';
 
 export default function RegistroMascota() {
   const navigation = useNavigation();
+  const { showAlert, AlertComponent } = useCustomAlert();
   const [loading, setLoading] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   
@@ -98,7 +100,7 @@ export default function RegistroMascota() {
 
   const handleRegistrar = async () => {
     if (!form.nomMascota || !form.especie || !form.peso) {
-      Alert.alert("Campos obligatorios", "Por favor completa el nombre, especie y peso.");
+      showAlert("Campos obligatorios", "Por favor completa el nombre, especie y peso.");
       return;
     }
 
@@ -110,7 +112,7 @@ export default function RegistroMascota() {
       if (image) {
         imageUrl = await subirImagenCloudinary(image);
         if (!imageUrl) {
-          Alert.alert("Error de imagen", "No se pudo subir la foto. ¿Quieres intentar registrar sin foto?");
+          showAlert("Error de imagen", "No se pudo subir la foto. ¿Quieres intentar registrar sin foto?");
           setLoading(false);
           return;
         }
@@ -131,11 +133,11 @@ export default function RegistroMascota() {
 
       await api.post('/v1/mascotas/registrar', payload);
       
-      Alert.alert("¡Éxito!", `${form.nomMascota} registrado correctamente.`);
+      showAlert("¡Éxito!", `${form.nomMascota} registrado correctamente.`);
       navigation.goBack();
     } catch (error) {
       console.error("Error en el registro:", error);
-      Alert.alert("Error", "No se pudo conectar con el servidor.");
+      showAlert("Error", "No se pudo conectar con el servidor.");
     } finally {
       setLoading(false);
     }

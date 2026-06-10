@@ -20,6 +20,14 @@ export interface RegistroData {
     telefonoUsr: string;
 }
 
+export interface UsuarioData {
+    idUsuario: number;
+    nombreCompleto: string;
+    correoUsr: string;
+    telefonoUsr: string;
+    estadoUsr: number;
+}
+
 export const registro = async (userData: RegistroData) => {
     // Como el baseURL es '/api', solo agregamos el resto de la ruta del UsuarioController
     return await api.post('/v1/usuarios/registro', userData);
@@ -31,4 +39,9 @@ export const login = async (correoUsr: string, passUsr: string) => {
         correoUsr,
         passUsr
     });
+};
+
+//Traer datos del usuario autenticado (sin necesidad de pasar ID)
+export const obtenerPerfilUsuario = async () => {
+    return await api.get('/v1/usuarios/perfil');
 };
