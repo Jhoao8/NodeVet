@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator, RefreshControl, FlatList } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '@/src/theme/colors';
 import { globalStyles } from '@/src/style/GlobalStyle';
 import api from '@/src/api/axiosInstance';
@@ -8,8 +7,11 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import DashboardHeader from '@/src/components/DashboardHeader';
 import { dashboardStyles } from '@/src/style/DashboardStyle';
 import { PetCard } from '@/src/components/PetCard';
+import { useAuth } from '@/src/context/AuthContext';
+import axios from 'axios';
 
 export default function MascotasScreen() {
+    const { userToken } = useAuth();
     // Definimos la navegación para que el botón funcione
     const navigation = useNavigation<any>();
 
@@ -18,6 +20,13 @@ export default function MascotasScreen() {
     const [refreshing, setRefreshing] = useState(false);
 
     const fetchMascotas = async () => {
+        if(!userToken){
+            setMascotas([]);
+            setLoading(false);
+            setRefreshing(false);
+            return;
+        }
+
         try {
             const response = await api.get('/v1/mascotas/listar');
             setMascotas(response.data);
@@ -34,13 +43,13 @@ export default function MascotasScreen() {
     useFocusEffect(
         useCallback(() => {
             fetchMascotas();
-        }, [])
+        }, [userToken])
     );
 
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         fetchMascotas();
-    }, []);
+    }, [userToken]);
 
     return (
         <View style={[globalStyles.container, dashboardStyles.lightBackground]}>

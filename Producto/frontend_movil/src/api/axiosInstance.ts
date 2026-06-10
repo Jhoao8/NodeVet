@@ -51,7 +51,7 @@ api.interceptors.response.use(
 
         if (newToken) {
             try {
-                // Si el servidor nos mandó un token fresco, lo guardamos
+                // Si el servidor nos mandó un token nuevo, lo guardamos
                 await AsyncStorage.setItem('userToken', newToken);
                 console.log("Sesión renovada automáticamente por 30 días más.");
             } catch (error) {

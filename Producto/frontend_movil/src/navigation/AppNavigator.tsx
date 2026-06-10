@@ -24,7 +24,7 @@ const AppNavigator = () => {
     }
 
     return (
-        <NavigationContainer>
+        <NavigationContainer key={userToken ? 'auth' : 'noauth'}>
             {userToken ? (
                 <Stack.Navigator screenOptions={{ headerShown: false }}>
                     <Stack.Screen name="Main" component={BottomTabNavigator} />

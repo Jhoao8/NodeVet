@@ -1,270 +1,248 @@
 import React, { useState, useCallback } from 'react';
-import { 
-    View, Text, ScrollView, TouchableOpacity, 
-    StyleSheet, Alert, ActivityIndicator 
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
 
-// Importación de configuración y estilos
-import api from '@/src/api/axiosInstance';
-import { globalStyles } from '@/src/style/GlobalStyle';
-import { dashboardStyles } from '@/src/style/DashboardStyle';
-import { colors } from '@/src/theme/colors';
-import { typography } from '@/src/theme/typography';
-
-// Importamos tu contexto de autenticación
-import { useAuth } from '@/src/context/AuthContext'; 
+// Importación de tu sistema de diseño completo
+import { globalStyles } from '../../style/GlobalStyle';
+import { dashboardStyles } from '../../style/DashboardStyle';
+import { colors } from '../../theme/colors';
+import { spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+import DashboardHeader from '../../components/DashboardHeader';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../api/axiosInstance';
+import axios from 'axios';
+import { useCustomAlert } from '../../components/CustomAlert';
 
 interface UserProfile {
     nombreUsr: string;
     apellidoUsr: string;
     correoUsr: string;
     telefonoUsr: string;
+    fotoUrl: string;
 }
 
-export default function ProfileScreen() {
-    const navigation = useNavigation<any>();
-    const { signOut } = useAuth(); // Usamos tu función signOut
-    
+export default function ProfileScreen({ navigation }: any) {
+    const { userToken, signOut } = useAuth();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const { showAlert, AlertComponent } = useCustomAlert();
 
-    // Función para obtener los datos desde el backend
     const fetchUserProfile = async () => {
+        if (!userToken) {
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             const response = await api.get('/v1/usuarios/perfil');
             setUser(response.data);
         } catch (error: any) {
-            // Ignoramos el error 401 en silencio si ocurre justo al cerrar sesión
-            if (error.response && error.response.status === 401) {
-                console.log("Sesión terminada o token expirado. Ignorando error 401.");
-                return; 
+            if (axios.isAxiosError(error) && error.response?.status === 401) {
+                console.log("Sesión terminada o token expirado.");
+                return;
             }
             console.error("Error al obtener perfil:", error);
-            Alert.alert("Error", "No se pudo cargar la información del perfil.");
         } finally {
             setLoading(false);
         }
     };
 
-    // Refrescar cada vez que la pantalla gana el foco
     useFocusEffect(
         useCallback(() => {
             fetchUserProfile();
-        }, [])
+        }, [userToken])
     );
 
     const handleLogout = () => {
-        Alert.alert(
-            "Cerrar Sesión",
-            "¿Estás seguro que deseas salir?",
+        showAlert(
+            'Cerrar Sesión',
+            '¿Estás seguro de que quieres cerrar sesión?',
             [
-                { text: "Cancelar", style: "cancel" },
-                { 
-                    text: "Salir", 
-                    style: "destructive",
+                {
+                    text: 'Cancelar',
+                    onPress: () => {},
+                    style: 'cancel',
+                },
+                {
+                    text: 'Sí, cerrar sesión',
                     onPress: async () => {
-                        await signOut(); // Esto destruye el token y te manda al Login
-                    } 
-                }
-            ]
+                        try {
+                            await signOut();
+                        } catch (error) {
+                            console.error('Error al cerrar sesión:', error);
+                            showAlert('Error', 'Error al cerrar sesión. Por favor intenta de nuevo.');
+                        }
+                    },
+                    style: 'destructive',
+                },
+            ],
         );
     };
 
-    // Sub-componente para los ítems del menú
-    const MenuItem = ({ icon, title, subtitle, onPress, isLast = false }: any) => (
-        <TouchableOpacity 
-            style={[styles.menuItem, !isLast && styles.menuItemBorder]} 
-            onPress={onPress}
-            activeOpacity={0.7}
-        >
-            <View style={styles.menuItemLeft}>
-                <View style={styles.iconWrapper}>
-                    <Ionicons name={icon} size={20} color={colors.darkGreen} />
-                </View>
-                <View>
-                    <Text style={styles.menuItemTitle}>{title}</Text>
-                    {subtitle && <Text style={styles.menuItemSubtitle}>{subtitle}</Text>}
-                </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.lightGreen} />
-        </TouchableOpacity>
-    );
-
-    if (loading) {
-        return (
-            <View style={[globalStyles.container, styles.centered]}>
-                <ActivityIndicator size="large" color={colors.darkGreen} />
-            </View>
-        );
-    }
-
     return (
         <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
-            {/* Cabecera con botón volver */}
-            <View style={styles.customHeader}>
-                <TouchableOpacity onPress={() => navigation.goBack()}>
-                    <Ionicons name="arrow-back" size={26} color={colors.darkDGreen} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitleText}>Mi Perfil</Text>
-                <View style={{ width: 26 }} />
-            </View>
+            <DashboardHeader />
 
-            <ScrollView contentContainerStyle={globalStyles.scrollContainer}>
-                
-                {/* TARJETA DE PERFIL DINÁMICA */}
-                <View style={[dashboardStyles.flatCard, styles.profileCard]}>
-                    <View style={styles.avatarCircle}>
-                        <Text style={styles.avatarText}>
-                            {user?.nombreUsr?.charAt(0) || ''}{user?.apellidoUsr?.charAt(0) || ''}
+            <ScrollView 
+                contentContainerStyle={globalStyles.scrollContainer}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* ════════ TÍTULO DE SECCIÓN ════════ */}
+                <View style={dashboardStyles.greetingContainer}>
+                    <View style={styles.titleRow}>
+                        <Text style={[dashboardStyles.greetingText, dashboardStyles.darkText]}>
+                            Mi perfil
                         </Text>
+                        <TouchableOpacity 
+                            style={styles.editIcon}
+                            onPress={() => navigation.navigate('EditProfile')}
+                        >
+                            <Ionicons name="pencil" size={20} color={colors.darkGreen} />
+                        </TouchableOpacity>
                     </View>
-                    <Text style={styles.fullUserName}>{user?.nombreUsr} {user?.apellidoUsr}</Text>
-                    <Text style={styles.userEmailText}>{user?.correoUsr}</Text>
+                    <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider]} />
                 </View>
 
-                {/* SECCIÓN DE INFORMACIÓN */}
-                <View style={globalStyles.sectionHeaderRow}>
-                    <Text style={styles.sectionLabel}>Información de contacto</Text>
-                </View>
-                <View style={[dashboardStyles.flatCard, { padding: 0 }]}>
-                    <MenuItem 
-                        icon="call-outline" 
-                        title="Teléfono" 
-                        subtitle={user?.telefonoUsr || 'No registrado'}
-                        onPress={() => {}} 
-                    />
-                    <MenuItem 
-                        icon="mail-outline" 
-                        title="Correo electrónico" 
-                        subtitle={user?.correoUsr}
-                        isLast={true}
-                        onPress={() => {}} 
-                    />
+                {/* ════════ TARJETA DE INFORMACIÓN ════════ */}
+                {loading ? (
+                    <View style={{ justifyContent: 'center', alignItems: 'center', marginVertical: spacing.xl }}>
+                        <ActivityIndicator size="large" color={colors.darkGreen} />
+                    </View>
+                ) : user ? (
+                    <View style={styles.profileInfoContainer}>
+                        {/* Placeholder de la foto */}
+                        <View style={styles.imagePlaceholder}>
+                            <Ionicons name="paw" size={60} color={colors.darkGreen} style={{ opacity: 0.3 }} />
+                        </View>
+
+                        {/* Datos del usuario */}
+                        <View style={styles.infoTextContainer}>
+                            <View style={styles.infoBlock}>
+                                <Text style={styles.labelText}>Nombre:</Text>
+                                <Text style={styles.valueText}>{user.nombreUsr} {user.apellidoUsr}</Text>
+                            </View>
+                            
+                            <View style={styles.infoBlock}>
+                                <Text style={styles.labelText}>Email:</Text>
+                                <Text style={styles.valueText}>{user.correoUsr}</Text>
+                            </View>
+                            
+                            <View style={styles.infoBlock}>
+                                <Text style={styles.labelText}>Teléfono:</Text>
+                                <Text style={styles.valueText}>{user.telefonoUsr || 'No registrado'}</Text>
+                            </View>
+                        </View>
+                    </View>
+                ) : null}
+
+                <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider, { marginVertical: spacing.lg }]} />
+
+                {/* ════════ MENÚ DE OPCIONES ════════ */}
+                <View style={styles.menuContainer}>
+                    <TouchableOpacity style={styles.menuButton}>
+                        <Text style={styles.menuButtonText}>Cambiar contraseña</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.menuButton}>
+                        <Text style={styles.menuButtonText}>Configurar recordatorios</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.menuButton}>
+                        <Text style={styles.menuButtonText}>Eliminar cuenta</Text>
+                    </TouchableOpacity>
                 </View>
 
-                {/* SECCIÓN DE SEGURIDAD Y CUENTA */}
-                <View style={globalStyles.sectionHeaderRow}>
-                    <Text style={styles.sectionLabel}>Ajustes de cuenta</Text>
-                </View>
-                <View style={[dashboardStyles.flatCard, { padding: 0 }]}>
-                    <MenuItem 
-                        icon="lock-closed-outline" 
-                        title="Seguridad" 
-                        subtitle="Cambiar contraseña"
-                        onPress={() => {}} 
-                    />
-                    <MenuItem 
-                        icon="help-circle-outline" 
-                        title="Soporte técnico" 
-                        isLast={true}
-                        onPress={() => {}} 
-                    />
-                </View>
-
-                {/* BOTÓN CERRAR SESIÓN */}
+                {/* ════════ BOTÓN CERRAR SESIÓN ════════ */}
                 <TouchableOpacity 
-                    style={[globalStyles.primaryButton, styles.logoutBtn]} 
+                    style={styles.logoutButton}
                     onPress={handleLogout}
                 >
-                    <Ionicons name="log-out-outline" size={20} color={colors.white} style={{ marginRight: 8 }} />
-                    <Text style={globalStyles.primaryButtonText}>Cerrar Sesión</Text>
+                    <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
                 </TouchableOpacity>
 
             </ScrollView>
+            <AlertComponent />
         </View>
     );
 }
 
+// ════════ ESTILOS LOCALES ════════
 const styles = StyleSheet.create({
-    centered: { justifyContent: 'center', alignItems: 'center' },
-    customHeader: {
+    titleRow: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingTop: 50,
-        paddingBottom: 15,
-        backgroundColor: colors.lightYellow,
+        marginBottom: spacing.sm,
     },
-    headerTitleText: {
-        fontFamily: typography?.family?.main?.bold || 'System',
-        fontSize: 18,
-        color: colors.darkDGreen,
+    editIcon: {
+        padding: spacing.xs,
     },
-    profileCard: {
-        alignItems: 'center',
-        paddingVertical: 25,
-        marginBottom: 10,
-    },
-    avatarCircle: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
-        backgroundColor: colors.darkGreen,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 15,
-    },
-    avatarText: {
-        color: colors.white,
-        fontSize: 24,
-        fontFamily: typography?.family?.main?.bold || 'System',
-    },
-    fullUserName: {
-        fontFamily: typography?.family?.main?.bold || 'System',
-        fontSize: 20,
-        color: colors.darkDGreen,
-    },
-    userEmailText: {
-        fontFamily: typography?.family?.main?.regular || 'System',
-        fontSize: 14,
-        color: colors.darkGreen,
-        marginTop: 4,
-    },
-    sectionLabel: {
-        fontFamily: typography?.family?.main?.semiBold || 'System',
-        fontSize: 14,
-        color: colors.darkGreen,
-        marginLeft: 5,
-    },
-    menuItem: {
+
+    profileInfoContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: spacing.lg,
+        paddingHorizontal: spacing.sm,
+    },
+    imagePlaceholder: {
+        width: 120,
+        height: 120,
+        borderWidth: 1.5,
+        borderColor: colors.darkDGreen,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: spacing.lg,
+    },
+    infoTextContainer: {
+        flex: 1,
         justifyContent: 'space-between',
-        padding: 16,
     },
-    menuItemBorder: {
-        borderBottomWidth: 1,
-        borderBottomColor: colors.lightGreen,
+    infoBlock: {
+        marginBottom: spacing.sm,
     },
-    menuItemLeft: { flexDirection: 'row', alignItems: 'center' },
-    iconWrapper: {
-        width: 34,
-        height: 34,
-        borderRadius: 17,
-        backgroundColor: colors.lightYellow,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    menuItemTitle: {
-        fontFamily: typography?.family?.main?.semiBold || 'System',
-        fontSize: 15,
-        color: colors.darkDGreen,
-    },
-    menuItemSubtitle: {
-        fontFamily: typography?.family?.main?.regular || 'System',
-        fontSize: 13,
+    labelText: {
+        fontFamily: typography.family.main.semiBold,
+        fontSize: typography.size.xs,
         color: colors.darkGreen,
     },
-    logoutBtn: {
-        marginTop: 25,
-        marginBottom: 50,
-        backgroundColor: '#D9534F',
-        borderColor: '#D9534F',
-        flexDirection: 'row',
-    }
+    valueText: {
+        fontFamily: typography.family.main.bold,
+        fontSize: typography.size.md,
+        color: colors.darkDGreen,
+    },
+
+    menuContainer: {
+        gap: spacing.md, 
+    },
+    menuButton: {
+        borderWidth: 1.5,
+        borderColor: colors.darkDGreen,
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
+        alignItems: 'center',
+    },
+    menuButtonText: {
+        fontFamily: typography.family.main.medium,
+        fontSize: typography.size.md,
+        color: colors.darkDGreen,
+    },
+
+    logoutButton: {
+        borderWidth: 1.5,
+        borderColor: colors.darkDGreen,
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
+        borderRadius: 8,
+        alignSelf: 'flex-start',
+        marginTop: spacing.lg,
+        marginBottom: spacing.xl,
+    },
+    logoutButtonText: {
+        fontFamily: typography.family.main.bold,
+        fontSize: typography.size.sm,
+        color: colors.darkDGreen,
+    },
 });

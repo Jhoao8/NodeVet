@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, Modal, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import { styles } from './PetCard.styles';
 import { PetCardProps } from './PetCard.types';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '@/src/theme/colors';
 import { globalStyles } from '@/src/style/GlobalStyle';
 import api from '@/src/api/axiosInstance';
+import { useCustomAlert } from '../CustomAlert';
 
 const PetCard: React.FC<PetCardProps> = ({ id, nombreMasc, fotoUrl, sexo, especie, onPress }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { showAlert, AlertComponent } = useCustomAlert();
 
   // Convertimos el número a texto
   const sexoTexto = sexo === 1 ? 'Macho' : 'Hembra';
@@ -19,10 +21,10 @@ const PetCard: React.FC<PetCardProps> = ({ id, nombreMasc, fotoUrl, sexo, especi
     try {
       await api.delete(`/v1/mascotas/eliminar/${id}`);
       setModalVisible(false);
-      Alert.alert("Éxito", `${nombreMasc} ha sido borrada correctamente.`);
+      showAlert("Éxito", `${nombreMasc} ha sido borrada correctamente.`);
     } catch (error) {
       console.error("Error al borrar la mascota:", error);
-      Alert.alert("Error", "No se pudo borrar la mascota.");
+      showAlert("Error", "No se pudo borrar la mascota.");
     } finally {
       setIsDeleting(false);
     }

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; 
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { globalStyles } from '@/src/style/GlobalStyle';
-import api from '../../api/axiosInstance'; // Importamos tu instancia de Axios
+import api from '../../api/axiosInstance';
+import { useCustomAlert } from '../../components/CustomAlert';
 
 const RegisterScreen = () => {
     const navigation = useNavigation<any>();
@@ -29,6 +30,7 @@ const RegisterScreen = () => {
     const [emailError, setEmailError] = useState('');
     const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
     const [passwordMatchError, setPasswordMatchError] = useState('');
+    const { showAlert, AlertComponent } = useCustomAlert();
 
     // Validar nombre
     const validateNombre = (text: string) => {
@@ -129,13 +131,13 @@ const RegisterScreen = () => {
     const handleRegister = async () => {
         // Validar todos los campos
         if (!nombre || !apellido || !celular || !email || !password || !confirmPassword) {
-            Alert.alert('Campos incompletos', 'Por favor, llena todos los campos.');
+            showAlert('Campos incompletos', 'Por favor, llena todos los campos.');
             return;
         }
 
         // Validar que no haya errores
         if (nombreError || apellidoError || celularError || emailError || passwordErrors.length > 0 || passwordMatchError) {
-            Alert.alert('Validación incompleta', 'Por favor, corrige los errores en los campos.');
+            showAlert('Validación incompleta', 'Por favor, corrige los errores en los campos.');
             return;
         }
 
@@ -161,7 +163,7 @@ const RegisterScreen = () => {
             }
         } catch (error: any) {
             const errorMsg = error.response?.data?.message || 'Error al intentar registrar el usuario.';
-            Alert.alert('No se pudo registrar', errorMsg);
+            showAlert('No se pudo registrar', errorMsg);
         } finally {
             setLoading(false);
         }
@@ -316,6 +318,7 @@ const RegisterScreen = () => {
             </TouchableOpacity>
 
             </ScrollView>
+            <AlertComponent />
         </KeyboardAvoidingView>
     );
 };
