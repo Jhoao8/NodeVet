@@ -6,12 +6,14 @@ import { useNavigation } from '@react-navigation/native';
 import { globalStyles } from '@/src/style/GlobalStyle';
 import { dashboardStyles } from '@/src/style/DashboardStyle';
 import { colors } from '../theme/colors';
+import { useAuth } from '../context/AuthContext';
 
 import DashboardHeader from '../components/DashboardHeader';
 import PetSummaryList from '../components/PetSummaryList/PetSummaryList';
 
 const HomeScreen = () => {
     const navigation = useNavigation<any>();
+    const { userData } = useAuth();
 
     return (
         <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
@@ -24,7 +26,9 @@ const HomeScreen = () => {
             >
                 {/* Saludo */}
                 <View style={dashboardStyles.greetingContainer}>
-                    <Text style={[dashboardStyles.greetingText, dashboardStyles.darkText]}>Bienvenido</Text>
+                    <Text style={[dashboardStyles.greetingText, dashboardStyles.darkText]}>
+                        Bienvenido, {userData?.nombreCompleto || 'Usuario'}
+                    </Text>
                     <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider]} />
                 </View>
 

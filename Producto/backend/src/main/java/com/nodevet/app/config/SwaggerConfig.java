@@ -25,11 +25,9 @@ public class SwaggerConfig {
                         .contact(new Contact()
                                 .name("Ricardo Cruz") // Aquí puedes poner los nombres de tu equipo
                                 .email("soporte.nodevet@gmail.com")))
-                
-                // 1. Le decimos a Swagger que todos los endpoints usan este esquema
+                // 1. Añadimos un requisito de seguridad global para que Swagger UI sepa que debe enviar el token.
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
-                
-                // 2. Configuramos cómo funciona el esquema (es un token Bearer en formato JWT)
+                // 2. Definimos cómo es nuestro esquema de seguridad (un token Bearer en formato JWT).
                 .components(new Components()
                         .addSecuritySchemes(securitySchemeName, new SecurityScheme()
                                 .name(securitySchemeName)

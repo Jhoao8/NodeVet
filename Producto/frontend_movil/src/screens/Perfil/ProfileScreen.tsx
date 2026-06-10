@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -20,7 +20,7 @@ interface UserProfile {
     apellidoUsr: string;
     correoUsr: string;
     telefonoUsr: string;
-    fotoUrl: string;
+    fotoPerfil?: string;
 }
 
 export default function ProfileScreen({ navigation }: any) {
@@ -38,6 +38,8 @@ export default function ProfileScreen({ navigation }: any) {
         try {
             setLoading(true);
             const response = await api.get('/v1/usuarios/perfil');
+            // 👇 AGREGA ESTA LÍNEA PARA ESPIAR LOS DATOS 👇
+            console.log("DATOS REALES DEL BACKEND:", response.data);
             setUser(response.data);
         } catch (error: any) {
             if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -111,32 +113,57 @@ export default function ProfileScreen({ navigation }: any) {
                     <View style={{ justifyContent: 'center', alignItems: 'center', marginVertical: spacing.xl }}>
                         <ActivityIndicator size="large" color={colors.darkGreen} />
                     </View>
-                ) : user ? (
+                ) : (
+                    // Quitamos el ": user ?" para que la sección siempre se vea, sí o sí
                     <View style={styles.profileInfoContainer}>
-                        {/* Placeholder de la foto */}
-                        <View style={styles.imagePlaceholder}>
-                            <Ionicons name="paw" size={60} color={colors.darkGreen} style={{ opacity: 0.3 }} />
-                        </View>
+                        
+                        {/* Foto de perfil (Muestra la de Cloudinary si existe, sino un ícono) */}
+                        <TouchableOpacity style={styles.imagePlaceholder} activeOpacity={0.8}>
+                            {user?.fotoPerfil ? (
+                                <Image 
+                                    source={{ uri: user.fotoPerfil }}
+                                />
+                            ) : (
+                                <Ionicons name="camera-outline" size={50} color={colors.darkGreen} style={{ opacity: 0.6 }} />
+                            )}
+                        </TouchableOpacity>
 
                         {/* Datos del usuario */}
                         <View style={styles.infoTextContainer}>
                             <View style={styles.infoBlock}>
                                 <Text style={styles.labelText}>Nombre:</Text>
-                                <Text style={styles.valueText}>{user.nombreUsr} {user.apellidoUsr}</Text>
+                                {/* Recuadro para el Nombre */}
+                                <View style={styles.valueBox}>
+                                    <Text style={styles.valueText}>
+                                        {user?.nombreUsr || user?.apellidoUsr 
+                                            ? `${user?.nombreUsr || ''} ${user?.apellidoUsr || ''}`.trim() 
+                                            : 'No registrado'}
+                                    </Text>
+                                </View>
                             </View>
                             
                             <View style={styles.infoBlock}>
                                 <Text style={styles.labelText}>Email:</Text>
-                                <Text style={styles.valueText}>{user.correoUsr}</Text>
+                                {/* Recuadro para el Email */}
+                                <View style={styles.valueBox}>
+                                    <Text style={styles.valueText}>
+                                        {user?.correoUsr || 'No registrado'}
+                                    </Text>
+                                </View>
                             </View>
                             
                             <View style={styles.infoBlock}>
                                 <Text style={styles.labelText}>Teléfono:</Text>
-                                <Text style={styles.valueText}>{user.telefonoUsr || 'No registrado'}</Text>
+                                {/* Recuadro para el Teléfono */}
+                                <View style={styles.valueBox}>
+                                    <Text style={styles.valueText}>
+                                        {user?.telefonoUsr || 'No registrado'}
+                                    </Text>
+                                </View>
                             </View>
                         </View>
                     </View>
-                ) : null}
+                )}
 
                 <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider, { marginVertical: spacing.lg }]} />
 
@@ -180,6 +207,14 @@ const styles = StyleSheet.create({
     editIcon: {
         padding: spacing.xs,
     },
+    valueBox: {
+        backgroundColor: colors.white,
+        borderWidth: 1,
+        borderColor: colors.lightGreen,
+        borderRadius: 8,
+        paddingHorizontal: spacing.sm,
+        paddingVertical: 8,
+    },
 
     profileInfoContainer: {
         flexDirection: 'row',
@@ -195,6 +230,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: spacing.lg,
+        overflow: 'hidden', // <- Agrega esto para que la imagen no se salga del cuadro
+    },
+    // Agrega este nuevo estilo para la foto
+    profileImage: {
+        width: '100%',
+        height: '100%',
+        resizeMode: 'cover',
     },
     infoTextContainer: {
         flex: 1,

@@ -25,13 +25,13 @@ const PetSummaryList = () => {
             }
 
             const loadMascotas = async () => {
-                setLoading(true);
                 try {
+                    setLoading(true);
                     const response = await api.get('/v1/mascotas/listar');
                     setMascotas(response.data);
-                } catch (error) {
-                    if (axios.isAxiosError(error) && error.response?.status === 401) {
-                        console.error("Error al cargar mascotas:",error);
+                } catch (error: any) {
+                    if (error.response?.status !== 401 && error.response?.status !== 404) {
+                        console.error("Error al cargar mascotas:", error.message);
                     }
                 } finally {
                     setLoading(false);

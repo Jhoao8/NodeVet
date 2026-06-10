@@ -2,13 +2,17 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { cancelAllRequests } from '../api/axiosInstance';
 import api from '../api/axiosInstance';
+import {UsuarioData} from '../api/authApi';
+
 
 
 interface AuthContextData {
     userToken: string | null;
+    userData: UsuarioData | null; 
     isLoading: boolean;
     signIn: (token: string) => Promise<void>;
     signOut: () => Promise<void>;
+    fetchUserData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);

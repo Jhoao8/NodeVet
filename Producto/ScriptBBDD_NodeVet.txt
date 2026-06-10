@@ -94,7 +94,7 @@ CREATE TABLE CODIGO_VERIFICACION (
 CREATE TABLE ADMIN (
     id_admin INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
-    nivel_acceso INT NOT NULL,
+    nivel_acceso VARCHAR(50) NOT NULL,
     CONSTRAINT fk_admin_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
 );
 

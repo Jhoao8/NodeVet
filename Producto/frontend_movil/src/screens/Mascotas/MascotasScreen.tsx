@@ -8,7 +8,6 @@ import DashboardHeader from '@/src/components/DashboardHeader';
 import { dashboardStyles } from '@/src/style/DashboardStyle';
 import { PetCard } from '@/src/components/PetCard';
 import { useAuth } from '@/src/context/AuthContext';
-import axios from 'axios';
 
 export default function MascotasScreen() {
     const { userToken } = useAuth();
@@ -29,9 +28,14 @@ export default function MascotasScreen() {
 
         try {
             const response = await api.get('/v1/mascotas/listar');
-            setMascotas(response.data);
-        } catch (error) {
-            console.error("Error al obtener mascotas:", error);
+            setMascotas(response.data || []);
+        } catch (error: any) {
+            // Silenciar errores 401 (sin token válido) y 404 (no encontrado)
+            // En estos casos, simplemente mostramos lista vacía sin loguear
+            if (error.response?.status !== 401 && error.response?.status !== 404) {
+                // Solo loguear si es un error diferente a 401 o 404
+                console.error("Error al obtener mascotas:", error.message);
+            }
         } finally {
             setLoading(false);
             setRefreshing(false);

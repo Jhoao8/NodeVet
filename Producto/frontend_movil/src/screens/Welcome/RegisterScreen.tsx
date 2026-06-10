@@ -162,7 +162,7 @@ const RegisterScreen = () => {
                 );
             }
         } catch (error: any) {
-            const errorMsg = error.response?.data?.message || 'Error al intentar registrar el usuario.';
+            const errorMsg = error.response?.data?.error || 'Error al intentar registrar el usuario.';
             showAlert('No se pudo registrar', errorMsg);
         } finally {
             setLoading(false);
