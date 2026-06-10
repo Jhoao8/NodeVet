@@ -57,7 +57,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 
                 // --- LÓGICA DE REINICIO DE 30 DÍAS ---
                 // Generamos un token fresquito con otros 30 días
-                String newToken = jwtUtil.refreshToken(jwt, JwtUtil.EXPIRE_MOBILE);                // Lo enviamos en la respuesta. El frontend deberá guardarlo.
+                String newToken = jwtUtil.generateToken(userDetails.getUsername(), JwtUtil.EXPIRE_MOBILE);
+                // Lo enviamos en la respuesta. El frontend deberá guardarlo.
                 response.setHeader("New-Token", newToken);
                 // Exponemos el header para que CORS no lo bloquee en el navegador/app
                 response.setHeader("Access-Control-Expose-Headers", "New-Token");
