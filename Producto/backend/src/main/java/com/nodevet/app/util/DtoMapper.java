@@ -3,12 +3,15 @@ package com.nodevet.app.util;
 import com.nodevet.app.dto.AdminDTO;
 import com.nodevet.app.dto.EspecialidadDTO;
 import com.nodevet.app.dto.VeterinarioDTO;
+import com.nodevet.app.dto.agenda.BloqueHorarioDTO;
+import com.nodevet.app.dto.agenda.JornadaDTO;
 import com.nodevet.app.dto.UsuarioDTO;
 import com.nodevet.app.model.Admin;
 import com.nodevet.app.model.Especialidad;
 import com.nodevet.app.model.Usuario;
 import com.nodevet.app.model.Veterinario;
-import org.springframework.stereotype.Component;
+import com.nodevet.app.model.agenda.BloqueHorario;
+
 import java.util.stream.Collectors;
 
 public class DtoMapper {
@@ -55,6 +58,26 @@ public class DtoMapper {
                 usuario.getCorreoUsr(),
                 usuario.getTelefonoUsr(),
                 usuario.getEstadoUsr()
+        );
+    }
+
+    public static BloqueHorarioDTO toBloqueHorarioDTO(BloqueHorario bloque) {
+        return new BloqueHorarioDTO(
+                bloque.getIdBloque(),
+                bloque.getVeterinario().getId(), 
+                bloque.getFecHrInicio(),
+                bloque.getFecHrFin()
+        );
+    }
+
+    public static JornadaDTO toJornadaDTO(com.nodevet.app.model.agenda.Jornada jornada) {
+        return new JornadaDTO(
+                jornada.getIdJornada(),
+                jornada.getVeterinario().getId(),
+                jornada.getDiaSemana(),
+                jornada.getHoraInicio(),
+                jornada.getHoraFin(),
+                jornada.getEstJornada()
         );
     }
 }

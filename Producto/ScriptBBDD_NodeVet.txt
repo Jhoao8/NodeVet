@@ -27,11 +27,22 @@ CREATE TABLE ESTADO_RESERVA (
     nom_est_reserva VARCHAR(15) NOT NULL
 );
 
-CREATE TABLE BLOQUE_HORARIO (
-    id_bloque INT AUTO_INCREMENT PRIMARY KEY,
-    fec_hr_inicio DATETIME NOT NULL,
-    fec_hr_fin DATETIME NOT NULL
-);
+-- Poblar tabla estado_reserva
+INSERT INTO estado_reserva (nom_est_reserva)
+SELECT 'PENDIENTE' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM estado_reserva WHERE nom_est_reserva = 'PENDIENTE');
+
+INSERT INTO estado_reserva (nom_est_reserva)
+SELECT 'CONFIRMADA' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM estado_reserva WHERE nom_est_reserva = 'CONFIRMADA');
+
+INSERT INTO estado_reserva (nom_est_reserva)
+SELECT 'CANCELADA' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM estado_reserva WHERE nom_est_reserva = 'CANCELADA');
+
+INSERT INTO estado_reserva (nom_est_reserva)
+SELECT 'COMPLETADA' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM estado_reserva WHERE nom_est_reserva = 'COMPLETADA');
 
 CREATE TABLE VALOR (
     id_valor INT AUTO_INCREMENT PRIMARY KEY,
@@ -121,8 +132,29 @@ CREATE TABLE VET_ESP (
 );
 
 -- ========================================================
--- 3. TABLAS DE NEGOCIO (Mascotas, Reservas, Consultas, etc.)
+-- 3. TABLAS DE NEGOCIO (Jornadas, Bloques, Mascotas, Reservas, etc.)
 -- ========================================================
+
+-- NUEVA TABLA: JORNADA
+CREATE TABLE JORNADA (
+    id_jornada INT AUTO_INCREMENT PRIMARY KEY,
+    id_vet INT NOT NULL,
+    dia_semana TINYINT NOT NULL COMMENT '1=Lunes, 2=Martes, 3=Miercoles, 4=Jueves, 5=Viernes, 6=Sabado, 7=Domingo',
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    est_jornada TINYINT(1) DEFAULT 1 NOT NULL,
+    CONSTRAINT fk_jornada_vet FOREIGN KEY (id_vet) REFERENCES VETERINARIO(id_vet) ON DELETE CASCADE
+);
+
+-- TABLA MODIFICADA Y REUBICADA: BLOQUE_HORARIO
+CREATE TABLE BLOQUE_HORARIO (
+    id_bloque INT AUTO_INCREMENT PRIMARY KEY,
+    id_vet INT NOT NULL,
+    fec_hr_inicio DATETIME NOT NULL,
+    fec_hr_fin DATETIME NOT NULL,
+    CONSTRAINT fk_bloque_vet FOREIGN KEY (id_vet) REFERENCES VETERINARIO(id_vet) ON DELETE CASCADE
+);
+
 CREATE TABLE MASCOTA (
     id_mascota INT AUTO_INCREMENT PRIMARY KEY,
     id_tutor INT NOT NULL,
@@ -137,7 +169,6 @@ CREATE TABLE MASCOTA (
     estado_masc TINYINT(1) DEFAULT 1 NOT NULL,
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
     CONSTRAINT fk_mascota_tutor FOREIGN KEY (id_tutor) REFERENCES TUTOR(id_tutor) ON DELETE CASCADE
 );
 

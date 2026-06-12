@@ -9,7 +9,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class VeterinarioDTO {
-    private Long idVeterinario; // ID del perfil de Veterinario
+    private Integer idVeterinario; // ID del perfil de Veterinario
     private Integer idUsuario; // ID del Usuario asociado (Integer, como en tu modelo actual)
     private String nombreCompleto;
     private String correoUsr;

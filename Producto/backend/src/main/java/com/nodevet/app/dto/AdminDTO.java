@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AdminDTO {
-    private Long idAdmin; // ID del perfil de Admin
+    private Integer idAdmin; // ID del perfil de Admin
     private Integer idUsuario; // ID del Usuario asociado (Integer, como en tu modelo actual)
     private String nombreCompleto;
     private String correoUsr;
