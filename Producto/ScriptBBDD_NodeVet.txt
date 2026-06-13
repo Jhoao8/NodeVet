@@ -24,14 +24,24 @@ CREATE TABLE ESPECIALIDAD (
 
 CREATE TABLE ESTADO_RESERVA (
     id_est_reserva INT AUTO_INCREMENT PRIMARY KEY,
-    nom_est_reserva VARCHAR(15) NOT NULL
+    nom_est_reserva VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE BLOQUE_HORARIO (
-    id_bloque INT AUTO_INCREMENT PRIMARY KEY,
-    fec_hr_inicio DATETIME NOT NULL,
-    fec_hr_fin DATETIME NOT NULL
+-- Poblar tabla estado_reserva (Los 5 estados del ciclo clínico)
+INSERT INTO ESTADO_RESERVA (nom_est_reserva) VALUES ('PENDIENTE');
+INSERT INTO ESTADO_RESERVA (nom_est_reserva) VALUES ('CONFIRMADA');
+INSERT INTO ESTADO_RESERVA (nom_est_reserva) VALUES ('COMPLETADA');
+INSERT INTO ESTADO_RESERVA (nom_est_reserva) VALUES ('CANCELADA');
+INSERT INTO ESTADO_RESERVA (nom_est_reserva) VALUES ('AUSENTE');
+
+CREATE TABLE ESTADO_BLOQUE (
+    id_est_bloque INT AUTO_INCREMENT PRIMARY KEY,
+    nom_est_bloque VARCHAR(20) NOT NULL
 );
+
+-- Poblar tabla estado_bloque (Disponibilidad de la agenda)
+INSERT INTO ESTADO_BLOQUE (nom_est_bloque) VALUES ('DISPONIBLE');
+INSERT INTO ESTADO_BLOQUE (nom_est_bloque) VALUES ('OCUPADO');
 
 CREATE TABLE VALOR (
     id_valor INT AUTO_INCREMENT PRIMARY KEY,
@@ -73,10 +83,10 @@ CREATE TABLE USUARIO (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombre_usr VARCHAR(75) NOT NULL,
     apellido_usr VARCHAR(75) NOT NULL,
-    correo_usr VARCHAR(100) UNIQUE NOT NULL,
+    correo_usr VARCHAR(150) UNIQUE NOT NULL,
     pass_usr VARCHAR(255) NOT NULL,
     telefono_usr VARCHAR(12) NULL,
-    foto_usr MEDIUMTEXT NULL,
+    foto_usr VARCHAR(255) NULL,
     estado_usr TINYINT(1) DEFAULT 1 NOT NULL,
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -94,7 +104,7 @@ CREATE TABLE CODIGO_VERIFICACION (
 CREATE TABLE ADMIN (
     id_admin INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
-    nivel_acceso VARCHAR(50) NOT NULL,
+    nivel_acceso INT NOT NULL,
     CONSTRAINT fk_admin_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
 );
 
@@ -121,23 +131,42 @@ CREATE TABLE VET_ESP (
 );
 
 -- ========================================================
--- 3. TABLAS DE NEGOCIO (Mascotas, Reservas, Consultas, etc.)
+-- 3. TABLAS DE NEGOCIO (Jornadas, Bloques, Mascotas, Reservas, etc.)
 -- ========================================================
+CREATE TABLE JORNADA (
+    id_jornada INT AUTO_INCREMENT PRIMARY KEY,
+    id_vet INT NOT NULL,
+    dia_semana TINYINT NOT NULL COMMENT '1=Lunes, 2=Martes, 3=Miercoles, 4=Jueves, 5=Viernes, 6=Sabado, 7=Domingo',
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    est_jornada TINYINT(1) DEFAULT 1 NOT NULL,
+    CONSTRAINT fk_jornada_vet FOREIGN KEY (id_vet) REFERENCES VETERINARIO(id_vet) ON DELETE CASCADE
+);
+
+CREATE TABLE BLOQUE_HORARIO (
+    id_bloque INT AUTO_INCREMENT PRIMARY KEY,
+    fec_hr_inicio DATETIME NOT NULL,
+    fec_hr_fin DATETIME NOT NULL,
+    id_vet INT NOT NULL,
+    id_est_bloque INT DEFAULT 1 NOT NULL,
+    CONSTRAINT fk_bloque_vet FOREIGN KEY (id_vet) REFERENCES VETERINARIO(id_vet) ON DELETE CASCADE,
+    CONSTRAINT fk_bloque_estado FOREIGN KEY (id_est_bloque) REFERENCES ESTADO_BLOQUE(id_est_bloque)
+);
+
 CREATE TABLE MASCOTA (
     id_mascota INT AUTO_INCREMENT PRIMARY KEY,
     id_tutor INT NOT NULL,
     nom_mascota VARCHAR(50) NOT NULL,
     especie VARCHAR(50) NOT NULL,
     raza VARCHAR(50) NULL,
-    sexo INT NULL, 
+    sexo INT NULL COMMENT '0 = macho, 1 = hembra', 
     fec_nac DATE NULL,
     fec_nac_est TINYINT(1) DEFAULT 0,
     peso DECIMAL(5,2) NULL,
-    imagen_mascota MEDIUMTEXT NULL,
+    imagen_mascota VARCHAR(255) NULL,
     estado_masc TINYINT(1) DEFAULT 1 NOT NULL,
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    
     CONSTRAINT fk_mascota_tutor FOREIGN KEY (id_tutor) REFERENCES TUTOR(id_tutor) ON DELETE CASCADE
 );
 
@@ -145,10 +174,9 @@ CREATE TABLE RESERVA (
     id_reserva INT AUTO_INCREMENT PRIMARY KEY,
     id_mascota INT NOT NULL,
     id_vet INT NOT NULL,
-    id_bloque INT NOT NULL,
+    id_bloque INT UNIQUE NOT NULL, 
     id_valor INT NOT NULL,
-    mot_res VARCHAR(255) NOT NULL,
-    id_est_res INT NOT NULL,
+    id_est_res INT DEFAULT 1 NOT NULL,
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_res_mascota FOREIGN KEY (id_mascota) REFERENCES MASCOTA(id_mascota),
@@ -169,15 +197,15 @@ CREATE TABLE CONSULTA (
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_cons_reserva FOREIGN KEY (id_reserva) REFERENCES RESERVA(id_reserva),
-    CONSTRAINT fk_cons_valor FOREIGN KEY (id_valor) REFERENCES VALOR(id_valor)
+    CONSTRAINT fk_cons_valor FOREIGN KEY (id_valor) REFERENCES VALOR(id_valor) 
 );
 
 CREATE TABLE ARCHIVO_ADJUNTO (
     id_archivo_adjunto INT AUTO_INCREMENT PRIMARY KEY,
     id_consulta INT NOT NULL,
-    id_tipo_archivo INT NOT NULL,
     nom_archivo VARCHAR(255) NOT NULL,
     archivo_url VARCHAR(500) NOT NULL,
+    id_tipo_archivo INT NOT NULL,
     CONSTRAINT fk_adj_consulta FOREIGN KEY (id_consulta) REFERENCES CONSULTA(id_consulta) ON DELETE CASCADE,
     CONSTRAINT fk_adj_tipo FOREIGN KEY (id_tipo_archivo) REFERENCES TIPO_ARCHIVO(id_tipo_archivo)
 );
@@ -214,10 +242,10 @@ CREATE TABLE VAC_SERV (
 
 CREATE TABLE EXAMEN (
     id_examen INT AUTO_INCREMENT PRIMARY KEY,
-    id_tipo_exam INT NOT NULL,
     nom_exam VARCHAR(50) NOT NULL,
     fec_exam DATE NOT NULL,
     result_exam TEXT NOT NULL,
+    id_tipo_exam INT NOT NULL,
     CONSTRAINT fk_exam_tipo FOREIGN KEY (id_tipo_exam) REFERENCES TIPO_EXAMEN(id_tipo_exam)
 );
 

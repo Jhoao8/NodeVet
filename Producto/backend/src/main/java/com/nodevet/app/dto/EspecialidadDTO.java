@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EspecialidadDTO {
-    private Long id;
+    private Integer id;
     private String nombre;
 }

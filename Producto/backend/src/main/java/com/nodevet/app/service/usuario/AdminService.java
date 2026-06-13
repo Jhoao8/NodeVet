@@ -1,8 +1,8 @@
-package com.nodevet.app.service;
+package com.nodevet.app.service.usuario;
 
-import com.nodevet.app.dto.AdminRegistroDTO;
-import com.nodevet.app.model.Admin;
-import com.nodevet.app.model.Usuario;
+import com.nodevet.app.dto.usuario.AdminRegistroDTO;
+import com.nodevet.app.model.usuario.Admin;
+import com.nodevet.app.model.usuario.Usuario;
 import com.nodevet.app.repository.AdminRepository;
 import com.nodevet.app.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;

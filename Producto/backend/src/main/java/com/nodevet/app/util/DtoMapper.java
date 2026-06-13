@@ -1,13 +1,18 @@
 package com.nodevet.app.util;
 
-import com.nodevet.app.dto.AdminDTO;
 import com.nodevet.app.dto.EspecialidadDTO;
-import com.nodevet.app.dto.VeterinarioDTO;
-import com.nodevet.app.dto.UsuarioDTO;
-import com.nodevet.app.model.Admin;
+import com.nodevet.app.dto.agenda.BloqueHorarioDTO;
+import com.nodevet.app.dto.agenda.JornadaDTO;
+import com.nodevet.app.dto.reserva.ReservaDTO;
+import com.nodevet.app.dto.usuario.AdminDTO;
+import com.nodevet.app.dto.usuario.UsuarioDTO;
+import com.nodevet.app.dto.usuario.VeterinarioDTO;
 import com.nodevet.app.model.Especialidad;
-import com.nodevet.app.model.Usuario;
-import com.nodevet.app.model.Veterinario;
+import com.nodevet.app.model.agenda.BloqueHorario;
+import com.nodevet.app.model.usuario.Admin;
+import com.nodevet.app.model.usuario.Usuario;
+import com.nodevet.app.model.usuario.Veterinario;
+
 import java.util.stream.Collectors;
 
 public class DtoMapper {
@@ -53,8 +58,39 @@ public class DtoMapper {
                 usuario.getNombreUsr() + " " + usuario.getApellidoUsr(),
                 usuario.getCorreoUsr(),
                 usuario.getTelefonoUsr(),
-                usuario.getFotoUsr(),
                 usuario.getEstadoUsr()
+        );
+    }
+
+    public static BloqueHorarioDTO toBloqueHorarioDTO(BloqueHorario bloque) {
+        return new BloqueHorarioDTO(
+                bloque.getIdBloque(),
+                bloque.getVeterinario().getId(), 
+                bloque.getFecHrInicio(),
+                bloque.getFecHrFin()
+        );
+    }
+
+    public static JornadaDTO toJornadaDTO(com.nodevet.app.model.agenda.Jornada jornada) {
+        return new JornadaDTO(
+                jornada.getIdJornada(),
+                jornada.getVeterinario().getId(),
+                jornada.getDiaSemana(),
+                jornada.getHoraInicio(),
+                jornada.getHoraFin(),
+                jornada.getEstJornada()
+        );
+    }
+
+    public static ReservaDTO toReservaDTO(com.nodevet.app.model.reserva.Reserva reserva) {
+        return new ReservaDTO(
+                reserva.getIdReserva(),
+                reserva.getMascota().getIdMascota(), // O getId() según tu modelo
+                reserva.getVeterinario().getId(), // O getId() según tu modelo
+                reserva.getBloqueHorario().getIdBloque(),
+                reserva.getValor().getIdValor(),
+                reserva.getEstadoReserva().getIdEstReserva(),
+                reserva.getFecCreacion()
         );
     }
 }

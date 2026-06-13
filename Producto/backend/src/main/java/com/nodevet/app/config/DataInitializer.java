@@ -1,8 +1,9 @@
 package com.nodevet.app.config;
 
-import com.nodevet.app.dto.AdminRegistroDTO;
+import com.nodevet.app.dto.usuario.AdminRegistroDTO;
 import com.nodevet.app.repository.UsuarioRepository;
-import com.nodevet.app.service.AdminService;
+import com.nodevet.app.service.usuario.AdminService;
+
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

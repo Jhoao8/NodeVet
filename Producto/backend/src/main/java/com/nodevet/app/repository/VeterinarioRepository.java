@@ -1,13 +1,13 @@
 package com.nodevet.app.repository;
 
-import com.nodevet.app.model.Usuario;
-import com.nodevet.app.model.Veterinario;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+
+import com.nodevet.app.model.usuario.Usuario;
+import com.nodevet.app.model.usuario.Veterinario;
+
 import java.util.Optional;
 
-@Repository
-public interface VeterinarioRepository extends JpaRepository<Veterinario, Long> {
+public interface VeterinarioRepository extends JpaRepository<Veterinario, Integer> {
     // Busca un perfil de Veterinario a partir de una entidad Usuario
     Optional<Veterinario> findByUsuario(Usuario usuario);
 }

@@ -1,10 +1,11 @@
 package com.nodevet.app.repository;
 
-import com.nodevet.app.model.Usuario;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import com.nodevet.app.model.usuario.Usuario;
 
 import java.util.Optional;
 

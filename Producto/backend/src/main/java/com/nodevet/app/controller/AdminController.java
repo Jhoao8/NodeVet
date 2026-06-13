@@ -1,9 +1,8 @@
 package com.nodevet.app.controller;
 
-import com.nodevet.app.dto.AdminDTO;
-import com.nodevet.app.dto.AdminRegistroDTO;
-import com.nodevet.app.model.Admin;
-import com.nodevet.app.service.AdminService;
+import com.nodevet.app.dto.usuario.AdminRegistroDTO;
+import com.nodevet.app.model.usuario.Admin;
+import com.nodevet.app.service.usuario.AdminService;
 import com.nodevet.app.util.DtoMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

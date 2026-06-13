@@ -1,8 +1,8 @@
 package com.nodevet.app.controller;
 
-import com.nodevet.app.dto.VeterinarioRegistroDTO;
-import com.nodevet.app.model.Veterinario;
-import com.nodevet.app.service.VeterinarioService;
+import com.nodevet.app.dto.usuario.VeterinarioRegistroDTO;
+import com.nodevet.app.model.usuario.Veterinario;
+import com.nodevet.app.service.usuario.VeterinarioService;
 import com.nodevet.app.util.DtoMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

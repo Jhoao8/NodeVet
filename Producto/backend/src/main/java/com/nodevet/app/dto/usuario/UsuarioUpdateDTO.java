@@ -1,4 +1,4 @@
-package com.nodevet.app.dto;
+package com.nodevet.app.dto.usuario;
 
 import lombok.Data;
 
