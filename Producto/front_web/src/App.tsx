@@ -10,6 +10,7 @@ import DashboardTutor from './pages/Dashboard/DashboardTutor';
 import DashboardMedico from './pages/Dashboard/DashboardMedico';
 import DashboardAdmin from './pages/Dashboard/DashboardAdmin';
 import AgregarMascota from './pages/AgregarMascota';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import './index.css';
 
 function App() {
@@ -29,10 +30,19 @@ function App() {
         <Route path="/agendarCita" element={<SeleccionDia />} />
         <Route path="/agendarCita/formulario" element={<FormularioAgendarCita />} />
         
-        {/* Dashboard Routes */}
-        <Route path="/dashboard/tutor" element={<DashboardTutor />} />
-        <Route path="/dashboard/medico" element={<DashboardMedico />} />
-        <Route path="/dashboard/admin" element={<DashboardAdmin />} />
+        {/* Dashboard Routes - Protegidas por Rol */}
+        <Route 
+          path="/dashboard/tutor" 
+          element={<DashboardTutor />} 
+        />
+        <Route 
+          path="/dashboard/medico" 
+          element={<ProtectedRoute element={<DashboardMedico />} requiredRole="VETERINARIO" />} 
+        />
+        <Route 
+          path="/dashboard/admin" 
+          element={<ProtectedRoute element={<DashboardAdmin />} requiredRole="ADMIN" />} 
+        />
 
         {/* Mascotas */}
         <Route path="/agregar-mascota" element={<AgregarMascota />} />

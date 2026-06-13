@@ -5,6 +5,36 @@ import Logo from '../assets/images/Logo.png';
 export default function Home() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+
+  const handleDashboardClick = () => {
+    if (!token || !userRole) {
+      navigate('/login');
+      return;
+    }
+
+    switch (userRole) {
+      case 'ADMIN':
+        navigate('/dashboard/admin');
+        break;
+      case 'VETERINARIO':
+        navigate('/dashboard/medico');
+        break;
+      case 'TUTOR':
+      default:
+        navigate('/dashboard/tutor');
+    }
+  };
+
+  const handleLogout = () => {
+    console.log('Logout iniciado');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
+    console.log('localStorage limpiado');
+    // Recargar la página para actualizar el estado de autenticación
+    window.location.href = '/home';
+  };
 
   return (
     <div className="home-container">
@@ -16,7 +46,7 @@ export default function Home() {
             <h1>NodeVet</h1>
           </div>
           <nav className="nav-tabs">
-            <button className="nav-tab" onClick={() => navigate('/dashboard/tutor')}>Dashboard</button>
+            <button className="nav-tab" onClick={handleDashboardClick}>Dashboard</button>
             <button className="nav-tab">Two</button>
             <button className="nav-tab">Three</button>
             <button className="nav-tab">One</button>
@@ -28,9 +58,17 @@ export default function Home() {
               Reserva Online
             </button>
             {token ? (
-              <button className="btn-primary" onClick={() => navigate('/dashboard/tutor')}>
-                Perfil
-              </button>
+              <>
+                <span style={{ fontSize: '14px', color: '#666' }}>
+                  {userRole && `(${userRole})`}
+                </span>
+                <button className="btn-primary" onClick={handleDashboardClick}>
+                  Perfil
+                </button>
+                <button className="btn-outline" onClick={handleLogout}>
+                  Salir
+                </button>
+              </>
             ) : (
               <button className="btn-primary" onClick={() => navigate('/login')}>
                 Ingresa

@@ -34,16 +34,45 @@ export default function DashboardTutor() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userData = await api.get('/v1/usuarios/perfil');
-        setUsuario(userData.data);
+        // Verificar autenticación
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          console.warn('❌ No hay token en localStorage, redirigiendo a login');
+          navigate('/login');
+          return;
+        }
 
-        const mascotasData = await api.get('/v1/mascotas/listar');
-        setMascotas(mascotasData.data);
+        console.log('✓ DashboardTutor - Token presente');
+
+        // Decodificar token para obtener nombre del usuario
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            setUsuario({ nombre: payload.sub || 'Usuario' });
+            console.log('✓ Usuario:', payload.sub);
+          } catch (e) {
+            console.error('❌ Error al decodificar el token:', e);
+          }
+        }
+
+        // Intentar cargar mascotas
+        try {
+          const mascotasData = await api.get('/v1/mascotas/listar');
+          setMascotas(mascotasData.data);
+          console.log('✓ Mascotas cargadas:', mascotasData.data.length);
+        } catch (err: any) {
+          console.error('Error al cargar mascotas:', err);
+          if (err.response?.status === 401) {
+            throw err; // Token inválido
+          }
+        }
 
       } catch (error: any) {
-        console.error('Error al cargar datos:', error);
+        console.error('❌ Error al cargar datos:', error);
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
+          localStorage.removeItem('userRole');
           navigate('/login');
         } else {
           setError('Error al cargar los datos. Por favor, intenta de nuevo.');
@@ -72,9 +101,16 @@ export default function DashboardTutor() {
   };
 
   const handlePetCardClick = (mascota: Mascota) => {
-    // Aquí puedes navegar a la página de detalles de la mascota
     console.log('Ver detalles de:', mascota.nomMascota);
-    // navigate(`/mascota/${mascota.idMascota}`);
+  };
+
+  const handleLogout = () => {
+    console.log('Logout iniciado');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
+    console.log('✓ localStorage limpiado');
+    navigate('/login');
   };
 
   return (
@@ -83,14 +119,12 @@ export default function DashboardTutor() {
       <header className="dashboard-header">
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</div>
         <nav className="nav-tabs">
-          <button className="nav-tab">One</button>
-          <button className="nav-tab">Two</button>
-          <button className="nav-tab">Three</button>
+          <button className="nav-tab">Mis Mascotas</button>
         </nav>
         <div className="user-section">
           <span className="notification">🔔</span>
           <span className="username">{usuario.nombre}</span>
-          <button className="user-menu" onClick={() => { localStorage.removeItem('token'); navigate('/login'); }}>Cerrar Sesión</button>
+          <button className="user-menu" onClick={handleLogout}>Cerrar Sesión</button>
         </div>
       </header>
 
