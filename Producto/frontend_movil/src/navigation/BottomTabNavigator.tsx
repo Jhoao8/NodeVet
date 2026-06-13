@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MascotasScreen from '../screens/Mascotas/MascotasScreen';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileStack from './ProfileStack';
+import AgendarHoraScreen from '../screens/Agendamiento/AgendarHoraScreen';
 
 import { colors } from '@/src/theme/colors';
 
@@ -69,7 +70,7 @@ export default function BottomTabNavigator() {
       {/* Posición 4: Agenda */}
       <Tab.Screen
         name="Agenda"
-        component={HomeScreen} // Placeholder
+        component={AgendarHoraScreen} // Placeholder
         options={{
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="calendar-plus" color={color} size={28} />

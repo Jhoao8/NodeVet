@@ -58,17 +58,34 @@ export default function DetalleMascotaScreen({ route, navigation }: any) {
                         value={mascota.fecNac} 
                     />
                     <DetailItem 
-                        icon="help-circle" 
-                        label="Tipo Fecha" 
-                        value={mascota.fecNacEst === 1 ? 'Estimada' : 'Exacta'} 
+                        icon="medical" // Cambié el icono por uno médico, puedes usar "clipboard" si prefieres
+                        label="Ult. Consulta" 
+                        // Verificamos si existe el dato, si no, mostramos "Sin registro"
+                        value={mascota.ultimaConsulta ? mascota.ultimaConsulta : 'Sin registro'} 
                     />
                 </View>
+
             </View>
+
+            <View style={{ alignItems: 'center', marginVertical: 10 }}>
+                <TouchableOpacity 
+                    style={[globalStyles.primaryButton, { width: '60%' }]}
+                    onPress={() => navigation.navigate('HistorialMedico', { 
+                        idMascota: mascota.idMascota, 
+                        nombreMascota: mascota.nomMascota })}
+                >
+                    <Text style={globalStyles.primaryButtonText}>Ver historial</Text>
+                </TouchableOpacity>
+            </View>
+
+
             <View style={{position: 'absolute', top: 10, right: 10}}>
                 <TouchableOpacity style={globalStyles.iconButton} onPress={() => navigation.navigate('EditarMascota', { mascota })}>
                     <Ionicons name='pencil' color={colors.lightYellow} size={20}/>
                 </TouchableOpacity>
             </View>
+
+            
         </ScrollView>
     );
 }

@@ -155,7 +155,7 @@ const RegisterScreen = () => {
             const response = await api.post('/v1/usuarios/registro', payload);
 
             if (response.status === 200 || response.status === 201) {
-                Alert.alert(
+                showAlert(
                     '¡Éxito!', 
                     'Cuenta creada correctamente.',
                     [{ text: 'Ir a Login', onPress: () => navigation.navigate('Login') }]

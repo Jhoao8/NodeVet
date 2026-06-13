@@ -1,19 +1,51 @@
-import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { globalStyles } from '@/src/style/GlobalStyle';
 import { dashboardStyles } from '@/src/style/DashboardStyle';
 import { colors } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
+import api from '../api/axiosInstance'; // 👇 Importamos la API para traer el nombre
 
 import DashboardHeader from '../components/DashboardHeader';
 import PetSummaryList from '../components/PetSummaryList/PetSummaryList';
 
 const HomeScreen = () => {
     const navigation = useNavigation<any>();
-    const { userData } = useAuth();
+    const { userToken } = useAuth(); // Usamos el token para verificar la sesión
+    const [primerNombre, setPrimerNombre] = useState('Usuario');
+    const [loadingName, setLoadingName] = useState(true);
+
+    //Función para extraer solo el nombre del usuario
+    const obtenerNombreUsuario = async () => {
+        if (!userToken) {
+            setLoadingName(false);
+            return;
+        }
+        try {
+            const response = await api.get('/v1/usuarios/perfil');
+            const nombreCompleto = response.data.nombreCompleto;
+            
+            if (nombreCompleto) {
+                // Cortamos por el espacio y tomamos la primera palabra
+                setPrimerNombre(nombreCompleto.split(' ')[0]);
+            }
+        } catch (error) {
+            console.error("Error al obtener el nombre en el Home:", error);
+            setPrimerNombre('Usuario'); // Fallback en caso de error
+        } finally {
+            setLoadingName(false);
+        }
+    };
+
+    // Se ejecuta cada vez que el usuario vuelve a ver la pantalla de Home
+    useFocusEffect(
+        useCallback(() => {
+            obtenerNombreUsuario();
+        }, [userToken])
+    );
 
     return (
         <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
@@ -27,7 +59,11 @@ const HomeScreen = () => {
                 {/* Saludo */}
                 <View style={dashboardStyles.greetingContainer}>
                     <Text style={[dashboardStyles.greetingText, dashboardStyles.darkText]}>
-                        Bienvenido, {userData?.nombreCompleto || 'Usuario'}
+                        {loadingName ? (
+                            <ActivityIndicator size="small" color={colors.darkGreen} />
+                        ) : (
+                            `Bienvenid@, ${primerNombre}`
+                        )}
                     </Text>
                     <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider]} />
                 </View>
@@ -62,7 +98,6 @@ const HomeScreen = () => {
                     <Text style={[globalStyles.sectionSubtitle, dashboardStyles.darkSubText]}>Últ. chequeo</Text>
                 </View>
 
-                {/* El componente PetSummaryList hace todo el trabajo aquí adentro */}
                 <View style={[dashboardStyles.flatCard, { padding: 0 }]}>
                     <PetSummaryList />
                 </View>

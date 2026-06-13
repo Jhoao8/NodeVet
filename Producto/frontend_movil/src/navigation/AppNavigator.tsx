@@ -9,6 +9,13 @@ import { colors } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
 import DetalleMascotaScreen from '../screens/Mascotas/DetalleMascotaScreen';
 import EditarMascota from '../screens/Mascotas/EditarMascota';
+import HistorialMedicoScreen from '../screens/Mascotas/Historial/HistorialMedico';
+
+// ════════ IMPORTACIONES DE LAS NUEVAS PANTALLAS ════════
+import VacunaScreen from '../screens/Mascotas/Historial/VacunasScreen';
+import ConsultasScreen from '../screens/Mascotas/Historial/ConsultaScreen';
+import ExamenScreen from '../screens/Mascotas/Historial/ExamenScreen';
+import CirugiaScreen from '../screens/Mascotas/Historial/CirugiaScreen';
 
 const Stack = createStackNavigator();
 
@@ -28,6 +35,7 @@ const AppNavigator = () => {
             {userToken ? (
                 <Stack.Navigator screenOptions={{ headerShown: false }}>
                     <Stack.Screen name="Main" component={BottomTabNavigator} />
+                    
                     <Stack.Screen 
                         name="RegistroMascota" 
                         component={RegistroMascotaScreen} 
@@ -39,6 +47,7 @@ const AppNavigator = () => {
                             headerTitleStyle: { fontFamily: 'Fredoka-Bold' }
                         }} 
                     />
+                    
                     <Stack.Screen 
                         name="DetalleMascota" 
                         component={DetalleMascotaScreen} 
@@ -49,6 +58,7 @@ const AppNavigator = () => {
                             headerTintColor: colors.lightYellow 
                         }} 
                     />
+                    
                     <Stack.Screen 
                         name="EditarMascota"
                         component={EditarMascota}
@@ -59,6 +69,38 @@ const AppNavigator = () => {
                             headerTintColor: colors.lightYellow
                         }}
                     />
+                    
+                    <Stack.Screen 
+                        name="HistorialMedico"
+                        component={HistorialMedicoScreen}
+                        options={{ headerShown: false }}
+                    />
+
+                    {/* ════════ RUTAS PARA LOS HISTORIALES ESPECÍFICOS ════════ */}
+                    <Stack.Screen 
+                        name="Vacunas"
+                        component={VacunaScreen}
+                        options={{ headerShown: false }}
+                    />
+                    
+                    <Stack.Screen 
+                        name="Consultas"
+                        component={ConsultasScreen}
+                        options={{ headerShown: false }}
+                    />
+                    
+                    <Stack.Screen 
+                        name="Examenes"
+                        component={ExamenScreen}
+                        options={{ headerShown: false }}
+                    />
+                    
+                    <Stack.Screen 
+                        name="Cirugias"
+                        component={CirugiaScreen}
+                        options={{ headerShown: false }}
+                    />
+
                 </Stack.Navigator>
                 
             ) : (
