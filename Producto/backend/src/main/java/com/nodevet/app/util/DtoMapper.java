@@ -90,7 +90,8 @@ public class DtoMapper {
                 reserva.getBloqueHorario().getIdBloque(),
                 reserva.getValor().getIdValor(),
                 reserva.getEstadoReserva().getIdEstReserva(),
-                reserva.getFecCreacion()
+                reserva.getFecCreacion(),
+                null
         );
     }
 }
