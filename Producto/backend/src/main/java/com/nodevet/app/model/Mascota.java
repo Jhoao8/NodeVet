@@ -41,8 +41,8 @@ public class Mascota {
     private LocalDate fecNac;
 
     @Builder.Default
-    @Column(name = "est_fec_nac", nullable = false)
-    private Integer estFecNac = 0;
+    @Column(name = "fec_nac_est", nullable = false)
+    private Integer fecNacEst = 0;
 
     @Column(precision = 5, scale = 2)
     private BigDecimal peso;

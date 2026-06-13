@@ -1,6 +1,5 @@
 package com.nodevet.app.controller;
 
-import com.nodevet.app.dto.AdminDTO;
 import com.nodevet.app.dto.AdminRegistroDTO;
 import com.nodevet.app.model.Admin;
 import com.nodevet.app.service.AdminService;

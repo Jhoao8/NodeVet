@@ -21,7 +21,7 @@ public class MascotaRequestDTO {
 
     private LocalDate fecNac; // Para calcular la "Edad aprox"
     
-    private Integer estFecNac;
+    private Integer fecNacEst;
 
     // VALIDACIÓN ESTRICTA: El peso debe ser mayor o igual a 0
     @DecimalMin(value = "0.0", message = "El peso no puede ser un valor negativo")

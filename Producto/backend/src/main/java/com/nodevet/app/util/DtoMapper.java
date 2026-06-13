@@ -5,6 +5,7 @@ import com.nodevet.app.dto.EspecialidadDTO;
 import com.nodevet.app.dto.VeterinarioDTO;
 import com.nodevet.app.dto.agenda.BloqueHorarioDTO;
 import com.nodevet.app.dto.agenda.JornadaDTO;
+import com.nodevet.app.dto.reserva.ReservaDTO;
 import com.nodevet.app.dto.UsuarioDTO;
 import com.nodevet.app.model.Admin;
 import com.nodevet.app.model.Especialidad;
@@ -78,6 +79,19 @@ public class DtoMapper {
                 jornada.getHoraInicio(),
                 jornada.getHoraFin(),
                 jornada.getEstJornada()
+        );
+    }
+
+    public static ReservaDTO toReservaDTO(com.nodevet.app.model.reserva.Reserva reserva) {
+        return new ReservaDTO(
+                reserva.getIdReserva(),
+                reserva.getMascota().getIdMascota(),
+                reserva.getVeterinario().getId(),
+                reserva.getBloqueHorario().getIdBloque(),
+                reserva.getValor().getIdValor(),
+                reserva.getMotRes(),
+                reserva.getEstadoReserva().getIdEstReserva(),
+                reserva.getFecCreacion()
         );
     }
 }
