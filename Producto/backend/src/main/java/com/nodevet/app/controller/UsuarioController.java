@@ -1,10 +1,10 @@
 package com.nodevet.app.controller;
 
-import com.nodevet.app.dto.UsuarioRegistroDTO;
-import com.nodevet.app.dto.UsuarioUpdateDTO;
-import com.nodevet.app.dto.UsuarioDTO;
-import com.nodevet.app.model.Usuario;
-import com.nodevet.app.service.UsuarioService;
+import com.nodevet.app.dto.usuario.UsuarioDTO;
+import com.nodevet.app.dto.usuario.UsuarioRegistroDTO;
+import com.nodevet.app.dto.usuario.UsuarioUpdateDTO;
+import com.nodevet.app.model.usuario.Usuario;
+import com.nodevet.app.service.usuario.UsuarioService;
 import com.nodevet.app.util.DtoMapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

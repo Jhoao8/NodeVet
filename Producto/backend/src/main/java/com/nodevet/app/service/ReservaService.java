@@ -3,10 +3,11 @@ package com.nodevet.app.service;
 import com.nodevet.app.dto.reserva.ReservaRequestDTO;
 import com.nodevet.app.model.Mascota;
 import com.nodevet.app.model.Valor;
-import com.nodevet.app.model.Veterinario;
 import com.nodevet.app.model.agenda.BloqueHorario;
+import com.nodevet.app.model.agenda.EstadoBloque; // <-- NUEVA IMPORTACIÓN
 import com.nodevet.app.model.reserva.EstadoReserva;
 import com.nodevet.app.model.reserva.Reserva;
+import com.nodevet.app.model.usuario.Veterinario;
 import com.nodevet.app.repository.MascotaRepository;
 import com.nodevet.app.repository.ValorRepository;
 import com.nodevet.app.repository.VeterinarioRepository;
@@ -42,10 +43,25 @@ public class ReservaService {
         BloqueHorario bloque = bloqueHorarioRepository.findById(request.getIdBloque())
                 .orElseThrow(() -> new RuntimeException("Bloque horario no encontrado"));
 
+        
+        // A. Validar que el bloque realmente siga "Disponible" (ID = 1)
+        if (bloque.getEstadoBloque() == null || bloque.getEstadoBloque().getIdEstBloque() != 1) {
+            throw new RuntimeException("¡Lo sentimos! Este bloque horario ya fue ocupado por otro paciente.");
+        }
+
+        // B. Crear la referencia al estado "Ocupado" (ID = 2)
+        EstadoBloque estadoOcupado = new EstadoBloque();
+        estadoOcupado.setIdEstBloque(2);
+
+        // C. Cambiar el estado del bloque y guardarlo
+        bloque.setEstadoBloque(estadoOcupado);
+        bloqueHorarioRepository.save(bloque);
+        
+
         Valor valor = valorRepository.findById(request.getIdValor())
                 .orElseThrow(() -> new RuntimeException("Valor no encontrado"));
 
-        // 2. Asignar el estado inicial (ID 1 = Agendada)
+        // 2. Asignar el estado inicial (ID 1 = Pendiente)
         EstadoReserva estado = estadoReservaRepository.findById(1)
                 .orElseThrow(() -> new RuntimeException("Estado de reserva por defecto no configurado"));
 
@@ -55,7 +71,6 @@ public class ReservaService {
                 .veterinario(veterinario)
                 .bloqueHorario(bloque)
                 .valor(valor)
-                .motRes(request.getMotRes())
                 .estadoReserva(estado)
                 .build();
 

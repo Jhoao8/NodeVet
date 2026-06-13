@@ -14,7 +14,6 @@ public class ReservaDTO {
     private Integer idVet;
     private Integer idBloque;
     private Integer idValor;
-    private String motRes;
     private Integer idEstReserva;
     private LocalDateTime fecCreacion;
 }

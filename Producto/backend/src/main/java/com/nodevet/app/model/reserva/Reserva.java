@@ -2,8 +2,9 @@ package com.nodevet.app.model.reserva;
 
 import com.nodevet.app.model.Mascota;
 import com.nodevet.app.model.Valor;
-import com.nodevet.app.model.Veterinario;
 import com.nodevet.app.model.agenda.BloqueHorario;
+import com.nodevet.app.model.usuario.Veterinario;
+
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -40,9 +41,6 @@ public class Reserva {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_valor", nullable = false)
     private Valor valor;
-
-    @Column(name = "mot_res", length = 255, nullable = false)
-    private String motRes;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_est_res", nullable = false)

@@ -1,4 +1,4 @@
-package com.nodevet.app.model;
+package com.nodevet.app.model.usuario;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.util.HashSet;
 import java.util.Set;
+
+import com.nodevet.app.model.Especialidad;
 
 @Entity
 @Table(name = "VETERINARIO")

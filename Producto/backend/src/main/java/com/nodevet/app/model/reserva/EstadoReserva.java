@@ -17,6 +17,6 @@ public class EstadoReserva {
     @Column(name = "id_est_reserva")
     private Integer idEstReserva;
 
-    @Column(name = "nom_est_reserva", length = 15, nullable = false)
+    @Column(name = "nom_est_reserva", length = 50, nullable = false)
     private String nomEstReserva;
 }

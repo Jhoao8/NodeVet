@@ -6,7 +6,8 @@ import com.nodevet.app.dto.LoginResponseDTO;
 import com.nodevet.app.dto.ResetPasswordRequest;
 import com.nodevet.app.dto.VerifyCodeRequest; 
 import com.nodevet.app.security.JwtUtil;
-import com.nodevet.app.service.UsuarioService;
+import com.nodevet.app.service.usuario.UsuarioService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

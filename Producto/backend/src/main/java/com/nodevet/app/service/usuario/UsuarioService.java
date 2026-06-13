@@ -1,11 +1,13 @@
-package com.nodevet.app.service;
+package com.nodevet.app.service.usuario;
 
-import com.nodevet.app.dto.UsuarioRegistroDTO;
-import com.nodevet.app.dto.UsuarioUpdateDTO;
+import com.nodevet.app.dto.usuario.UsuarioRegistroDTO;
+import com.nodevet.app.dto.usuario.UsuarioUpdateDTO;
 import com.nodevet.app.model.CodigoVerificacion;
-import com.nodevet.app.model.Tutor;
-import com.nodevet.app.model.Usuario;
+import com.nodevet.app.model.usuario.Tutor;
+import com.nodevet.app.model.usuario.Usuario;
 import com.nodevet.app.repository.*;
+import com.nodevet.app.service.EmailService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

@@ -1,9 +1,9 @@
-package com.nodevet.app.service;
+package com.nodevet.app.service.usuario;
 
-import com.nodevet.app.dto.VeterinarioRegistroDTO;
+import com.nodevet.app.dto.usuario.VeterinarioRegistroDTO;
 import com.nodevet.app.model.Especialidad;
-import com.nodevet.app.model.Usuario;
-import com.nodevet.app.model.Veterinario;
+import com.nodevet.app.model.usuario.Usuario;
+import com.nodevet.app.model.usuario.Veterinario;
 import com.nodevet.app.repository.EspecialidadRepository;
 import com.nodevet.app.repository.UsuarioRepository;
 import com.nodevet.app.repository.VeterinarioRepository;
