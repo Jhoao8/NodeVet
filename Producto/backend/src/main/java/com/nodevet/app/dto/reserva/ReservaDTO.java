@@ -16,4 +16,5 @@ public class ReservaDTO {
     private Integer idValor;
     private Integer idEstReserva;
     private LocalDateTime fecCreacion;
+    private String urlPago;
 }
