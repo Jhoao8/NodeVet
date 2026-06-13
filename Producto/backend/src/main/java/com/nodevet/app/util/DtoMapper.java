@@ -8,7 +8,6 @@ import com.nodevet.app.model.Admin;
 import com.nodevet.app.model.Especialidad;
 import com.nodevet.app.model.Usuario;
 import com.nodevet.app.model.Veterinario;
-import org.springframework.stereotype.Component;
 import java.util.stream.Collectors;
 
 public class DtoMapper {
@@ -54,6 +53,7 @@ public class DtoMapper {
                 usuario.getNombreUsr() + " " + usuario.getApellidoUsr(),
                 usuario.getCorreoUsr(),
                 usuario.getTelefonoUsr(),
+                usuario.getFotoUsr(),
                 usuario.getEstadoUsr()
         );
     }

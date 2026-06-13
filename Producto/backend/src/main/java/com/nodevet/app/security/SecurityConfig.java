@@ -10,8 +10,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -56,13 +54,17 @@ public class SecurityConfig {
                 // 1. Mantenemos tus endpoints públicos
                 .requestMatchers(
                     "/api/auth/**", // Cubre login, forgot-password, etc.
-                    "/api/v1/usuarios/registro", // Registro de tutores
+                    "/api/v1/usuarios/registro", // Registro de tutores,
                     "/swagger-ui/**", 
                     "/v3/api-docs/**", 
-                    "/swagger-ui.html"
+                    "/swagger-ui.html",
+                    "/api/v1/pagos/confirmar"
                 ).permitAll()
                 
                 // 2. AÑADIMOS LAS REGLAS BASADAS EN ROLES
+                .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/perfil").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/actualizar").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/actualizar-foto").authenticated()
                 // Gestión de Usuarios (GET, PUT, DELETE): solo Admins.
                 // El POST a /registro ya está permitido arriba.
                 .requestMatchers(HttpMethod.GET, "/api/v1/usuarios", "/api/v1/usuarios/**").hasRole("ADMIN")
@@ -71,6 +73,10 @@ public class SecurityConfig {
 
                 // Mascotas: solo para Tutores
                 .requestMatchers("/api/v1/mascotas/**").hasRole("TUTOR")
+                .requestMatchers("/api/v1/reservas/**").hasRole("TUTOR")
+                // === RUTAS DE PAGOS ===
+                // El Tutor inicia el pago en la app:
+                .requestMatchers("/api/v1/pagos/iniciar").hasRole("TUTOR")
 
                 // Especialidades:
                 .requestMatchers("/api/v1/especialidades/crear").hasRole("ADMIN")

@@ -7,5 +7,6 @@ public class UsuarioUpdateDTO {
     private String nombreUsr;
     private String apellidoUsr;
     private String telefonoUsr;
-    private String fotoUsr; // Opcional
+    private String correoUsr; 
+
 }

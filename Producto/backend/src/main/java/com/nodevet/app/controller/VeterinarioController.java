@@ -1,6 +1,5 @@
 package com.nodevet.app.controller;
 
-import com.nodevet.app.dto.VeterinarioDTO;
 import com.nodevet.app.dto.VeterinarioRegistroDTO;
 import com.nodevet.app.model.Veterinario;
 import com.nodevet.app.service.VeterinarioService;

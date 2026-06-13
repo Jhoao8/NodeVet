@@ -84,11 +84,16 @@ public class UsuarioService implements UserDetailsService {
         usuario.setApellidoUsr(dto.getApellidoUsr());
         usuario.setTelefonoUsr(dto.getTelefonoUsr());
 
-        if (dto.getFotoUsr() != null) {
-            usuario.setFotoUsr(dto.getFotoUsr());
-        }
-
         return usuarioRepository.save(usuario);
+    }
+
+    @Transactional
+    public void actualizarFotoPerfil(String correoUsuario, String nuevaFotoUrl) {
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correoUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con correo: " + correoUsuario));
+
+        usuario.setFotoUsr(nuevaFotoUrl);
+        usuarioRepository.save(usuario);
     }
 
     @Transactional
