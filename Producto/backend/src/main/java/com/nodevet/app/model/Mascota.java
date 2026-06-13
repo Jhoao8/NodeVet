@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.nodevet.app.model.usuario.Tutor;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

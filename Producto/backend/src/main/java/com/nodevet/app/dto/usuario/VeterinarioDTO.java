@@ -1,9 +1,11 @@
-package com.nodevet.app.dto;
+package com.nodevet.app.dto.usuario;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.Set;
+
+import com.nodevet.app.dto.EspecialidadDTO;
 
 @Data
 @NoArgsConstructor

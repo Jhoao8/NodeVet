@@ -14,12 +14,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.lang.NonNull;
 
 import java.io.IOException;
+import lombok.RequiredArgsConstructor;
 
-@Component // Lo registramos como Bean para poder inyectar JwtUtil
+@Component
+@RequiredArgsConstructor 
 public class JwtRequestFilter extends OncePerRequestFilter {
-    private JwtUtil jwtUtil;
 
-    private UserDetailsService userDetailsService;
+    private final JwtUtil jwtUtil;
+
+    private final UserDetailsService userDetailsService;
 
     // Este método se ejecuta una vez por cada petición HTTP que llega al servidor
     @Override

@@ -2,8 +2,8 @@ package com.nodevet.app.service.agenda;
 
 import com.nodevet.app.dto.agenda.JornadaDTO;
 import com.nodevet.app.dto.agenda.JornadaRequestDTO;
-import com.nodevet.app.model.Veterinario;
 import com.nodevet.app.model.agenda.Jornada;
+import com.nodevet.app.model.usuario.Veterinario;
 import com.nodevet.app.repository.VeterinarioRepository;
 import com.nodevet.app.repository.agenda.JornadaRepository;
 import com.nodevet.app.util.DtoMapper;

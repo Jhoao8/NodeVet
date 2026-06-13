@@ -2,8 +2,8 @@ package com.nodevet.app.service;
 
 import com.nodevet.app.dto.MascotaRequestDTO;
 import com.nodevet.app.model.Mascota;
-import com.nodevet.app.model.Tutor;
-import com.nodevet.app.model.Usuario;
+import com.nodevet.app.model.usuario.Tutor;
+import com.nodevet.app.model.usuario.Usuario;
 import com.nodevet.app.repository.MascotaRepository;
 import com.nodevet.app.repository.TutorRepository;
 import com.nodevet.app.repository.UsuarioRepository;

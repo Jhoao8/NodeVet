@@ -1,4 +1,4 @@
-package com.nodevet.app.model;
+package com.nodevet.app.model.usuario;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

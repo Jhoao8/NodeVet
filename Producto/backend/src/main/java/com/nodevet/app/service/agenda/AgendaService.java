@@ -1,9 +1,10 @@
 package com.nodevet.app.service.agenda;
 
 import com.nodevet.app.dto.agenda.BloqueHorarioDTO;
-import com.nodevet.app.model.Veterinario;
 import com.nodevet.app.model.agenda.BloqueHorario;
+import com.nodevet.app.model.agenda.EstadoBloque;
 import com.nodevet.app.model.agenda.Jornada;
+import com.nodevet.app.model.usuario.Veterinario;
 import com.nodevet.app.repository.VeterinarioRepository;
 import com.nodevet.app.repository.agenda.BloqueHorarioRepository;
 import com.nodevet.app.repository.agenda.JornadaRepository;
@@ -31,7 +32,7 @@ public class AgendaService {
 
     /**
      * Genera los bloques de horario para un veterinario en un mes y año específicos.
-     * * @param idVet El ID del veterinario.
+     * @param idVet El ID del veterinario.
      * @param anio El año (ej. 2026).
      * @param mes El mes (1 a 12).
      * @param duracionMinutos La duración del bloque. Si viene null, por defecto será 30.
@@ -51,6 +52,10 @@ public class AgendaService {
         if (jornadas.isEmpty()) {
             throw new RuntimeException("El veterinario no tiene jornadas laborales configuradas.");
         }
+
+        // --- CORRECCIÓN: Preparar el estado "DISPONIBLE" (ID = 1) por defecto ---
+        EstadoBloque estadoDisponible = new EstadoBloque();
+        estadoDisponible.setIdEstBloque(1);
 
         // 4. Configurar las fechas del mes a procesar
         YearMonth anioMes = YearMonth.of(anio, mes);
@@ -88,6 +93,7 @@ public class AgendaService {
                             .veterinario(veterinario)
                             .fecHrInicio(fecHrInicioBloque)
                             .fecHrFin(fecHrFinBloque)
+                            .estadoBloque(estadoDisponible) // <-- CORRECCIÓN: Se asigna el estado aquí
                             .build();
 
                     nuevosBloques.add(bloque);

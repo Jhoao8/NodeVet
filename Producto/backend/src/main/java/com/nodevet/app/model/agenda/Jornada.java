@@ -1,12 +1,13 @@
 package com.nodevet.app.model.agenda;
 
-import com.nodevet.app.model.Veterinario;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalTime;
+
+import com.nodevet.app.model.usuario.Veterinario;
 
 @Data
 @NoArgsConstructor
