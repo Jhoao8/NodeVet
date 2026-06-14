@@ -38,6 +38,7 @@ export default function DashboardAdmin() {
   const navigate = useNavigate();
   const [admin, setAdmin] = useState({ nombre: 'Administrador' });
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [veterinarios, setVeterinarios] = useState<any[]>([]); // New state for Vets
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
   const [citas, setCitas] = useState<Cita[]>([]);
   const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
@@ -64,11 +65,39 @@ export default function DashboardAdmin() {
   const [creatingMedico, setCreatingMedico] = useState(false);
 
   // Clinic scheduling settings state
-  const [clinicSettings, setClinicSettings] = useState({
-    appointmentDurationMin: 30,
-    workingDaysPerWeek: 5,
-    weeklyWorkingHours: 40,
+  interface ClinicSettings {
+    appointmentDurationMin: number;
+    workingDaysPerWeek: number;
+    weeklyWorkingHours: number;
+  }
+
+  const [clinicSettings, setClinicSettings] = useState<ClinicSettings>(() => {
+    const saved = localStorage.getItem('clinicSettings');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Error parsing clinicSettings from local storage', e);
+      }
+    }
+    return {
+      appointmentDurationMin: 30,
+      workingDaysPerWeek: 5,
+      weeklyWorkingHours: 40,
+    };
   });
+
+  const handleSaveClinicSettings = () => {
+    localStorage.setItem('clinicSettings', JSON.stringify(clinicSettings));
+    alert('Configuración guardada correctamente');
+  };
+
+  // Calendar and Block Scheduling State
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{start: Date, end: Date} | null>(null);
+  const [selectedVetId, setSelectedVetId] = useState<string>('');
+  const [savingBlock, setSavingBlock] = useState(false);
 
   const inputStyle = {
     width: '100%',
@@ -81,7 +110,10 @@ export default function DashboardAdmin() {
 
   const handleClinicSettingsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setClinicSettings(prev => ({ ...prev, [name]: parseInt(value) || 0 }));
+    setClinicSettings(prev => ({ 
+      ...prev, 
+      [name as keyof ClinicSettings]: parseInt(value, 10) || 0 
+    }));
   };
 
   // Calculate daily blocks
@@ -92,6 +124,57 @@ export default function DashboardAdmin() {
     const dailyWorkingHours = weeklyWorkingHours / workingDaysPerWeek;
     const dailyWorkingMinutes = dailyWorkingHours * 60;
     return Math.floor(dailyWorkingMinutes / appointmentDurationMin);
+  };
+
+  const generateTimeSlots = (dateStr: string) => {
+    if (!dateStr) return [];
+    const { appointmentDurationMin, workingDaysPerWeek, weeklyWorkingHours } = clinicSettings;
+    if (workingDaysPerWeek <= 0 || appointmentDurationMin <= 0) return [];
+    
+    const dailyWorkingHours = weeklyWorkingHours / workingDaysPerWeek;
+    const slots = [];
+    
+    const [year, month, day] = dateStr.split('-');
+    let current = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10), 9, 0, 0); // Start at 09:00
+    
+    const endOfDay = new Date(current.getTime() + dailyWorkingHours * 60 * 60 * 1000);
+
+    while (current < endOfDay) {
+        const next = new Date(current.getTime() + appointmentDurationMin * 60000);
+        if (next > endOfDay) break;
+        slots.push({ start: current, end: next });
+        current = next;
+    }
+    return slots;
+  };
+
+  const handleAssignBlock = async () => {
+    if (!selectedSlot || !selectedVetId) return;
+    setSavingBlock(true);
+    try {
+        // Formatear para LocalDateTime de Java (ej: 2026-06-14T09:00:00)
+        const formatForJava = (date: Date) => {
+          const tzOffset = date.getTimezoneOffset() * 60000; // offset in milliseconds
+          const localISOTime = (new Date(date.getTime() - tzOffset)).toISOString().slice(0, 19);
+          return localISOTime;
+        };
+
+        const payload = {
+            fecHrInicio: formatForJava(selectedSlot.start),
+            fecHrFin: formatForJava(selectedSlot.end),
+            idVet: parseInt(selectedVetId, 10),
+            idEstBloque: 1
+        };
+        await api.post('/v1/bloques-horarios', payload);
+        alert('✓ Bloque asignado exitosamente al veterinario');
+        setShowAssignModal(false);
+        setSelectedVetId('');
+    } catch (err: any) {
+        console.error('Error al asignar bloque:', err);
+        alert('Error al asignar bloque: ' + (err.response?.data?.error || err.message));
+    } finally {
+        setSavingBlock(false);
+    }
   };
 
   useEffect(() => {
@@ -173,6 +256,14 @@ export default function DashboardAdmin() {
           console.log('Especialidades cargadas:', especialidadesData.data);
         } catch (err) {
           console.log('Endpoint /v1/especialidades no disponible');
+        }
+
+        try {
+          const veterinariosData = await api.get('/v1/veterinarios');
+          setVeterinarios(veterinariosData.data);
+          console.log('Veterinarios cargados:', veterinariosData.data);
+        } catch (err) {
+          console.log('Endpoint /v1/veterinarios no disponible');
         }
 
       } catch (error: any) {
@@ -720,6 +811,22 @@ export default function DashboardAdmin() {
                             style={inputStyle} 
                           />
                         </div>
+                        <button
+                          onClick={handleSaveClinicSettings}
+                          style={{
+                            marginTop: '10px',
+                            padding: '10px 15px',
+                            backgroundColor: '#2196F3',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold',
+                            width: '100%'
+                          }}
+                        >
+                          💾 Guardar Configuración
+                        </button>
                       </div>
                     </div>
 
@@ -745,6 +852,129 @@ export default function DashboardAdmin() {
                       </p>
                     </div>
                   </div>
+
+                  <div style={{ 
+                    backgroundColor: '#fff', 
+                    padding: '20px', 
+                    borderRadius: '8px',
+                    border: '1px solid #e0e0e0',
+                    marginTop: '20px'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                      <h3 style={{ margin: 0 }}>Calendario de Bloques</h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <label style={{ fontWeight: 'bold' }}>Fecha:</label>
+                        <input 
+                          type="date" 
+                          value={selectedDate} 
+                          onChange={(e) => setSelectedDate(e.target.value)} 
+                          style={{ padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '15px' }}>
+                      {generateTimeSlots(selectedDate).map((slot, index) => {
+                        const timeString = `${slot.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - ${slot.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                        return (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              setSelectedSlot(slot);
+                              setShowAssignModal(true);
+                            }}
+                            style={{ 
+                              padding: '15px 10px', 
+                              borderRadius: '6px', 
+                              border: '1px solid #4CAF50', 
+                              backgroundColor: '#e8f5e9', 
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              color: '#2e7d32',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#c8e6c9'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#e8f5e9'}
+                          >
+                            🕒 {timeString}
+                          </button>
+                        )
+                      })}
+                      {generateTimeSlots(selectedDate).length === 0 && (
+                        <p style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#666' }}>No hay bloques configurados para mostrar.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Modal de Asignación */}
+                  {showAssignModal && selectedSlot && (
+                    <div style={{ 
+                      position: 'fixed', 
+                      top: 0, left: 0, right: 0, bottom: 0, 
+                      backgroundColor: 'rgba(0,0,0,0.5)', 
+                      display: 'flex', 
+                      justifyContent: 'center', 
+                      alignItems: 'center',
+                      zIndex: 1000
+                    }}>
+                      <div style={{ backgroundColor: 'white', padding: '25px', borderRadius: '8px', width: '400px', maxWidth: '90%' }}>
+                        <h3 style={{ marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '10px' }}>Asignar Veterinario</h3>
+                        
+                        <div style={{ margin: '20px 0', padding: '15px', backgroundColor: '#f5f5f5', borderRadius: '6px' }}>
+                          <p style={{ margin: '0 0 10px 0' }}><strong>📅 Fecha:</strong> {selectedSlot.start.toLocaleDateString()}</p>
+                          <p style={{ margin: 0 }}><strong>⏰ Horario:</strong> {selectedSlot.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {selectedSlot.end.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                        </div>
+                        
+                        <div style={{ marginBottom: '20px' }}>
+                          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>Veterinario:</label>
+                          <select 
+                            value={selectedVetId} 
+                            onChange={(e) => setSelectedVetId(e.target.value)}
+                            style={inputStyle}
+                          >
+                            <option value="">-- Seleccione un Veterinario --</option>
+                            {veterinarios
+                              .map((vet: any) => {
+                                const id = vet.idVet;
+                                const nombre = vet.nombre || 'Desconocido';
+                                const apellido = vet.apellido ? ` ${vet.apellido}` : '';
+                                return (
+                                  <option key={id} value={id}>{nombre}{apellido} - RUN: {vet.runVet}-{vet.dvVet}</option>
+                                );
+                              })
+                            }
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '25px' }}>
+                          <button 
+                            onClick={() => {
+                              setShowAssignModal(false);
+                              setSelectedVetId('');
+                            }} 
+                            style={{ padding: '10px 15px', backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                          >
+                            Cancelar
+                          </button>
+                          <button 
+                            onClick={handleAssignBlock}
+                            disabled={!selectedVetId || savingBlock}
+                            style={{ 
+                              backgroundColor: '#4CAF50', 
+                              color: 'white', 
+                              padding: '10px 15px', 
+                              border: 'none', 
+                              borderRadius: '4px', 
+                              cursor: (!selectedVetId || savingBlock) ? 'not-allowed' : 'pointer',
+                              opacity: (!selectedVetId || savingBlock) ? 0.6 : 1
+                            }}
+                          >
+                            {savingBlock ? 'Guardando...' : 'Guardar Asignación'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </section>
               )}
             </>
