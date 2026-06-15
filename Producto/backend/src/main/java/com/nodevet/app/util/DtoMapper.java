@@ -58,6 +58,7 @@ public class DtoMapper {
                 usuario.getNombreUsr() + " " + usuario.getApellidoUsr(),
                 usuario.getCorreoUsr(),
                 usuario.getTelefonoUsr(),
+                usuario.getFotoUsr(),
                 usuario.getEstadoUsr()
         );
     }

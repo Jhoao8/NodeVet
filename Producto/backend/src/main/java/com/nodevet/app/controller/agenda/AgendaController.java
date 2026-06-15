@@ -1,6 +1,7 @@
 package com.nodevet.app.controller.agenda;
 
 import com.nodevet.app.dto.agenda.BloqueHorarioDTO;
+import com.nodevet.app.dto.agenda.VetDispDTO;
 import com.nodevet.app.model.agenda.BloqueHorario;
 import com.nodevet.app.service.agenda.AgendaService;
 import com.nodevet.app.util.DtoMapper;
@@ -59,4 +60,21 @@ public class AgendaController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al obtener disponibilidad: " + e.getMessage());
         }
     }
+
+    /**
+     * Endpoint para consultar la disponibilidad de TODOS los veterinarios en una FECHA específica.
+     * URL de ejemplo: GET http://localhost:8080/api/v1/agendas/disponibles-por-fecha?fecha=2026-06-15
+     */
+    @GetMapping("/disponibles-por-fecha")
+    public ResponseEntity<?> obtenerDisponiblesPorFecha(@RequestParam String fecha) {
+        try {
+            List<com.nodevet.app.dto.agenda.VetDispDTO> disponibles = agendaService.obtenerDisponibilidadDiaria(fecha);
+            return ResponseEntity.ok(disponibles);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al obtener disponibilidad diaria: " + e.getMessage());
+        }
+    }
+
+
 }

@@ -21,6 +21,10 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.nodevet.app.dto.agenda.VetDispDTO;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class AgendaService {
@@ -124,5 +128,61 @@ public class AgendaService {
         return bloquesLibres.stream()
                 .map(DtoMapper::toBloqueHorarioDTO)
                 .toList();
+    }
+
+    /**
+     * Obtiene todos los veterinarios con sus respectivos bloques disponibles para una fecha específica.
+     * Filtra para no mostrar bloques que pertenezcan al pasado si se consulta el día de hoy.
+     */
+    @Transactional(readOnly = true)
+    public List<VetDispDTO> obtenerDisponibilidadDiaria(String fecha) {
+        // 1. Parsear la fecha recibida (ej: "2026-06-15") y definir el rango del día completo
+        LocalDate localDate = LocalDate.parse(fecha);
+        LocalDateTime inicioDia = localDate.atStartOfDay();
+        LocalDateTime finDia = localDate.atTime(LocalTime.MAX);
+        LocalDateTime ahora = LocalDateTime.now();
+
+        // 2. Consultar todos los bloques disponibles en ese rango horario que sean futuros
+        List<BloqueHorario> bloquesDisponibles = bloqueHorarioRepository.findDisponiblesPorFecha(inicioDia, finDia, ahora);
+
+        // 3. Agrupar los bloques por Veterinario usando Streams
+        Map<Veterinario, List<BloqueHorario>> bloquesPorVeterinario = bloquesDisponibles.stream()
+                .collect(Collectors.groupingBy(BloqueHorario::getVeterinario));
+
+        // 4. Transformar el mapa en la lista de DTOs requerida
+        List<VetDispDTO> resultado = new ArrayList<>();
+
+        for (Map.Entry<Veterinario, List<BloqueHorario>> entry : bloquesPorVeterinario.entrySet()) {
+            Veterinario vet = entry.getKey();
+            List<BloqueHorario> bloquesVet = entry.getValue();
+
+            // Construir el nombre completo desde la entidad Usuario relacionada
+            String nombreCompleto = "Dr(a). " + vet.getUsuario().getNombreUsr() + " " + vet.getUsuario().getApellidoUsr();
+
+            // Obtener la especialidad principal (Asumiendo que tienes mapeada la relación ManyToMany en tu entidad Veterinario)
+            // Si no la tienes mapeada en el modelo de Java, puedes dejar un valor por defecto o consultarla
+            String especialidad = "Veterinario General";
+            // Ejemplo de uso si tienes mapeado 'getEspecialidades()' en tu entidad Veterinario:
+            // if (vet.getEspecialidades() != null && !vet.getEspecialidades().isEmpty()) {
+            //     especialidad = vet.getEspecialidades().get(0).getNomEsp();
+            // }
+
+            // Mapear la lista de entidades BloqueHorario a BloqueHorarioDTO
+            List<BloqueHorarioDTO> bloquesDTO = bloquesVet.stream()
+                    .map(DtoMapper::toBloqueHorarioDTO)
+                    .toList();
+
+            // Construir el DTO agrupador
+            VetDispDTO dto = new VetDispDTO(
+                    vet.getId(),
+                    nombreCompleto,
+                    especialidad,
+                    bloquesDTO
+            );
+
+            resultado.add(dto);
+        }
+
+        return resultado;
     }
 }

@@ -21,20 +21,19 @@ import java.util.TreeMap;
 @RequiredArgsConstructor
 public class FlowService {
 
-    // Inyectamos las variables de tu application.properties / .env
-    @Value("${flow.api.url}")
+    @Value("${flow.base-url}")
     private String flowApiUrl;
 
-    @Value("${flow.api.key}")
+    @Value("${flow.api-key}")
     private String flowApiKey;
 
-    @Value("${flow.api.secret}")
-    private String flowApiSecret;
+    @Value("${flow.secret-key}")
+    private String flowSecretKey;
 
-    @Value("${flow.url.return}")
+    @Value("${flow.return-url}")
     private String flowUrlReturn;
 
-    @Value("${flow.url.confirm}")
+    @Value("${flow.confirm-url}")
     private String flowUrlConfirm;
 
     private final RestTemplate restTemplate;
@@ -63,8 +62,8 @@ public class FlowService {
             dataParaFirmar.append(entry.getKey()).append(entry.getValue());
         }
 
-        // 3. Generar la firma criptográfica
-        String firma = generarFirmaHmacSha256(dataParaFirmar.toString(), flowApiSecret);
+        // 3. Generar la firma criptográfica (Se usa flowSecretKey)
+        String firma = generarFirmaHmacSha256(dataParaFirmar.toString(), flowSecretKey);
         parametros.put("s", firma); // Agregamos la firma al paquete
 
         // 4. Preparar la petición HTTP (Form URL Encoded, como lo exige Flow)
@@ -84,7 +83,7 @@ public class FlowService {
                 // Flow nos devuelve una URL base y un Token. Hay que juntarlos.
                 String url = (String) response.getBody().get("url");
                 String token = (String) response.getBody().get("token");
-                return url + "?token=" + token; // ¡Esta es la URL que Catalina usará en el frontend!
+                return url + "?token=" + token; // URL final para el frontend
             } else {
                 throw new RuntimeException("Error al comunicarse con Flow. Código: " + response.getStatusCode());
             }
@@ -110,13 +109,13 @@ public class FlowService {
             dataParaFirmar.append(entry.getKey()).append(entry.getValue());
         }
         
-        // CORRECCIÓN: Llamamos a generarFirmaHmacSha256
-        String firma = generarFirmaHmacSha256(dataParaFirmar.toString(), flowApiSecret);
+        // 3. Llamamos a generar firma (Se usa flowSecretKey)
+        String firma = generarFirmaHmacSha256(dataParaFirmar.toString(), flowSecretKey);
 
-        // 3. Armar la URL de consulta
+        // 4. Armar la URL de consulta
         String url = flowApiUrl + "/payment/getStatus?apiKey=" + flowApiKey + "&token=" + token + "&s=" + firma;
 
-        // 4. Preguntarle a Flow
+        // 5. Preguntarle a Flow
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {

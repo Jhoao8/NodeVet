@@ -2,14 +2,14 @@ package com.nodevet.app.service;
 
 import com.nodevet.app.dto.flow.PagoInitRequestDTO;
 import com.nodevet.app.dto.flow.PagoInitResponseDTO;
-import com.nodevet.app.model.flow.EstadoPago;
-import com.nodevet.app.model.flow.Pago;
-import com.nodevet.app.model.flow.Reserva;
+import com.nodevet.app.model.pago.EstadoPago;
+import com.nodevet.app.model.pago.Pago;
+import com.nodevet.app.model.reserva.Reserva;
 // Importante: Asegúrate de tener estos repositorios creados (Reserva y EstadoPago)
 // Si no los tienes, puedes crearlos rápidamente igual que hiciste con PagoRepository
-import com.nodevet.app.repository.flow.EstadoPagoRepository;
-import com.nodevet.app.repository.flow.ReservaRepository;
-import com.nodevet.app.repository.flow.PagoRepository;
+import com.nodevet.app.repository.pago.EstadoPagoRepository;
+import com.nodevet.app.repository.reserva.ReservaRepository;
+import com.nodevet.app.repository.pago.PagoRepository;
 import com.nodevet.app.util.FlowSignatureUtil;
 
 import org.springframework.beans.factory.annotation.Autowired;
