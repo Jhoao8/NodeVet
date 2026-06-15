@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 
 // Importación de tu sistema de diseño completo
 import { globalStyles } from '../../style/GlobalStyle';
@@ -16,17 +17,18 @@ import axios from 'axios';
 import { useCustomAlert } from '../../components/CustomAlert';
 
 interface UserProfile {
-    nombreUsr: string;
-    apellidoUsr: string;
+    nombreCompleto: string;
     correoUsr: string;
     telefonoUsr: string;
-    fotoPerfil?: string;
+    fotoUsr?: string; 
 }
 
 export default function ProfileScreen({ navigation }: any) {
     const { userToken, signOut } = useAuth();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false); // Nuevo estado para la foto
+    
     const { showAlert, AlertComponent } = useCustomAlert();
 
     const fetchUserProfile = async () => {
@@ -38,12 +40,9 @@ export default function ProfileScreen({ navigation }: any) {
         try {
             setLoading(true);
             const response = await api.get('/v1/usuarios/perfil');
-            // 👇 AGREGA ESTA LÍNEA PARA ESPIAR LOS DATOS 👇
-            console.log("DATOS REALES DEL BACKEND:", response.data);
             setUser(response.data);
         } catch (error: any) {
             if (axios.isAxiosError(error) && error.response?.status === 401) {
-                console.log("Sesión terminada o token expirado.");
                 return;
             }
             console.error("Error al obtener perfil:", error);
@@ -58,23 +57,103 @@ export default function ProfileScreen({ navigation }: any) {
         }, [userToken])
     );
 
+    // ════════ LÓGICA DE FOTO DE PERFIL ════════
+    const subirImagenCloudinary = async (uri: string) => {
+        const data = new FormData();
+        data.append('file', {
+            uri: uri,
+            type: 'image/jpeg',
+            name: 'foto_perfil.jpg',
+        } as any);
+        data.append('upload_preset', 'mascotas_preset'); // Sugerencia: Cambia a 'usuarios_preset' si lo creas luego
+
+        try {
+            const response = await fetch('https://api.cloudinary.com/v1_1/dkryb2g4m/image/upload', {
+                method: 'POST',
+                body: data,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            const result = await response.json();
+            return result.secure_url ? result.secure_url : null;
+        } catch (error) {
+            console.error("Error de conexión con Cloudinary:", error);
+            return null;
+        }
+    };
+
+    const confirmarYSubirFoto = async (uri: string) => {
+        setIsUploadingPhoto(true);
+        try {
+            const imageUrl = await subirImagenCloudinary(uri);
+            if (!imageUrl) {
+                showAlert('Error', 'No se pudo subir la imagen. Intenta nuevamente.');
+                return;
+            }
+
+            // Aquí actualizamos solo la foto. 
+            // Nota: Si tu backend requiere todos los datos en /actualizar, 
+            // asegúrate de tener un endpoint dedicado como /actualizar-foto o mandar el payload completo.
+            await api.put('/v1/usuarios/actualizar-foto', { fotoUsr: imageUrl });
+            
+            // Actualizamos la UI localmente al instante
+            setUser(prev => prev ? { ...prev, fotoUsr: imageUrl } : null);
+            showAlert('¡Éxito!', 'Tu foto de perfil ha sido actualizada.');
+
+        } catch (error) {
+            console.error("Error al actualizar la foto en backend:", error);
+            showAlert('Error', 'No se pudo guardar la foto en tu perfil.');
+        } finally {
+            setIsUploadingPhoto(false);
+        }
+    };
+
+    const handlePhotoPress = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.5,
+        });
+
+        if (!result.canceled) {
+            const selectedUri = result.assets[0].uri;
+            
+            // Lanzamos el modal de confirmación antes de subir
+            showAlert(
+                'Actualizar foto',
+                '¿Deseas establecer esta imagen como tu nueva foto de perfil?',
+                [
+                    {
+                        text: 'Cancelar',
+                        onPress: () => {},
+                        style: 'cancel',
+                    },
+                    {
+                        text: 'Sí, actualizar',
+                        onPress: () => confirmarYSubirFoto(selectedUri),
+                        style: 'default',
+                    },
+                ]
+            );
+        }
+    };
+    // ══════════════════════════════════════════
+
     const handleLogout = () => {
         showAlert(
             'Cerrar Sesión',
             '¿Estás seguro de que quieres cerrar sesión?',
             [
-                {
-                    text: 'Cancelar',
-                    onPress: () => {},
-                    style: 'cancel',
-                },
+                { text: 'Cancelar', onPress: () => {}, style: 'cancel' },
                 {
                     text: 'Sí, cerrar sesión',
                     onPress: async () => {
                         try {
                             await signOut();
                         } catch (error) {
-                            console.error('Error al cerrar sesión:', error);
                             showAlert('Error', 'Error al cerrar sesión. Por favor intenta de nuevo.');
                         }
                     },
@@ -88,20 +167,14 @@ export default function ProfileScreen({ navigation }: any) {
         <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
             <DashboardHeader />
 
-            <ScrollView 
-                contentContainerStyle={globalStyles.scrollContainer}
-                showsVerticalScrollIndicator={false}
-            >
+            <ScrollView contentContainerStyle={globalStyles.scrollContainer} showsVerticalScrollIndicator={false}>
                 {/* ════════ TÍTULO DE SECCIÓN ════════ */}
                 <View style={dashboardStyles.greetingContainer}>
                     <View style={styles.titleRow}>
                         <Text style={[dashboardStyles.greetingText, dashboardStyles.darkText]}>
                             Mi perfil
                         </Text>
-                        <TouchableOpacity 
-                            style={styles.editIcon}
-                            onPress={() => navigation.navigate('EditProfile')}
-                        >
+                        <TouchableOpacity style={styles.editIcon} onPress={() => navigation.navigate('EditProfile')}>
                             <Ionicons name="pencil" size={20} color={colors.darkGreen} />
                         </TouchableOpacity>
                     </View>
@@ -114,52 +187,54 @@ export default function ProfileScreen({ navigation }: any) {
                         <ActivityIndicator size="large" color={colors.darkGreen} />
                     </View>
                 ) : (
-                    // Quitamos el ": user ?" para que la sección siempre se vea, sí o sí
-                    <View style={styles.profileInfoContainer}>
-                        
-                        {/* Foto de perfil (Muestra la de Cloudinary si existe, sino un ícono) */}
-                        <TouchableOpacity style={styles.imagePlaceholder} activeOpacity={0.8}>
-                            {user?.fotoPerfil ? (
-                                <Image 
-                                    source={{ uri: user.fotoPerfil }}
-                                />
-                            ) : (
-                                <Ionicons name="camera-outline" size={50} color={colors.darkGreen} style={{ opacity: 0.6 }} />
-                            )}
-                        </TouchableOpacity>
+                    <View style={styles.profileMainContainer}>
+                        <View style={styles.topRowInfoContainer}>
+                            
+                            {/* FOTO DE PERFIL (Ahora es editable) */}
+                            <TouchableOpacity 
+                                style={styles.imagePlaceholder} 
+                                activeOpacity={0.8}
+                                onPress={handlePhotoPress}
+                                disabled={isUploadingPhoto}
+                            >
+                                {isUploadingPhoto ? (
+                                    <ActivityIndicator size="large" color={colors.darkGreen} />
+                                ) : user?.fotoUsr ? (
+                                    <>
+                                        <Image source={{ uri: user.fotoUsr }} style={styles.profileImage} />
+                                        {/* Pequeño icono flotante para indicar que es editable */}
+                                        <View style={styles.editPhotoBadge}>
+                                            <Ionicons name="camera" size={14} color="white" />
+                                        </View>
+                                    </>
+                                ) : (
+                                    <Ionicons name="camera-outline" size={50} color={colors.darkGreen} style={{ opacity: 0.6 }} />
+                                )}
+                            </TouchableOpacity>
 
-                        {/* Datos del usuario */}
-                        <View style={styles.infoTextContainer}>
-                            <View style={styles.infoBlock}>
-                                <Text style={styles.labelText}>Nombre:</Text>
-                                {/* Recuadro para el Nombre */}
-                                <View style={styles.valueBox}>
-                                    <Text style={styles.valueText}>
-                                        {user?.nombreUsr || user?.apellidoUsr 
-                                            ? `${user?.nombreUsr || ''} ${user?.apellidoUsr || ''}`.trim() 
-                                            : 'No registrado'}
-                                    </Text>
+                            {/* Datos Laterales */}
+                            <View style={styles.sideInfoContainer}>
+                                <View style={styles.infoBlock}>
+                                    <Text style={styles.labelText}>Nombre:</Text>
+                                    <View style={styles.valueBox}>
+                                        <Text style={styles.valueText}>{user?.nombreCompleto || 'No registrado'}</Text>
+                                    </View>
+                                </View>
+                                
+                                <View style={styles.infoBlock}>
+                                    <Text style={styles.labelText}>Teléfono:</Text>
+                                    <View style={styles.valueBox}>
+                                        <Text style={styles.valueText}>{user?.telefonoUsr || 'No registrado'}</Text>
+                                    </View>
                                 </View>
                             </View>
-                            
-                            <View style={styles.infoBlock}>
-                                <Text style={styles.labelText}>Email:</Text>
-                                {/* Recuadro para el Email */}
-                                <View style={styles.valueBox}>
-                                    <Text style={styles.valueText}>
-                                        {user?.correoUsr || 'No registrado'}
-                                    </Text>
-                                </View>
-                            </View>
-                            
-                            <View style={styles.infoBlock}>
-                                <Text style={styles.labelText}>Teléfono:</Text>
-                                {/* Recuadro para el Teléfono */}
-                                <View style={styles.valueBox}>
-                                    <Text style={styles.valueText}>
-                                        {user?.telefonoUsr || 'No registrado'}
-                                    </Text>
-                                </View>
+                        </View>
+
+                        {/* FILA INFERIOR: Email */}
+                        <View style={styles.fullWidthInfoBlock}>
+                            <Text style={styles.labelText}>Email:</Text>
+                            <View style={styles.valueBox}>
+                                <Text style={styles.valueText}>{user?.correoUsr || 'No registrado'}</Text>
                             </View>
                         </View>
                     </View>
@@ -172,21 +247,16 @@ export default function ProfileScreen({ navigation }: any) {
                     <TouchableOpacity style={styles.menuButton}>
                         <Text style={styles.menuButtonText}>Cambiar contraseña</Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity style={styles.menuButton}>
                         <Text style={styles.menuButtonText}>Configurar recordatorios</Text>
                     </TouchableOpacity>
-
                     <TouchableOpacity style={styles.menuButton}>
                         <Text style={styles.menuButtonText}>Eliminar cuenta</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* ════════ BOTÓN CERRAR SESIÓN ════════ */}
-                <TouchableOpacity 
-                    style={styles.logoutButton}
-                    onPress={handleLogout}
-                >
+                <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
                 </TouchableOpacity>
 
@@ -198,93 +268,44 @@ export default function ProfileScreen({ navigation }: any) {
 
 // ════════ ESTILOS LOCALES ════════
 const styles = StyleSheet.create({
-    titleRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: spacing.sm,
-    },
-    editIcon: {
-        padding: spacing.xs,
-    },
-    valueBox: {
-        backgroundColor: colors.white,
-        borderWidth: 1,
-        borderColor: colors.lightGreen,
-        borderRadius: 8,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: 8,
-    },
+    titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
+    editIcon: { padding: spacing.xs },
+    
+    profileMainContainer: { flexDirection: 'column', marginBottom: spacing.lg, paddingHorizontal: spacing.sm },
+    topRowInfoContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm },
+    sideInfoContainer: { flex: 1, justifyContent: 'center' },
+    fullWidthInfoBlock: { width: '100%' },
 
-    profileInfoContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: spacing.lg,
-        paddingHorizontal: spacing.sm,
+    valueBox: {
+        backgroundColor: colors.white, borderWidth: 1, borderColor: colors.lightGreen,
+        borderRadius: 8, paddingHorizontal: spacing.sm, paddingVertical: 8,
     },
     imagePlaceholder: {
-        width: 120,
-        height: 120,
-        borderWidth: 1.5,
-        borderColor: colors.darkDGreen,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: spacing.lg,
-        overflow: 'hidden', // <- Agrega esto para que la imagen no se salga del cuadro
+        width: 120, height: 120, borderWidth: 1.5, borderColor: colors.darkDGreen,
+        justifyContent: 'center', alignItems: 'center', marginRight: spacing.lg,
+        overflow: 'hidden', position: 'relative', borderRadius: 60, // Circular para que se vea como foto de perfil moderna (opcional, puedes quitar el borderRadius si la prefieres cuadrada)
     },
-    // Agrega este nuevo estilo para la foto
-    profileImage: {
-        width: '100%',
-        height: '100%',
-        resizeMode: 'cover',
+    profileImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+    editPhotoBadge: {
+        position: 'absolute', bottom: 5, right: 15, backgroundColor: colors.darkDGreen,
+        padding: 6, borderRadius: 15, borderWidth: 2, borderColor: colors.white,
     },
-    infoTextContainer: {
-        flex: 1,
-        justifyContent: 'space-between',
-    },
-    infoBlock: {
-        marginBottom: spacing.sm,
-    },
-    labelText: {
-        fontFamily: typography.family.main.semiBold,
-        fontSize: typography.size.xs,
-        color: colors.darkGreen,
-    },
-    valueText: {
-        fontFamily: typography.family.main.bold,
-        fontSize: typography.size.md,
-        color: colors.darkDGreen,
-    },
+    
+    infoBlock: { marginBottom: spacing.sm },
+    labelText: { fontFamily: typography.family.main.semiBold, fontSize: typography.size.xs, color: colors.darkGreen },
+    valueText: { fontFamily: typography.family.main.bold, fontSize: typography.size.md, color: colors.darkDGreen },
 
-    menuContainer: {
-        gap: spacing.md, 
-    },
+    menuContainer: { gap: spacing.md },
     menuButton: {
-        borderWidth: 1.5,
-        borderColor: colors.darkDGreen,
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        alignItems: 'center',
+        borderWidth: 1.5, borderColor: colors.darkDGreen, paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg, alignItems: 'center',
     },
-    menuButtonText: {
-        fontFamily: typography.family.main.medium,
-        fontSize: typography.size.md,
-        color: colors.darkDGreen,
-    },
+    menuButtonText: { fontFamily: typography.family.main.medium, fontSize: typography.size.md, color: colors.darkDGreen },
 
     logoutButton: {
-        borderWidth: 1.5,
-        borderColor: colors.darkDGreen,
-        paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg,
-        borderRadius: 8,
-        alignSelf: 'flex-start',
-        marginTop: spacing.lg,
-        marginBottom: spacing.xl,
+        borderWidth: 1.5, borderColor: colors.darkDGreen, paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg, borderRadius: 8, alignSelf: 'flex-start',
+        marginTop: spacing.lg, marginBottom: spacing.xl,
     },
-    logoutButtonText: {
-        fontFamily: typography.family.main.bold,
-        fontSize: typography.size.sm,
-        color: colors.darkDGreen,
-    },
+    logoutButtonText: { fontFamily: typography.family.main.bold, fontSize: typography.size.sm, color: colors.darkDGreen },
 });

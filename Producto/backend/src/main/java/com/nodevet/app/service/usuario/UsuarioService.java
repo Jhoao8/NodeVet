@@ -86,11 +86,16 @@ public class UsuarioService implements UserDetailsService {
         usuario.setApellidoUsr(dto.getApellidoUsr());
         usuario.setTelefonoUsr(dto.getTelefonoUsr());
 
-        if (dto.getFotoUsr() != null) {
-            usuario.setFotoUsr(dto.getFotoUsr());
-        }
-
         return usuarioRepository.save(usuario);
+    }
+
+    @Transactional
+    public void actualizarFotoPerfil(String correoUsuario, String nuevaFotoUrl) {
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correoUsuario)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con correo: " + correoUsuario));
+
+        usuario.setFotoUsr(nuevaFotoUrl);
+        usuarioRepository.save(usuario);
     }
 
     @Transactional
@@ -195,5 +200,25 @@ public class UsuarioService implements UserDetailsService {
                 usuario.getPassUsr(),
                 authorities // Usamos la lista de roles dinámicos
         );
+    }
+
+    // Añade esto a tu UsuarioService.java
+
+    @Transactional(readOnly = true)
+    public Optional<Usuario> obtenerUsuarioPorCorreo(String correo) {
+        return usuarioRepository.findByCorreoUsr(correo);
+    }
+
+    @Transactional
+    public void actualizarUsuarioPorCorreo(String correo, UsuarioUpdateDTO dto) {
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        usuario.setNombreUsr(dto.getNombreUsr());
+        usuario.setApellidoUsr(dto.getApellidoUsr());
+        usuario.setTelefonoUsr(dto.getTelefonoUsr());
+        usuario.setCorreoUsr(dto.getCorreoUsr()); 
+
+        usuarioRepository.save(usuario);
     }
 }
