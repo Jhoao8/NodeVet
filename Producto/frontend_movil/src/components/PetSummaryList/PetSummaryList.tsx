@@ -2,33 +2,44 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import axios from 'axios';
 
 import PetSummaryCard from '../PetSummaryCard/PetSummaryCard'; 
 import { styles } from './PetSummaryList.styles';
 import { dashboardStyles } from '../../style/DashboardStyle';
 import { colors } from '../../theme/colors';
 import api from '../../api/axiosInstance';
+import { useAuth } from '../../context/AuthContext';
 
 const PetSummaryList = () => {
+    const { userToken } = useAuth();
     const [mascotas, setMascotas] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useFocusEffect(
         useCallback(() => {
+            if (!userToken) {
+                setMascotas([]);
+                setLoading(false);
+                return;
+            }
+
             const loadMascotas = async () => {
-                setLoading(true);
                 try {
+                    setLoading(true);
                     const response = await api.get('/v1/mascotas/listar');
                     setMascotas(response.data);
-                } catch (error) {
-                    console.error("Error al cargar mascotas:", error);
+                } catch (error: any) {
+                    if (error.response?.status !== 401 && error.response?.status !== 404) {
+                        console.error("Error al cargar mascotas:", error.message);
+                    }
                 } finally {
                     setLoading(false);
                 }
             };
             
             loadMascotas();
-        }, [])
+        }, [userToken]) // ← AÑADE userToken AQUÍ
     );
 
     if (loading) {

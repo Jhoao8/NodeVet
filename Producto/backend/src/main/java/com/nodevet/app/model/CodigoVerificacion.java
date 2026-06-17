@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+import com.nodevet.app.model.usuario.Usuario;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

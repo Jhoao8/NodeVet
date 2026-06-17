@@ -1,10 +1,11 @@
 package com.nodevet.app.security;
 
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -14,13 +15,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Autowired
-    private JwtRequestFilter jwtRequestFilter;
+    private final JwtRequestFilter jwtRequestFilter;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
             
@@ -50,31 +51,52 @@ public class SecurityConfig {
             )
 
             .authorizeHttpRequests(auth -> auth
-                // 1. Permitimos el login, registro y mantallas de recuperar contraseña
+                // 1. Mantenemos tus endpoints públicos
                 .requestMatchers(
-                    "/api/auth/login", 
-                    "/api/v1/usuarios/registro",
-                    "/api/auth/forgot-password",
-                    "/api/auth/verify-code",
-                    "/api/auth/reset-password"
+                    "/api/auth/**", // Cubre login, forgot-password, etc.
+                    "/api/v1/usuarios/registro", // Registro de tutores,
+                    "/swagger-ui/**", 
+                    "/v3/api-docs/**", 
+                    "/swagger-ui.html",
+                    "/api/v1/pagos/confirmar"
                 ).permitAll()
                 
-                // 2. Mantenemos Swagger publico
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                // 2. AÑADIMOS LAS REGLAS BASADAS EN ROLES
+                .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/perfil").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/actualizar").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/actualizar-foto").authenticated()
+                // Gestión de Usuarios (GET, PUT, DELETE): solo Admins.
+                // El POST a /registro ya está permitido arriba.
+                .requestMatchers(HttpMethod.GET, "/api/v1/usuarios", "/api/v1/usuarios/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/usuarios/**").hasRole("ADMIN")
+
+                // Mascotas: solo para Tutores
+                .requestMatchers("/api/v1/mascotas/**").hasRole("TUTOR")
+                .requestMatchers("/api/v1/reservas/**").hasRole("TUTOR")
+                // === RUTAS DE PAGOS ===
+                // El Tutor inicia el pago en la app:
+                .requestMatchers("/api/v1/pagos/iniciar").hasRole("TUTOR")
+
+                // Especialidades:
+                .requestMatchers("/api/v1/especialidades/crear").hasRole("ADMIN")
+                .requestMatchers("/api/v1/especialidades").hasAnyRole("ADMIN", "VET")
+
+                // Admins y Veterinarios: solo un ADMIN puede registrar nuevos
+                .requestMatchers("/api/v1/admins/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/veterinarios/**").hasRole("ADMIN")
                 
-                // 3. Todo lo demas requiere token
+                // 3. Todo lo demás requiere token
                 .anyRequest().authenticated()
             );
 
-        // 3. Reemplazamos Basic Auth poniendo nuestro filtro JWT antes del filtro de Spring
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // 4. Permite a Spring usar el AuthenticationManager en nuestro AuthController
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 }

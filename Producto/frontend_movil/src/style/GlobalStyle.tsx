@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -180,7 +180,7 @@ export const globalStyles = StyleSheet.create({
   },
 
 //════════════════════════════════════════════//
-//              Botón Principal               //
+//               Botón Principal              //
 //════════════════════════════════════════════//
 
   /* Botón de acción principal (ancho completo — WelcomeScreen / RegisterScreen) */
@@ -204,7 +204,7 @@ export const globalStyles = StyleSheet.create({
   },
 
 //════════════════════════════════════════════//
-//           Registrar Mascota                //
+//             Registrar Mascota              //
 //════════════════════════════════════════════//
 
   /* Contenedores para imágenes / Upload de fotos */
@@ -317,7 +317,7 @@ export const globalStyles = StyleSheet.create({
   },
 
 //════════════════════════════════════════════//
-//              Botón secundario              //
+//               Botón secundario             //
 //════════════════════════════════════════════//
 
   /* Botón con solo borde, sin fondo */
@@ -337,7 +337,7 @@ export const globalStyles = StyleSheet.create({
   },
 
 //════════════════════════════════════════════//
-//            Links de navegación             //
+//             Links de navegación            //
 //════════════════════════════════════════════//
 
   /* Contenedor de enlaces inferiores */
@@ -366,7 +366,7 @@ export const globalStyles = StyleSheet.create({
   },
 
 //════════════════════════════════════════════//
-//                Espaciadores                //
+//                 Espaciadores               //
 //════════════════════════════════════════════//
 
   /* Wrapper que centra el botón principal y los enlaces */
@@ -394,7 +394,7 @@ export const globalStyles = StyleSheet.create({
   },
 
 //════════════════════════════════════════════//
-//                   Modal                    //
+//                    Modal                   //
 //════════════════════════════════════════════//
 
   /* Overlay semitransparente del modal */
@@ -452,7 +452,7 @@ export const globalStyles = StyleSheet.create({
   },
 
 //════════════════════════════════════════════//
-//                  Divisor                   //
+//                   Divisor                  //
 //════════════════════════════════════════════//
 
   /* Línea divisora sutil (usado en ForgotPassword entre pasos) */
@@ -532,6 +532,204 @@ export const globalStyles = StyleSheet.create({
     fontFamily: typography.family.main.semiBold,
     fontSize: typography.size.sm,
     color: colors.lightGreen,
+  },
+
+//════════════════════════════════════════════//
+//           Cabecera Interior (Sub-rutas)    //
+//════════════════════════════════════════════//
+  innerHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.darkDGreen, 
+    paddingLeft: spacing.sm,
+  },
+  innerBackButton: {
+    paddingTop: Platform.OS === 'ios' ? 42 : 22, 
+    paddingHorizontal: spacing.xs,
+    zIndex: 11,
+  },
+  innerHeaderFlex: {
+    flex: 1,
+    marginLeft: -spacing.md, 
+  },
+
+//════════════════════════════════════════════//
+//           Títulos y Barra de Filtros       //
+//════════════════════════════════════════════//
+  petTitleContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  petTitleText: {
+    fontFamily: typography.family.main.bold,
+    fontSize: typography.size.lg,
+    color: colors.darkDGreen,
+  },
+  filterBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: spacing.sm,
+  },
+  listSectionTitle: {
+    fontFamily: typography.family.main.semiBold,
+    fontSize: typography.size.md,
+    color: colors.darkDGreen,
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.darkDGreen,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    gap: 4,
+    backgroundColor: colors.white,
+  },
+  filterButtonText: {
+    fontFamily: typography.family.main.regular,
+    fontSize: typography.size.sm,
+    color: colors.darkDGreen,
+  },
+
+//════════════════════════════════════════════//
+//           Filas de Tablas (Listas)         //
+//════════════════════════════════════════════//
+  tableRowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.darkDGreen,
+    borderRadius: 8,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  tableRowTextLeft: {
+    flex: 1.8,
+    fontFamily: typography.family.main.regular,
+    fontSize: typography.size.md,
+    color: colors.darkDGreen,
+  },
+  tableRowTextCenter: {
+    flex: 1.2,
+    fontFamily: typography.family.main.regular,
+    fontSize: typography.size.sm,
+    color: colors.darkGreen,
+    textAlign: 'right',
+    marginRight: spacing.sm,
+  },
+  tableEyeIcon: {
+    width: 30,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+
+//════════════════════════════════════════════//
+//           Estados (Cargando / Vacío)       //
+//════════════════════════════════════════════//
+  emptyListText: {
+    fontFamily: typography.family.main.regular,
+    fontSize: typography.size.md,
+    color: colors.disabled,
+    textAlign: 'center',
+    marginTop: spacing.xl,
+  },
+  loadingCenterContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 50,
+  },
+  loadingMessageText: {
+    marginTop: spacing.md,
+    fontFamily: typography.family.main.medium,
+    color: colors.darkGreen,
+  },
+
+  //════════════════════════════════════════════//
+//           Modal de Detalles (Ojito)        //
+//════════════════════════════════════════════//
+  
+  /* Fondo oscuro semitransparente que cubre la pantalla */
+  detailModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  
+  /* Contenedor principal de la tarjeta tipo documento */
+  detailModalContainer: {
+    width: '100%',
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    overflow: 'hidden',
+    maxHeight: '85%', // Evita que se salga de la pantalla si hay mucho texto
+    borderWidth: 1,
+    borderColor: colors.darkDGreen,
+  },
+  
+  /* Cabecera del modal (Franja superior con fecha y botón X) */
+  detailModalHeader: {
+    backgroundColor: colors.darkDGreen,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  
+  /* Texto de la fecha en la cabecera */
+  detailModalDate: {
+    fontFamily: typography.family.main.semiBold,
+    fontSize: typography.size.md,
+    color: colors.lightYellow,
+  },
+  
+  /* Contenedor scrolleable interior del modal */
+  detailModalBody: {
+    padding: spacing.lg,
+  },
+  
+  /* Fila para datos cortos (ej. Lugar: Clínica Vet) */
+  detailRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: spacing.sm,
+  },
+  
+  /* Etiqueta principal (negrita) */
+  detailLabel: {
+    fontFamily: typography.family.main.bold,
+    color: colors.darkDGreen,
+    fontSize: typography.size.md,
+    marginRight: spacing.xs,
+  },
+  
+  /* Valor de la etiqueta (regular) */
+  detailValue: {
+    fontFamily: typography.family.main.regular,
+    color: colors.darkGreen,
+    fontSize: typography.size.md,
+  },
+  
+  /* Contenedor para bloques de texto largos (Diagnóstico, Motivo) */
+  detailTextBlock: {
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  
+  /* Párrafo de texto largo */
+  detailParagraph: {
+    fontFamily: typography.family.main.regular,
+    color: colors.darkGreen,
+    fontSize: typography.size.md,
+    lineHeight: 22,
+    marginTop: spacing.xs,
+    textAlign: 'justify',
   },
 
 });

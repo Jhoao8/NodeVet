@@ -4,7 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,15 +14,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.lang.NonNull;
 
 import java.io.IOException;
+import lombok.RequiredArgsConstructor;
 
-@Component // Lo registramos como Bean para poder inyectar JwtUtil
+@Component
+@RequiredArgsConstructor 
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
-    @Autowired
-    private UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
 
     // Este método se ejecuta una vez por cada petición HTTP que llega al servidor
     @Override
@@ -57,7 +56,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 
                 // --- LÓGICA DE REINICIO DE 30 DÍAS ---
                 // Generamos un token fresquito con otros 30 días
-                String newToken = jwtUtil.refreshToken(jwt, JwtUtil.EXPIRE_MOBILE);                // Lo enviamos en la respuesta. El frontend deberá guardarlo.
+                String newToken = jwtUtil.generateToken(userDetails.getUsername(), JwtUtil.EXPIRE_MOBILE);
+                // Lo enviamos en la respuesta. El frontend deberá guardarlo.
                 response.setHeader("New-Token", newToken);
                 // Exponemos el header para que CORS no lo bloquee en el navegador/app
                 response.setHeader("Access-Control-Expose-Headers", "New-Token");

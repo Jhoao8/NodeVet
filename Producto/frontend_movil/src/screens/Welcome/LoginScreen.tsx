@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; 
 import { colors } from '../../theme/colors';
@@ -8,10 +8,12 @@ import { typography } from '../../theme/typography';
 import { globalStyles } from '../../style/GlobalStyle';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
+import { useCustomAlert } from '../../components/CustomAlert';
 
 const LoginScreen = () => {
     const [loading, setLoading] = useState(false);
     const navigation = useNavigation<any>();
+    const { showAlert, AlertComponent } = useCustomAlert();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -22,7 +24,7 @@ const LoginScreen = () => {
 
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Campos incompletos', 'Por favor ingresa tu correo y contraseña.');
+            showAlert('Campos incompletos', 'Por favor ingresa tu correo y contraseña.');
             return;
         }
 
@@ -44,7 +46,7 @@ const LoginScreen = () => {
             }
 
         } catch (error: any) {
-            Alert.alert('Error', 'Credenciales incorrectas o problema de servidor.');
+            showAlert('Error', 'Credenciales incorrectas o problema de servidor.');
         } finally {
             setLoading(false);
         }
@@ -138,6 +140,7 @@ const LoginScreen = () => {
                 </View>
 
             </ScrollView>
+            <AlertComponent />
         </KeyboardAvoidingView>
     );
 };
