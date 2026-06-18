@@ -8,6 +8,8 @@ import com.nodevet.app.dto.VerifyCodeRequest;
 import com.nodevet.app.security.JwtUtil;
 import com.nodevet.app.service.usuario.UsuarioService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "Autenticación", description = "Gestión de acceso y seguridad. Endpoints públicos para el inicio de sesión y el flujo de recuperación de contraseñas mediante códigos OTP.")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
@@ -29,6 +32,7 @@ public class AuthController {
     private final JwtUtil jwtUtil;
 
     @PostMapping("/login")
+    @Operation(summary = "Iniciar sesión", description = "Valida las credenciales del usuario y devuelve un token JWT. El tiempo de expiración del token varía si el origen es la App Móvil (30 días) o la Web (8 horas).")
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO dto) {
         try {
             // 1. Autenticación estándar
@@ -40,7 +44,6 @@ public class AuthController {
             UserDetails userDetails = usuarioService.loadUserByUsername(dto.getCorreoUsr());
 
             // 3. Lógica de expiración diferenciada (App vs Web)
-            // Si isMobile es true, usamos 30 días; si no, 8 horas.
             long expiracion = dto.isMobile() ? JwtUtil.EXPIRE_MOBILE : JwtUtil.EXPIRE_WEB;
 
             // 4. Generar el token con el tiempo correspondiente
@@ -56,7 +59,8 @@ public class AuthController {
     }
 
     // PANTALLA 1: Solicitar recuperación (Envía el correo con el código)
-    @PostMapping("/forgot-password")
+    @PostMapping("/recuperacion")
+    @Operation(summary = "Solicitar código de recuperación", description = "Paso 1 del flujo de olvido de contraseña. Si el correo existe en el sistema, genera y envía un código OTP de 6 dígitos al correo del usuario.")
     public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
         try {
             String correo = request.getCorreo_usr();
@@ -75,7 +79,8 @@ public class AuthController {
     }
 
     // PANTALLA 1 (Paso 2): Verificar si el código ingresado es correcto
-    @PostMapping("/verify-code")
+    @PostMapping("/verificacion")
+    @Operation(summary = "Verificar código OTP", description = "Paso 2 del flujo. Valida que el código de 6 dígitos ingresado coincida con el enviado al correo y que no haya expirado (ventana de 15 minutos).")
     public ResponseEntity<?> verifyCode(@RequestBody VerifyCodeRequest request) {
         try {
             // Validamos que el código coincida y no esté expirado
@@ -88,7 +93,8 @@ public class AuthController {
     }
 
     // PANTALLA 2: Establecer nueva contraseña
-    @PostMapping("/reset-password")
+    @PutMapping("/password")
+    @Operation(summary = "Restablecer contraseña", description = "Paso 3 y final. Permite definir la nueva contraseña exigiendo nuevamente el código OTP como medida de seguridad para evitar peticiones fraudulentas.")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         try {
             // Pasamos el correo, el código (como doble verificación) y la nueva contraseña

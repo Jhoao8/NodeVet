@@ -9,6 +9,7 @@ import com.nodevet.app.repository.*;
 import com.nodevet.app.service.EmailService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +18,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,8 +32,8 @@ public class UsuarioService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
     private final TutorRepository tutorRepository;
-    private final AdminRepository adminRepository; // Inyectamos el nuevo repo
-    private final VeterinarioRepository veterinarioRepository; // Inyectamos el nuevo repo
+    private final AdminRepository adminRepository; 
+    private final VeterinarioRepository veterinarioRepository; 
     private final CodigoVerificacionRepository codigoRepo;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
@@ -39,10 +41,10 @@ public class UsuarioService implements UserDetailsService {
     @Transactional
     public Usuario registrarUsuario(UsuarioRegistroDTO dto) {
         if (usuarioRepository.existsByCorreoUsr(dto.getCorreoUsr())) {
-            throw new RuntimeException("El correo ya está registrado en el sistema.");
+            // Cambio de RuntimeException a un 400 Bad Request
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo ya está registrado en el sistema.");
         }
 
-        // 1. Guardar Usuario
         Usuario nuevoUsuario = Usuario.builder()
                 .nombreUsr(dto.getNombreUsr())
                 .apellidoUsr(dto.getApellidoUsr())
@@ -55,7 +57,6 @@ public class UsuarioService implements UserDetailsService {
 
         Usuario usuarioGuardado = usuarioRepository.save(nuevoUsuario);
 
-        // 2. Guardar Tutor asociado automáticamente
         Tutor nuevoTutor = Tutor.builder()
                 .usuario(usuarioGuardado)
                 .build();
@@ -65,7 +66,7 @@ public class UsuarioService implements UserDetailsService {
         return usuarioGuardado;
     }
 
-    // --- MÉTODOS CRUD PARA GESTIÓN DE USUARIOS (POR ADMIN) ---
+    // --- MÉTODOS CRUD PARA GESTIÓN DE USUARIOS (POR ADMIN Y PERFIL) ---
 
     @Transactional(readOnly = true)
     public List<Usuario> listarUsuariosActivos() {
@@ -77,22 +78,46 @@ public class UsuarioService implements UserDetailsService {
         return usuarioRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
+    public Optional<Usuario> obtenerUsuarioPorCorreo(String correo) {
+        return usuarioRepository.findByCorreoUsr(correo);
+    }
+
     @Transactional
     public Usuario actualizarUsuario(Integer id, UsuarioUpdateDTO dto) {
         Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + id));
+        return aplicarActualizacion(usuario, dto);
+    }
 
+    @Transactional
+    public void actualizarUsuarioPorCorreo(String correo, UsuarioUpdateDTO dto) {
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+        aplicarActualizacion(usuario, dto);
+    }
+
+    // Método centralizado para evitar duplicación de código
+    private Usuario aplicarActualizacion(Usuario usuario, UsuarioUpdateDTO dto) {
         usuario.setNombreUsr(dto.getNombreUsr());
         usuario.setApellidoUsr(dto.getApellidoUsr());
         usuario.setTelefonoUsr(dto.getTelefonoUsr());
-
+        
+        // Si viene un correo nuevo y es diferente al actual, verificamos que no exista
+        if (dto.getCorreoUsr() != null && !dto.getCorreoUsr().equals(usuario.getCorreoUsr())) {
+            if (usuarioRepository.existsByCorreoUsr(dto.getCorreoUsr())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo especificado ya está en uso por otra cuenta.");
+            }
+            usuario.setCorreoUsr(dto.getCorreoUsr());
+        }
+        
         return usuarioRepository.save(usuario);
     }
 
     @Transactional
     public void actualizarFotoPerfil(String correoUsuario, String nuevaFotoUrl) {
         Usuario usuario = usuarioRepository.findByCorreoUsr(correoUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con correo: " + correoUsuario));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado con correo: " + correoUsuario));
 
         usuario.setFotoUsr(nuevaFotoUrl);
         usuarioRepository.save(usuario);
@@ -100,7 +125,8 @@ public class UsuarioService implements UserDetailsService {
 
     @Transactional
     public void desactivarUsuario(Integer id) {
-        usuarioRepository.findById(id).orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + id));
         usuarioRepository.softDelete(id);
     }
 
@@ -109,7 +135,7 @@ public class UsuarioService implements UserDetailsService {
     @Transactional
     public void generarTokenRecuperacion(String correo) {
         Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
-                .orElseThrow(() -> new RuntimeException("No se encontró un usuario con ese correo."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró un usuario con ese correo."));
 
         String codigoOTP = String.format("%06d", new Random().nextInt(999999));
         
@@ -120,7 +146,6 @@ public class UsuarioService implements UserDetailsService {
         token.setFecExpiracion(LocalDateTime.now().plusMinutes(15));
         
         codigoRepo.save(token);
-        
         emailService.enviarCorreoRecuperacion(correo, codigoOTP);
         
         System.out.println("DEBUG - Código " + codigoOTP + " enviado a: " + correo);
@@ -129,34 +154,26 @@ public class UsuarioService implements UserDetailsService {
     @Transactional(readOnly = true)
     public void validarCodigoOTP(String correo, String codigo) {
         Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado."));
 
         CodigoVerificacion token = codigoRepo.findByUsuario(usuario)
-                .orElseThrow(() -> new RuntimeException("No hay una solicitud de recuperación activa para este correo."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "No hay una solicitud de recuperación activa para este correo."));
 
         if (!token.getCodigo().equals(codigo)) {
-            throw new RuntimeException("El código ingresado es incorrecto.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El código ingresado es incorrecto.");
         }
 
         if (token.getFecExpiracion().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("El código ha expirado. Por favor, solicita uno nuevo.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El código ha expirado. Por favor, solicita uno nuevo.");
         }
     }
 
     @Transactional
     public void restablecerPassword(String correo, String codigo, String nuevaPassword) {
-        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
+        validarCodigoOTP(correo, codigo); // Reutilizamos la validación
 
-        CodigoVerificacion token = codigoRepo.findByUsuario(usuario)
-                .orElseThrow(() -> new RuntimeException("No hay una solicitud de recuperación activa."));
-
-        if (!token.getCodigo().equals(codigo)) {
-            throw new RuntimeException("El código es incorrecto.");
-        }
-        if (token.getFecExpiracion().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("El código ha expirado.");
-        }
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correo).get();
+        CodigoVerificacion token = codigoRepo.findByUsuario(usuario).get();
 
         usuario.setPassUsr(passwordEncoder.encode(nuevaPassword));
         usuarioRepository.save(usuario);
@@ -170,25 +187,22 @@ public class UsuarioService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con correo: " + correo));
 
         if (usuario.getEstadoUsr() == 0) {
-            throw new RuntimeException("El usuario se encuentra inactivo.");
+            // Spring Security prefiere UsernameNotFoundException para bloquear el login limpiamente
+            throw new UsernameNotFoundException("El usuario se encuentra inactivo.");
         }
 
-        // Lógica para determinar el rol del usuario
         List<GrantedAuthority> authorities = new ArrayList<>();
         
-        // 1. ¿Es Admin? (El más importante)
         adminRepository.findByUsuario(usuario).ifPresent(admin -> {
             authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
         });
 
-        // 2. Si no es Admin, ¿es Veterinario?
         if (authorities.isEmpty()) {
             veterinarioRepository.findByUsuario(usuario).ifPresent(vet -> {
                 authorities.add(new SimpleGrantedAuthority("ROLE_VET"));
             });
         }
 
-        // 3. Si no es ninguno de los anteriores, es Tutor (rol por defecto para usuarios registrados)
         if (authorities.isEmpty()) {
             tutorRepository.findByUsuario(usuario).ifPresent(tutor -> {
                 authorities.add(new SimpleGrantedAuthority("ROLE_TUTOR"));
@@ -198,27 +212,7 @@ public class UsuarioService implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 usuario.getCorreoUsr(),
                 usuario.getPassUsr(),
-                authorities // Usamos la lista de roles dinámicos
+                authorities 
         );
-    }
-
-    // Añade esto a tu UsuarioService.java
-
-    @Transactional(readOnly = true)
-    public Optional<Usuario> obtenerUsuarioPorCorreo(String correo) {
-        return usuarioRepository.findByCorreoUsr(correo);
-    }
-
-    @Transactional
-    public void actualizarUsuarioPorCorreo(String correo, UsuarioUpdateDTO dto) {
-        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        usuario.setNombreUsr(dto.getNombreUsr());
-        usuario.setApellidoUsr(dto.getApellidoUsr());
-        usuario.setTelefonoUsr(dto.getTelefonoUsr());
-        usuario.setCorreoUsr(dto.getCorreoUsr()); 
-
-        usuarioRepository.save(usuario);
     }
 }
