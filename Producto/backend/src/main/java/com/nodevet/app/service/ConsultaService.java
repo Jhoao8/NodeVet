@@ -17,6 +17,9 @@ import com.nodevet.app.repository.consulta.TipoArchivoRepository;
 import com.nodevet.app.repository.consulta.VacServRepository;
 import com.nodevet.app.repository.reserva.ReservaRepository;
 
+import java.time.format.DateTimeFormatter;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -28,33 +31,33 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ConsultaService {
 
-    private final ConsultaRepository consultaRepository;
-    private final ReservaRepository reservaRepository;
-    private final ValorRepository valorRepository;
-    
-    // Repositorios para procesar los servicios médicos
-    private final ServicioRepository servicioRepository;
-    private final VacunaRepository vacunaRepository;
-    private final ExamenRepository examenRepository;
-    private final VacServRepository vacServRepository;
-    private final ExamServRepository examServRepository;
+private final ConsultaRepository consultaRepository;
+private final ReservaRepository reservaRepository;
+private final ValorRepository valorRepository;
 
-    private final ArchivoAdjuntoRepository archivoAdjuntoRepository;
-    private final TipoArchivoRepository tipoArchivoRepository;
+// Repositorios para procesar los servicios médicos
+private final ServicioRepository servicioRepository;
+private final VacunaRepository vacunaRepository;
+private final ExamenRepository examenRepository;
+private final VacServRepository vacServRepository;
+private final ExamServRepository examServRepository;
 
-    @Transactional
-    public Consulta crearConsulta(ConsultaRequestDTO dto) {
+private final ArchivoAdjuntoRepository archivoAdjuntoRepository;
+private final TipoArchivoRepository tipoArchivoRepository;
+
+@Transactional
+public Consulta crearConsulta(ConsultaRequestDTO dto) {
         
         // 1. Validaciones
         if (consultaRepository.existsByReserva_IdReserva(dto.getIdReserva())) {
-            throw new IllegalStateException("Error: Ya existe una ficha clínica asociada a la reserva ID " + dto.getIdReserva());
+        throw new IllegalStateException("Error: Ya existe una ficha clínica asociada a la reserva ID " + dto.getIdReserva());
         }
 
         Reserva reserva = reservaRepository.findById(dto.getIdReserva())
                 .orElseThrow(() -> new IllegalArgumentException("La reserva no existe."));
 
         if (reserva.getEstadoReserva() == null || reserva.getEstadoReserva().getIdEstReserva() != 2) { 
-            throw new IllegalStateException("Error: No se puede crear una atención clínica para una reserva que no está pagada o confirmada.");
+        throw new IllegalStateException("Error: No se puede crear una atención clínica para una reserva que no está pagada o confirmada.");
         }
 
         Valor valor = valorRepository.findById(dto.getIdValor())
@@ -73,7 +76,7 @@ public class ConsultaService {
 
         // 3. Procesar las Vacunas aplicadas
         if (dto.getVacunasIds() != null && !dto.getVacunasIds().isEmpty()) {
-            for (Integer idVacuna : dto.getVacunasIds()) {
+        for (Integer idVacuna : dto.getVacunasIds()) {
                 Vacuna vacuna = vacunaRepository.findById(idVacuna)
                         .orElseThrow(() -> new IllegalArgumentException("Vacuna no encontrada con ID: " + idVacuna));
                 
@@ -88,12 +91,12 @@ public class ConsultaService {
                         .build();
                 
                 vacServRepository.save(vacServ);
-            }
+        }
         }
 
         // 4. Procesar los Exámenes realizados
         if (dto.getExamenesIds() != null && !dto.getExamenesIds().isEmpty()) {
-            for (Integer idExamen : dto.getExamenesIds()) {
+        for (Integer idExamen : dto.getExamenesIds()) {
                 Examen examen = examenRepository.findById(idExamen)
                         .orElseThrow(() -> new IllegalArgumentException("Examen no encontrado con ID: " + idExamen));
                 
@@ -108,14 +111,14 @@ public class ConsultaService {
                         .build();
                         
                 examServRepository.save(examServ);
-            }
+        }
         }
 
         return consultaGuardada;
-    }
+}
 
-    @Transactional
-    public void agregarArchivo(Integer idConsulta, ArchivoAdjuntoRequestDTO dto) {
+@Transactional
+public void agregarArchivo(Integer idConsulta, ArchivoAdjuntoRequestDTO dto) {
         // Buscamos que la ficha clínica realmente exista
         Consulta consulta = consultaRepository.findById(idConsulta)
                 .orElseThrow(() -> new IllegalArgumentException("La consulta médica no existe."));
@@ -133,10 +136,10 @@ public class ConsultaService {
                 .build();
 
         archivoAdjuntoRepository.save(nuevoArchivo);
-    }
+}
 
-    @Transactional(readOnly = true)
-    public ConsultaResponseDTO obtenerConsultaPorReserva(Integer idReserva) {
+@Transactional(readOnly = true)
+public ConsultaResponseDTO obtenerConsultaPorReserva(Integer idReserva) {
         
         // 1. Buscamos la ficha clínica por el ID de la reserva
         Consulta consulta = consultaRepository.findByReserva_IdReserva(idReserva)
@@ -159,5 +162,44 @@ public class ConsultaService {
                 .indicacionReceta(consulta.getIndicacionReceta())
                 .archivosUrls(urls)
                 .build();
-    }
+}
+
+@Transactional(readOnly = true)
+public List<ConsultaResponseDTO> obtenerHistorialPorMascota(Integer idMascota) {
+List<Consulta> consultas = consultaRepository.findByReserva_Mascota_IdMascota(idMascota);
+
+DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+return consultas.stream().map(consulta -> {
+        // Navegación segura hacia el profesional (Veterinario -> Usuario)
+        String nombreProfesional = "No asignado";
+        if (consulta.getReserva().getVeterinario() != null && consulta.getReserva().getVeterinario().getUsuario() != null) {
+        nombreProfesional = "Dr(a). " + consulta.getReserva().getVeterinario().getUsuario().getNombreUsr() + " " +
+                                consulta.getReserva().getVeterinario().getUsuario().getApellidoUsr();
+        }
+
+        // Navegación segura hacia la fecha del bloque de atención
+        String fechaAtencion = "Sin fecha";
+        if (consulta.getReserva().getBloqueHorario() != null && consulta.getReserva().getBloqueHorario().getFecHrInicio() != null) {
+        fechaAtencion = consulta.getReserva().getBloqueHorario().getFecHrInicio().format(formatter);
+        }
+
+        // Obtención de URLs de archivos adjuntos asociados a esta consulta específica
+        List<String> urls = archivoAdjuntoRepository.findByConsulta_IdConsulta(consulta.getIdConsulta())
+                .stream()
+                .map(ArchivoAdjunto::getArchivoUrl)
+                .collect(Collectors.toList());
+
+        return ConsultaResponseDTO.builder()
+                .idConsulta(consulta.getIdConsulta())
+                .idReserva(consulta.getReserva().getIdReserva())
+                .fecha(fechaAtencion)
+                .profesional(nombreProfesional)
+                .diagnostico(consulta.getDiagnostico())
+                .notas(consulta.getNotas())
+                .indicacionReceta(consulta.getIndicacionReceta())
+                .archivosUrls(urls)
+                .build();
+}).collect(Collectors.toList());
+}
 }

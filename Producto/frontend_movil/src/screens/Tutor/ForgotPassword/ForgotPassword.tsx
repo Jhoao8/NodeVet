@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons'; 
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
-import api from '@/src/api/axiosInstance';
-import { globalStyles } from '../../style/GlobalStyle'; // <-- Ajusta la ruta
-
+import { colors } from '../../../theme/colors';
+import { spacing } from '../../../theme/spacing';
+import { typography } from '../../../theme/typography';
+import api from '../../../api/axiosInstance';
+import { globalStyles } from '../../../style/GlobalStyle';
 export const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [code, setCode] = useState(''); 
@@ -83,7 +82,7 @@ export const ForgotPassword = () => {
                     <View style={globalStyles.headerRow}>
                         <View style={globalStyles.logoPlaceholder}>
                             <Image 
-                                source={require('../../../assets/images/Logo.png')} 
+                                source={require('../../../../assets/images/Logo.png')}
                                 style={globalStyles.logo}
                                 resizeMode="contain" 
                             />

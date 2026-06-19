@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -74,5 +75,12 @@ public class ConsultaController {
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 404 si no existe
         }
+    }
+
+    @GetMapping("/mascota/{idMascota}")
+    @Operation(summary = "Obtener historial por mascota", description = "Devuelve el listado completo de fichas clínicas asociadas a una mascota.")
+    public ResponseEntity<List<ConsultaResponseDTO>> obtenerHistorialMascota(@PathVariable Integer idMascota) {
+        List<ConsultaResponseDTO> historial = consultaService.obtenerHistorialPorMascota(idMascota);
+        return new ResponseEntity<>(historial, HttpStatus.OK);
     }
 }

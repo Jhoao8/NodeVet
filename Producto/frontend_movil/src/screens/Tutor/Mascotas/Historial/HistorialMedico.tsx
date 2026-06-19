@@ -11,10 +11,9 @@ import DashboardHeader from '@/src/components/DashboardHeader';
 // ════════ ESTRUCTURA DE DATOS ENRIQUECIDA ════════
 interface RegistroMedico {
     id: number;
-    tipo: 'consulta' | 'vacuna' | 'examen' | 'cirugia'; // Agregamos el tipo para saber qué diseño mostrar en el modal
+    tipo: 'consulta' | 'vacuna' | 'examen' | 'cirugia'; 
     detalle: string; 
     fecha: string;
-    // Campos opcionales dependiendo del tipo de registro:
     profesional?: string;
     motivo?: string;
     diagnostico?: string;
@@ -53,7 +52,8 @@ export default function HistorialMedicoScreen({ route, navigation }: any) {
                         ultimaConsulta: { id: 101, tipo: 'consulta', detalle: 'Clínica Vet Central', fecha: '10/05/2026', profesional: 'Dr. Roberto Sánchez', motivo: 'Letargo y vómitos nocturnos.', diagnostico: 'Gastritis aguda leve. Reposo y dieta.' },
                         ultimaVacuna: { id: 205, tipo: 'vacuna', detalle: 'Antirrábica', fecha: '15/01/2026', laboratorio: 'Zoetis', lote: 'A-10293', serie: '001-92', qr: 'Generado' },
                         ultimoExamen: { id: 302, tipo: 'examen', detalle: 'Perfil Bioquímico', fecha: '20/11/2025', fechaResultados: '21/11/2025', resultados: '(Imágenes por definir)', observaciones: 'Parámetros normales.' },
-                        ultimaCirugia: null // Sigue nulo para probar que dice "Sin registro reciente"
+                        // AHORA SÍ TIENE DATOS LA CIRUGÍA 👇
+                        ultimaCirugia: { id: 401, tipo: 'cirugia', detalle: 'Pabellón Central', fecha: '05/04/2026', fechaAlta: '06/04/2026', profesional: 'Dra. Ana Gómez', motivo: 'Ovariohisterectomía (Esterilización)', observaciones: 'Procedimiento sin complicaciones. Reposo y uso de collar isabelino.' }
                     });
                     setLoading(false);
                 }, 800);
