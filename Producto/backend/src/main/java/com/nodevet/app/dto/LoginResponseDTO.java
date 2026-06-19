@@ -7,4 +7,5 @@ import lombok.Data;
 @AllArgsConstructor // Lombok crea un constructor con todos los argumentos automaticamente
 public class LoginResponseDTO {
     private String token;
+    private String rol;
 }

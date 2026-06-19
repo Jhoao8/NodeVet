@@ -30,8 +30,8 @@ public class UsuarioService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
     private final TutorRepository tutorRepository;
-    private final AdminRepository adminRepository; // Inyectamos el nuevo repo
-    private final VeterinarioRepository veterinarioRepository; // Inyectamos el nuevo repo
+    private final AdminRepository adminRepository; 
+    private final VeterinarioRepository veterinarioRepository; 
     private final CodigoVerificacionRepository codigoRepo;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
@@ -173,26 +173,20 @@ public class UsuarioService implements UserDetailsService {
             throw new RuntimeException("El usuario se encuentra inactivo.");
         }
 
-        // Lógica para determinar el rol del usuario
+        // Lógica estructural mejorada para determinar el rol del usuario
         List<GrantedAuthority> authorities = new ArrayList<>();
         
-        // 1. ¿Es Admin? (El más importante)
-        adminRepository.findByUsuario(usuario).ifPresent(admin -> {
+        // 1. ¿Es Admin? (Usamos la consulta nativa SQL para evitar problemas de mapeo)
+        if (adminRepository.checkIsAdmin(usuario.getIdUsuario()) > 0) {
             authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        });
-
+        } 
         // 2. Si no es Admin, ¿es Veterinario?
-        if (authorities.isEmpty()) {
-            veterinarioRepository.findByUsuario(usuario).ifPresent(vet -> {
-                authorities.add(new SimpleGrantedAuthority("ROLE_VET"));
-            });
-        }
-
-        // 3. Si no es ninguno de los anteriores, es Tutor (rol por defecto para usuarios registrados)
-        if (authorities.isEmpty()) {
-            tutorRepository.findByUsuario(usuario).ifPresent(tutor -> {
-                authorities.add(new SimpleGrantedAuthority("ROLE_TUTOR"));
-            });
+        else if (veterinarioRepository.findByUsuario(usuario).isPresent()) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_VET"));
+        } 
+        // 3. Si no es ninguno de los anteriores, es Tutor (rol por defecto)
+        else {
+            authorities.add(new SimpleGrantedAuthority("ROLE_TUTOR"));
         }
 
         return new org.springframework.security.core.userdetails.User(
@@ -201,8 +195,6 @@ public class UsuarioService implements UserDetailsService {
                 authorities // Usamos la lista de roles dinámicos
         );
     }
-
-    // Añade esto a tu UsuarioService.java
 
     @Transactional(readOnly = true)
     public Optional<Usuario> obtenerUsuarioPorCorreo(String correo) {

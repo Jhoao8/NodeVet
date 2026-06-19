@@ -10,7 +10,7 @@ const DashboardHeader = () => {
         <View style={dashboardStyles.header}>
             <View style={dashboardStyles.headerLogoContainer}>
                 <Image 
-                    source={require('@/assets/images/Logo.png')} 
+                    source={require('../../assets/images/Logo.png')} 
                     style={dashboardStyles.headerLogo}
                     resizeMode="contain" 
                 />
