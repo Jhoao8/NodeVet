@@ -136,7 +136,7 @@ export default function DashboardTutor() {
             <button className="nav-item active">👤 Perfil</button>
             <button className="nav-item">🏠 Home</button>
             <button className="nav-item">🐾 Mascotas</button>
-            <button className="nav-item">📅 Citas</button>
+            <button className="nav-item" onClick={() => navigate('/agendarCita')}>📅 Citas</button>
             <button className="nav-item">🏥 Control Médico</button>
           </nav>
         </aside>
@@ -151,16 +151,25 @@ export default function DashboardTutor() {
             <>
               {/* Próximas Citas */}
               <section className="dashboard-section">
-                <h2>Próximas Citas</h2>
-                <div className="citas-cards">
-                  {proximasCitas.slice(0, 2).map((cita) => (
-                    <div key={cita.id} className="cita-card">
-                      <h4>{cita.mascota}</h4>
-                      <p>📅 Fecha: {cita.fecha}</p>
-                      <p>🕐 Hora: {cita.hora}</p>
-                    </div>
-                  ))}
+                <div className="mascotas-header">
+                  <h2>Próximas Citas</h2>
+                  <button className="btn-add-mascota" onClick={() => navigate('/agendarCita')}>
+                    + Agendar Cita
+                  </button>
                 </div>
+                {proximasCitas.length === 0 ? (
+                  <p className="hint-text">No tienes citas próximas. Agenda una nueva hora médica.</p>
+                ) : (
+                  <div className="citas-cards">
+                    {proximasCitas.slice(0, 2).map((cita) => (
+                      <div key={cita.id} className="cita-card">
+                        <h4>{cita.mascota}</h4>
+                        <p>📅 Fecha: {cita.fecha}</p>
+                        <p>🕐 Hora: {cita.hora}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Próximo Control */}

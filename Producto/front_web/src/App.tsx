@@ -6,6 +6,7 @@ import RequestPassword from './pages/ForgotPassword/RequestPassword';
 import ResetPassword from './pages/ForgotPassword/ResetPassword';
 import SeleccionDia from './pages/AgendarCita/SeleccionDia';
 import FormularioAgendarCita from './pages/AgendarCita/Formulario';
+import PagoResultado from './pages/AgendarCita/PagoResultado';
 import DashboardTutor from './pages/Dashboard/DashboardTutor';
 import DashboardMedico from './pages/Dashboard/DashboardMedico';
 import DashboardAdmin from './pages/Dashboard/DashboardAdmin';
@@ -29,6 +30,7 @@ function App() {
         {/* Agendar Cita Routes */}
         <Route path="/agendarCita" element={<SeleccionDia />} />
         <Route path="/agendarCita/formulario" element={<FormularioAgendarCita />} />
+        <Route path="/pago/resultado" element={<PagoResultado />} />
         
         {/* Dashboard Routes - Protegidas por Rol */}
         <Route 

@@ -25,7 +25,7 @@ export default function DashboardMedico() {
   const [medico, setMedico] = useState({ nombre: 'Médico' });
   const [proximasCitas, setProximasCitas] = useState<Cita[]>([]);
   const [proximosControles, setProximosControles] = useState<Control[]>([]);
-  const [citasPasadas, setCitasPasadas] = useState<Cita[]>([]);
+  const [, setCitasPasadas] = useState<Cita[]>([]);
   const [loading, setLoading] = useState(true);
   const [vista, setVista] = useState<'dia' | 'semana' | 'mes'>('semana');
 

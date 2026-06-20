@@ -1,286 +1,195 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import api from '../../api/client';
+import type { CitaSeleccionada } from '../../interfaces/Agenda';
 import '../../styles/AgendarCita.css';
 
 interface Mascota {
   idMascota: number;
   nomMascota: string;
+  especie?: string;
 }
+
+// Valor (precio) hardcodeado: no existe un endpoint accesible para listar tarifas.
+// El backend exige un idValor válido; usamos el valor por defecto sembrado.
+const ID_VALOR_PLACEHOLDER = 1;
 
 export default function FormularioAgendarCita() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
+  const [mascotaSeleccionada, setMascotaSeleccionada] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cargandoMascotas, setCargandoMascotas] = useState(true);
   const [error, setError] = useState('');
 
-  // Form data
-  const [nombreUsuario, setNombreUsuario] = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [medico, setMedico] = useState('');
-  const [tipoConsulta, setTipoConsulta] = useState('');
-  const [descripcion, setDescripcion] = useState('');
+  const [citaSeleccionada] = useState<CitaSeleccionada | null>(() => {
+    const guardada = localStorage.getItem('citaSeleccionada');
+    if (!guardada) return null;
+    try {
+      return JSON.parse(guardada) as CitaSeleccionada;
+    } catch {
+      return null;
+    }
+  });
 
-  // Pet data
-  const [mascotaSeleccionada, setMascotaSeleccionada] = useState('');
-  const [nombreMascota, setNombreMascota] = useState('');
-  const [especie, setEspecie] = useState('');
-  const [raza, setRaza] = useState('');
-  const [sexo, setSexo] = useState('');
-  const [edadAproximada, setEdadAproximada] = useState('');
-  const [peso, setPeso] = useState('');
+  // Si se llegó aquí sin selección previa, volver al inicio del flujo.
+  useEffect(() => {
+    if (!citaSeleccionada) navigate('/agendarCita');
+  }, [citaSeleccionada, navigate]);
 
   useEffect(() => {
-    // Cargar mascotas del usuario
+    if (!token) {
+      setCargandoMascotas(false);
+      return;
+    }
+    let cancelado = false;
     const fetchMascotas = async () => {
       try {
-        const response = await api.get('/v1/mascotas/listar');
-        setMascotas(response.data);
-      } catch (err) {
-        console.error('Error al cargar mascotas:', err);
+        const resp = await api.get<Mascota[]>('/v1/mascotas/listar');
+        if (!cancelado) setMascotas(Array.isArray(resp.data) ? resp.data : []);
+      } catch {
+        if (!cancelado) setError('No se pudieron cargar tus mascotas.');
+      } finally {
+        if (!cancelado) setCargandoMascotas(false);
       }
     };
-
     fetchMascotas();
-  }, []);
-
-  const handleMascotaSeleccionada = (mascotaId: string) => {
-    setMascotaSeleccionada(mascotaId);
-    const mascota = mascotas.find((m) => m.idMascota.toString() === mascotaId);
-    if (mascota) {
-      setNombreMascota(mascota.nomMascota);
-    }
-  };
+    return () => {
+      cancelado = true;
+    };
+  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!mascotaSeleccionada) {
+      setError('Selecciona una mascota para continuar.');
+      return;
+    }
+    if (!citaSeleccionada) {
+      setError('No hay un horario seleccionado. Vuelve a elegir día y hora.');
+      return;
+    }
+
     setLoading(true);
     setError('');
-
     try {
-      const citaSeleccionada = JSON.parse(localStorage.getItem('citaSeleccionada') || '{}');
+      const resp = await api.post('/v1/reservas', {
+        idMascota: Number(mascotaSeleccionada),
+        idVet: citaSeleccionada.idVet,
+        idBloque: citaSeleccionada.idBloque,
+        idValor: ID_VALOR_PLACEHOLDER,
+      });
 
-      const nuevaCita = {
-        nombreUsuario,
-        telefono,
-        medico,
-        tipoConsulta,
-        descripcion,
-        fecha: citaSeleccionada.fecha,
-        hora: citaSeleccionada.hora,
-        mascotaId: mascotaSeleccionada,
-        mascota: {
-          nombre: nombreMascota,
-          especie,
-          raza,
-          sexo,
-          edadAproximada,
-          peso,
-        },
-      };
-
-      await api.post('/v1/citas', nuevaCita);
-      alert('Cita agendada exitosamente');
+      const urlPago: string | undefined = resp.data?.urlPago;
       localStorage.removeItem('citaSeleccionada');
-      navigate('/home');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al agendar la cita');
-    } finally {
+
+      if (urlPago) {
+        // Flujo real: redirige a la pasarela de pago (Flow). Al terminar, Flow vuelve
+        // a /pago/resultado.
+        window.location.href = urlPago;
+      } else {
+        // Sin URL de pago: vamos directo a la pantalla de resultado.
+        navigate('/pago/resultado');
+      }
+    } catch (err) {
+      const msg = axios.isAxiosError(err)
+        ? (typeof err.response?.data === 'string' ? err.response.data : 'No se pudo agendar la cita.')
+        : 'No se pudo agendar la cita.';
+      setError(msg);
       setLoading(false);
     }
   };
 
   return (
     <div className="agendar-cita-container">
-      {/* Header */}
       <header className="agendar-header">
         <div className="header-content">
           <h1 style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</h1>
           <nav className="nav-tabs">
             <button className="nav-tab" onClick={() => navigate('/dashboard/tutor')}>Dashboard</button>
-            <button className="nav-tab">Two</button>
-            <button className="nav-tab">Three</button>
           </nav>
           <div className="header-buttons">
             <button className="btn-outline" onClick={() => navigate('/agendarCita')}>Reserva Online</button>
             {token ? (
-              <button className="btn-primary" onClick={() => navigate('/dashboard/tutor')}>
-                Perfil
-              </button>
+              <button className="btn-primary" onClick={() => navigate('/dashboard/tutor')}>Perfil</button>
             ) : (
-              <button className="btn-primary" onClick={() => navigate('/login')}>
-                Ingresa
-              </button>
+              <button className="btn-primary" onClick={() => navigate('/login')}>Ingresa</button>
             )}
           </div>
         </div>
       </header>
 
-      {/* Form Content */}
       <div className="form-content">
-        {/* Pet Details Section */}
+        {/* Selección de mascota */}
         <div className="form-section">
-          <h3>Detalles de la Mascota</h3>
+          <h3>Selecciona tu Mascota</h3>
 
-          <div className="form-group">
-            <label>Selecciona tu Mascota:</label>
-            <select
-              value={mascotaSeleccionada}
-              onChange={(e) => handleMascotaSeleccionada(e.target.value)}
-            >
-              <option value="">-- Selecciona una mascota --</option>
-              {mascotas.map((mascota) => (
-                <option key={mascota.idMascota} value={mascota.idMascota}>
-                  {mascota.nomMascota}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Pet Info Section */}
-          <div className="pet-info-section">
-            <div className="pet-image-placeholder"></div>
-
-            <div className="pet-info-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Nombre de la Mascota:</label>
-                  <input
-                    type="text"
-                    value={nombreMascota}
-                    onChange={(e) => setNombreMascota(e.target.value)}
-                    placeholder="Nombre"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Sexo:</label>
-                  <input
-                    type="text"
-                    value={sexo}
-                    onChange={(e) => setSexo(e.target.value)}
-                    placeholder="Sexo"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Especie:</label>
-                  <input
-                    type="text"
-                    value={especie}
-                    onChange={(e) => setEspecie(e.target.value)}
-                    placeholder="Especie"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Edad Aproximada:</label>
-                  <input
-                    type="text"
-                    value={edadAproximada}
-                    onChange={(e) => setEdadAproximada(e.target.value)}
-                    placeholder="Edad"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Raza:</label>
-                  <input
-                    type="text"
-                    value={raza}
-                    onChange={(e) => setRaza(e.target.value)}
-                    placeholder="Raza"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Peso:</label>
-                  <input
-                    type="text"
-                    value={peso}
-                    onChange={(e) => setPeso(e.target.value)}
-                    placeholder="Peso"
-                  />
-                </div>
-              </div>
+          {cargandoMascotas ? (
+            <p className="hint-text">Cargando mascotas...</p>
+          ) : mascotas.length === 0 ? (
+            <div className="no-mascotas">
+              <p>No tienes mascotas registradas. Agrega una para poder agendar.</p>
+              <button className="btn-primary" onClick={() => navigate('/agregar-mascota')}>
+                Agregar mascota
+              </button>
             </div>
-          </div>
+          ) : (
+            <div className="form-group">
+              <label>Mascota:</label>
+              <select
+                value={mascotaSeleccionada}
+                onChange={(e) => setMascotaSeleccionada(e.target.value)}
+              >
+                <option value="">-- Selecciona una mascota --</option>
+                {mascotas.map((m) => (
+                  <option key={m.idMascota} value={m.idMascota}>
+                    {m.nomMascota}{m.especie ? ` (${m.especie})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
-        {/* Appointment Form Section */}
+        {/* Resumen + confirmación */}
         <div className="form-section">
-          <h3>Agendar Cita Veterinaria</h3>
+          <h3>Resumen de tu Cita</h3>
 
           {error && <div className="error-message">{error}</div>}
 
+          {citaSeleccionada ? (
+            <div className="resumen-cita">
+              <div className="resumen-item">
+                <span className="resumen-label">Especialidad:</span>
+                <span className="resumen-valor">{citaSeleccionada.especialidad}</span>
+              </div>
+              <div className="resumen-item">
+                <span className="resumen-label">Veterinario:</span>
+                <span className="resumen-valor">{citaSeleccionada.nombreVet}</span>
+              </div>
+              <div className="resumen-item">
+                <span className="resumen-label">Fecha:</span>
+                <span className="resumen-valor">{citaSeleccionada.fecha}</span>
+              </div>
+              <div className="resumen-item">
+                <span className="resumen-label">Hora:</span>
+                <span className="resumen-valor">{citaSeleccionada.hora}</span>
+              </div>
+            </div>
+          ) : (
+            <p className="hint-text">Cargando datos de la cita...</p>
+          )}
+
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Nombre del Usuario:</label>
-              <input
-                type="text"
-                value={nombreUsuario}
-                onChange={(e) => setNombreUsuario(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Teléfono:</label>
-              <input
-                type="tel"
-                value={telefono}
-                onChange={(e) => setTelefono(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Selecciona el Médico:</label>
-              <select
-                value={medico}
-                onChange={(e) => setMedico(e.target.value)}
-                required
-              >
-                <option value="">-- Selecciona un médico --</option>
-                <option value="medico1">Dr. Juan Pérez</option>
-                <option value="medico2">Dra. María García</option>
-                <option value="medico3">Dr. Carlos López</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Tipo de Consulta:</label>
-              <select
-                value={tipoConsulta}
-                onChange={(e) => setTipoConsulta(e.target.value)}
-                required
-              >
-                <option value="">-- Selecciona un tipo de consulta --</option>
-                <option value="control">Control</option>
-                <option value="vacuna">Vacuna</option>
-                <option value="examen">Exámen</option>
-                <option value="operacion">Operación</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>Descripción de la Consulta:</label>
-              <textarea
-                value={descripcion}
-                onChange={(e) => setDescripcion(e.target.value)}
-                placeholder="Describe brevemente el motivo de la consulta..."
-                rows={4}
-              />
-            </div>
-
             <button
               type="submit"
               className="btn-primary btn-lg"
-              disabled={loading}
+              disabled={loading || !citaSeleccionada || mascotas.length === 0}
             >
-              {loading ? 'Agendando...' : 'Agendar Cita'}
+              {loading ? 'Generando orden de pago...' : 'Confirmar y pagar'}
             </button>
           </form>
         </div>
