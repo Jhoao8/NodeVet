@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { getDashboardPath } from '../../utils/authUtils';
 import '../../styles/AgendarCita.css';
 
 type Estado = 'exito' | 'pendiente' | 'rechazado';
@@ -56,7 +57,7 @@ export default function PagoResultado() {
           <h2>{c.titulo}</h2>
           <p>{c.mensaje}</p>
           <div className="pago-resultado-acciones">
-            <button className="btn-primary" onClick={() => navigate('/dashboard/tutor')}>
+            <button className="btn-primary" onClick={() => navigate(getDashboardPath())}>
               Ir a mi panel
             </button>
             <button className="btn-outline" onClick={() => navigate('/agendarCita')}>

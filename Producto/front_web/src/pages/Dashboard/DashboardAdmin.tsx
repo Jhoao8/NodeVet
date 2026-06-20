@@ -17,6 +17,7 @@ export default function DashboardAdmin() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [ultimoVet, setUltimoVet] = useState<{ idVeterinario?: number; nombreCompleto?: string } | null>(null);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -38,9 +39,13 @@ export default function DashboardAdmin() {
     fetchUsers().finally(() => setLoading(false));
   }, []);
 
-  const handleSuccess = () => {
+  const handleSuccess = (vet?: { idVeterinario?: number; nombreCompleto?: string }) => {
     setShowModal(false);
     fetchUsers(); // Refresh user list
+    if (vet?.idVeterinario) {
+      setUltimoVet({ idVeterinario: vet.idVeterinario, nombreCompleto: vet.nombreCompleto });
+      localStorage.setItem('ultimoVetIdVet', String(vet.idVeterinario));
+    }
   };
 
   return (
@@ -67,11 +72,9 @@ export default function DashboardAdmin() {
           <aside className="sidebar">
             <h3>Menú</h3>
             <nav className="sidebar-nav">
-              <button className="nav-item active">🏠 Home</button>
-              <button className="nav-item">👥 Usuarios</button>
-              <button className="nav-item">🐾 Mascotas</button>
-              <button className="nav-item">📅 Citas</button>
-              <button className="nav-item">📊 Controles</button>
+              <button className="nav-item active" onClick={() => navigate('/dashboard/admin')}>👥 Usuarios</button>
+              <button className="nav-item" onClick={() => navigate('/dashboard/admin/agenda')}>🗓️ Generar Agenda</button>
+              <button className="nav-item" onClick={() => navigate('/dashboard/admin/precio')}>💲 Valor de citas</button>
             </nav>
           </aside>
 
@@ -88,6 +91,14 @@ export default function DashboardAdmin() {
                 <div className="admin-grid">
                   <section className="dashboard-section">
                     <h3>Usuarios</h3>
+                    {ultimoVet?.idVeterinario && (
+                      <div
+                        className="error-message"
+                        style={{ background: '#e6f4ea', color: '#1e4620', border: '1px solid #b7e1c4' }}
+                      >
+                        Veterinario creado: {ultimoVet.nombreCompleto} — <strong>ID de veterinario: {ultimoVet.idVeterinario}</strong>. Úsalo en "Generar Agenda".
+                      </div>
+                    )}
                     <table className="data-table">
                       <thead>
                         <tr>

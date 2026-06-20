@@ -10,6 +10,8 @@ import PagoResultado from './pages/AgendarCita/PagoResultado';
 import DashboardTutor from './pages/Dashboard/DashboardTutor';
 import DashboardMedico from './pages/Dashboard/DashboardMedico';
 import DashboardAdmin from './pages/Dashboard/DashboardAdmin';
+import GenerarAgenda from './pages/Dashboard/GenerarAgenda';
+import ConfigPrecio from './pages/Dashboard/ConfigPrecio';
 import AgregarMascota from './pages/AgregarMascota';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import './index.css';
@@ -41,9 +43,17 @@ function App() {
           path="/dashboard/medico" 
           element={<ProtectedRoute element={<DashboardMedico />} requiredRole="VETERINARIO" />} 
         />
-        <Route 
-          path="/dashboard/admin" 
-          element={<ProtectedRoute element={<DashboardAdmin />} requiredRole="ADMIN" />} 
+        <Route
+          path="/dashboard/admin"
+          element={<ProtectedRoute element={<DashboardAdmin />} requiredRole="ADMIN" />}
+        />
+        <Route
+          path="/dashboard/admin/agenda"
+          element={<ProtectedRoute element={<GenerarAgenda />} requiredRole="ADMIN" />}
+        />
+        <Route
+          path="/dashboard/admin/precio"
+          element={<ProtectedRoute element={<ConfigPrecio />} requiredRole="ADMIN" />}
         />
 
         {/* Mascotas */}

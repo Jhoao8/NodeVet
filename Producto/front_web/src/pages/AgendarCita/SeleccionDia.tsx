@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import api from '../../api/client';
 import type { VetDisponibilidad, BloqueHorarioDTO, CitaSeleccionada } from '../../interfaces/Agenda';
+import { getDashboardPath } from '../../utils/authUtils';
 import '../../styles/AgendarCita.css';
 
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -156,12 +157,12 @@ export default function SeleccionDia() {
         <div className="header-content">
           <h1 style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</h1>
           <nav className="nav-tabs">
-            <button className="nav-tab" onClick={() => navigate('/dashboard/tutor')}>Dashboard</button>
+            <button className="nav-tab" onClick={() => navigate(getDashboardPath())}>Dashboard</button>
           </nav>
           <div className="header-buttons">
             <button className="btn-outline" onClick={() => navigate('/agendarCita')}>Reserva Online</button>
             {token ? (
-              <button className="btn-primary" onClick={() => navigate('/dashboard/tutor')}>Perfil</button>
+              <button className="btn-primary" onClick={() => navigate(getDashboardPath())}>Perfil</button>
             ) : (
               <button className="btn-primary" onClick={() => navigate('/login')}>Ingresa</button>
             )}

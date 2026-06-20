@@ -4,7 +4,7 @@ import type { AxiosResponse } from 'axios';
 import type { Especialidad } from '../../interfaces/Especialidad.ts';
 
 interface Props {
-  onSuccess: () => void;
+  onSuccess: (vet?: { idVeterinario?: number; nombreCompleto?: string }) => void;
   onCancel: () => void;
 }
 
@@ -155,8 +155,8 @@ export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props)
     };
 
     try {
-      await api.post('/v1/veterinarios/registrar', vetData);
-      onSuccess();
+      const resp = await api.post('/v1/veterinarios/registrar', vetData);
+      onSuccess(resp.data);
     } catch (err: any) {
       console.error('Error registering veterinarian:', err);
       setError(err.response?.data?.message || 'Ocurrió un error al registrar el veterinario.');

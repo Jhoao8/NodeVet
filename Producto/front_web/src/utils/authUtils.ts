@@ -42,3 +42,21 @@ export const getUserInfoFromToken = (token: string) => {
     return null;
   }
 };
+
+/**
+ * Devuelve la ruta del dashboard correspondiente al rol guardado en localStorage.
+ * Evita enviar a un admin/veterinario al panel de tutor: ese panel consulta
+ * endpoints exclusivos de tutor (p.ej. /v1/mascotas/listar) y un 403 (enmascarado
+ * como 401 por el backend) provocaría el cierre de sesión indebido.
+ */
+export const getDashboardPath = (): string => {
+  const role = localStorage.getItem('userRole');
+  switch (role) {
+    case 'ADMIN':
+      return '/dashboard/admin';
+    case 'VETERINARIO':
+      return '/dashboard/medico';
+    default:
+      return '/dashboard/tutor';
+  }
+};

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import api from '../../api/client';
 import type { CitaSeleccionada } from '../../interfaces/Agenda';
+import { getDashboardPath } from '../../utils/authUtils';
+import { getPrecioCita, formatCLP } from '../../config/precioCita';
 import '../../styles/AgendarCita.css';
 
 interface Mascota {
@@ -103,18 +105,21 @@ export default function FormularioAgendarCita() {
     }
   };
 
+  const precioCita = getPrecioCita();
+  const precioCitaTexto = precioCita !== null ? formatCLP(precioCita) : 'Por confirmar';
+
   return (
     <div className="agendar-cita-container">
       <header className="agendar-header">
         <div className="header-content">
           <h1 style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</h1>
           <nav className="nav-tabs">
-            <button className="nav-tab" onClick={() => navigate('/dashboard/tutor')}>Dashboard</button>
+            <button className="nav-tab" onClick={() => navigate(getDashboardPath())}>Dashboard</button>
           </nav>
           <div className="header-buttons">
             <button className="btn-outline" onClick={() => navigate('/agendarCita')}>Reserva Online</button>
             {token ? (
-              <button className="btn-primary" onClick={() => navigate('/dashboard/tutor')}>Perfil</button>
+              <button className="btn-primary" onClick={() => navigate(getDashboardPath())}>Perfil</button>
             ) : (
               <button className="btn-primary" onClick={() => navigate('/login')}>Ingresa</button>
             )}
@@ -177,6 +182,10 @@ export default function FormularioAgendarCita() {
               <div className="resumen-item">
                 <span className="resumen-label">Hora:</span>
                 <span className="resumen-valor">{citaSeleccionada.hora}</span>
+              </div>
+              <div className="resumen-item">
+                <span className="resumen-label">Valor:</span>
+                <span className="resumen-valor">{precioCitaTexto}</span>
               </div>
             </div>
           ) : (
