@@ -41,8 +41,7 @@ public class UsuarioService implements UserDetailsService {
     @Transactional
     public Usuario registrarUsuario(UsuarioRegistroDTO dto) {
         if (usuarioRepository.existsByCorreoUsr(dto.getCorreoUsr())) {
-            // Cambio de RuntimeException a un 400 Bad Request
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo ya está registrado en el sistema.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo ya está registrado en el sistema.");
         }
 
         Usuario nuevoUsuario = Usuario.builder()
@@ -134,9 +133,15 @@ public class UsuarioService implements UserDetailsService {
 
     @Transactional
     public void generarTokenRecuperacion(String correo) {
-        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No se encontró un usuario con ese correo."));
+        Optional<Usuario> usuarioOpt = usuarioRepository.findByCorreoUsr(correo);
+        
+        // Prevención de enumeración de usuarios: Si no existe, salimos silenciosamente
+        if (usuarioOpt.isEmpty()) {
+            System.out.println("DEBUG - Intento de recuperación ignorado: Correo no registrado (" + correo + ")");
+            return; 
+        }
 
+        Usuario usuario = usuarioOpt.get();
         String codigoOTP = String.format("%06d", new Random().nextInt(999999));
         
         CodigoVerificacion token = codigoRepo.findByUsuario(usuario)

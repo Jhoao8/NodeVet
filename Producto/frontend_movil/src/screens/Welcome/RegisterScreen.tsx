@@ -172,7 +172,7 @@ const RegisterScreen = () => {
     return (
         <KeyboardAvoidingView 
             style={globalStyles.container} 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <ScrollView 
                 contentContainerStyle={{

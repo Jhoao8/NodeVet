@@ -86,8 +86,8 @@ public class DtoMapper {
     public static ReservaDTO toReservaDTO(com.nodevet.app.model.reserva.Reserva reserva) {
         return new ReservaDTO(
                 reserva.getIdReserva(),
-                reserva.getMascota().getIdMascota(), // O getId() según tu modelo
-                reserva.getVeterinario().getId(), // O getId() según tu modelo
+                reserva.getMascota().getIdMascota(),
+                reserva.getVeterinario().getId(),
                 reserva.getBloqueHorario().getIdBloque(),
                 reserva.getValor().getIdValor(),
                 reserva.getEstadoReserva().getIdEstReserva(),

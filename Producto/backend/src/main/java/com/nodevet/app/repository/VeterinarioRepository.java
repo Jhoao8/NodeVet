@@ -10,4 +10,7 @@ import java.util.Optional;
 public interface VeterinarioRepository extends JpaRepository<Veterinario, Integer> {
     // Busca un perfil de Veterinario a partir de una entidad Usuario
     Optional<Veterinario> findByUsuario(Usuario usuario);
+
+    // Método necesario para validar que el RUN no se repita (TC-M3-B03)
+    boolean existsByRunVet(Integer runVet);
 }

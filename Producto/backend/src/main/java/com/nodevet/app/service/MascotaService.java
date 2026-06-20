@@ -8,9 +8,11 @@ import com.nodevet.app.repository.MascotaRepository;
 import com.nodevet.app.repository.TutorRepository;
 import com.nodevet.app.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -47,17 +49,16 @@ public class MascotaService {
 
         // 2. Buscamos la mascota en la BD
         Mascota mascota = mascotaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Mascota no encontrada"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mascota no encontrada"));
 
         // 3. Verificamos que la mascota esté activa
-        // (Asumiendo que 1 es activo y 0 es inhabilitado/eliminado)
         if (mascota.getEstadoMasc() == 0) {
-            throw new RuntimeException("No puedes modificar una mascota que ha sido dada de baja");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No puedes modificar una mascota que ha sido dada de baja");
         }
 
-        // 4. LA VALIDACIÓN CLAVE: Verificamos que los IDs coincidan
+        // 4. LA VALIDACIÓN CLAVE: Verificamos que los IDs coincidan (Anti-IDOR)
         if (!mascota.getTutor().getIdTutor().equals(tutorLogueado.getIdTutor())) {
-            throw new RuntimeException("No tienes permisos para modificar esta mascota");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para modificar esta mascota");
         }
 
         // 5. Si pasa todas las validaciones, procedemos a actualizar
@@ -82,10 +83,10 @@ public class MascotaService {
         Tutor tutorLogueado = obtenerTutorActual();
         
         Mascota mascota = mascotaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Mascota no encontrada"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Mascota no encontrada"));
 
         if (!mascota.getTutor().getIdTutor().equals(tutorLogueado.getIdTutor())) {
-            throw new RuntimeException("No tienes permisos para eliminar esta mascota");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No tienes permisos para eliminar esta mascota");
         }
 
         mascotaRepository.softDelete(id);
@@ -94,8 +95,8 @@ public class MascotaService {
     private Tutor obtenerTutorActual() {
         String correoUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
         Usuario usuario = usuarioRepository.findByCorreoUsr(correoUsuario)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado en el contexto de seguridad"));
         return tutorRepository.findByUsuario(usuario)
-                .orElseThrow(() -> new RuntimeException("Perfil de Tutor no válido"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Perfil de Tutor no válido o inexistente"));
     }
 }
