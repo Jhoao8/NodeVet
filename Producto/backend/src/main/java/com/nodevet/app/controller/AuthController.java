@@ -40,8 +40,14 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(dto.getCorreoUsr(), dto.getPassUsr())
             );
 
-            // 2. Cargar detalles del usuario
+            // 2. Cargar detalles del usuario (AQUÍ VIENE EL ROL)
             UserDetails userDetails = usuarioService.loadUserByUsername(dto.getCorreoUsr());
+
+            // ════════ AGREGA ESTO: EXTRAER EL ROL ════════
+            // Tomamos el primer rol de la lista (ej: "ROLE_ADMIN") y le quitamos el "ROLE_"
+            String rolSpring = userDetails.getAuthorities().iterator().next().getAuthority();
+            String rolLimpio = rolSpring.replace("ROLE_", "");
+            // ═════════════════════════════════════════════
 
             // 3. Lógica de expiración diferenciada (App vs Web)
             long expiracion = dto.isMobile() ? JwtUtil.EXPIRE_MOBILE : JwtUtil.EXPIRE_WEB;
@@ -49,7 +55,8 @@ public class AuthController {
             // 4. Generar el token con el tiempo correspondiente
             String jwt = jwtUtil.generateToken(userDetails.getUsername(), expiracion);
 
-            return ResponseEntity.ok(new LoginResponseDTO(jwt));
+            // 5. Retornar el token Y el rol al teléfono
+            return ResponseEntity.ok(new LoginResponseDTO(jwt, rolLimpio));
 
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();

@@ -5,12 +5,12 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { globalStyles } from '@/src/style/GlobalStyle';
 import { dashboardStyles } from '@/src/style/DashboardStyle';
-import { colors } from '../theme/colors';
-import { useAuth } from '../context/AuthContext';
-import api from '../api/axiosInstance'; // 👇 Importamos la API para traer el nombre
+import { colors } from '../../theme/colors';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../api/axiosInstance'; // 👇 Importamos la API para traer el nombre
 
-import DashboardHeader from '../components/DashboardHeader';
-import PetSummaryList from '../components/PetSummaryList/PetSummaryList';
+import DashboardHeader from '../../components/DashboardHeader';
+import PetSummaryList from '../../components/PetSummaryList/PetSummaryList';
 
 const HomeScreen = () => {
     const navigation = useNavigation<any>();

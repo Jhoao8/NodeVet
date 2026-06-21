@@ -4,23 +4,26 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import AuthStack from './AuthStack';
 import BottomTabNavigator from './BottomTabNavigator';
-import RegistroMascotaScreen from '@/src/screens/Mascotas/RegistroMascota';
+import RegistroMascotaScreen from '@/src/screens/Tutor/Mascotas/RegistroMascota';
 import { colors } from '../theme/colors';
 import { useAuth } from '../context/AuthContext';
-import DetalleMascotaScreen from '../screens/Mascotas/DetalleMascotaScreen';
-import EditarMascota from '../screens/Mascotas/EditarMascota';
-import HistorialMedicoScreen from '../screens/Mascotas/Historial/HistorialMedico';
+import DetalleMascotaScreen from '../screens/Tutor/Mascotas/DetalleMascotaScreen';
+import EditarMascota from '../screens/Tutor/Mascotas/EditarMascota';
+import HistorialMedicoScreen from '../screens/Tutor/Mascotas/Historial/HistorialMedico';
 
-// ════════ IMPORTACIONES DE LAS NUEVAS PANTALLAS ════════
-import VacunaScreen from '../screens/Mascotas/Historial/VacunasScreen';
-import ConsultasScreen from '../screens/Mascotas/Historial/ConsultaScreen';
-import ExamenScreen from '../screens/Mascotas/Historial/ExamenScreen';
-import CirugiaScreen from '../screens/Mascotas/Historial/CirugiaScreen';
+import VacunaScreen from '../screens/Tutor/Mascotas/Historial/VacunasScreen';
+import ConsultasScreen from '../screens/Tutor/Mascotas/Historial/ConsultaScreen';
+import ExamenScreen from '../screens/Tutor/Mascotas/Historial/ExamenScreen';
+import CirugiaScreen from '../screens/Tutor/Mascotas/Historial/CirugiaScreen';
+
+// ════════ IMPORTACIÓN DEL NUEVO TAB NAVIGATOR DEL ADMIN ════════
+import AdminBottomTabNavigator from './AdminBottomTabNavigator'; 
 
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
-    const { userToken, isLoading } = useAuth();
+    // ════════ EXTRAEMOS EL ROL DEL CONTEXTO ════════
+    const { userToken, userRole, isLoading } = useAuth(); 
 
     if (isLoading) {
         return (
@@ -30,10 +33,24 @@ const AppNavigator = () => {
         );
     }
 
+    // ════════ LÓGICA DE ENRUTAMIENTO (RBAC) ════════
+    const getInitialRoute = () => {
+        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+            return 'AdminMain'; // <-- Ahora apunta al Tab Navigator
+        }
+        return 'Main'; // Por defecto, va al BottomTabNavigator de los tutores
+    };
+
     return (
         <NavigationContainer key={userToken ? 'auth' : 'noauth'}>
             {userToken ? (
-                <Stack.Navigator screenOptions={{ headerShown: false }}>
+                // Asignamos la ruta inicial dinámicamente
+                <Stack.Navigator initialRouteName={getInitialRoute()} screenOptions={{ headerShown: false }}>
+                    
+                    {/* ════════ Registramos el Tab Navigator del Administrador ════════ */}
+                    <Stack.Screen name="AdminMain" component={AdminBottomTabNavigator} />
+                    
+                    {/* El BottomTabNavigator de siempre para clientes */}
                     <Stack.Screen name="Main" component={BottomTabNavigator} />
                     
                     <Stack.Screen 
@@ -70,36 +87,11 @@ const AppNavigator = () => {
                         }}
                     />
                     
-                    <Stack.Screen 
-                        name="HistorialMedico"
-                        component={HistorialMedicoScreen}
-                        options={{ headerShown: false }}
-                    />
-
-                    {/* ════════ RUTAS PARA LOS HISTORIALES ESPECÍFICOS ════════ */}
-                    <Stack.Screen 
-                        name="Vacunas"
-                        component={VacunaScreen}
-                        options={{ headerShown: false }}
-                    />
-                    
-                    <Stack.Screen 
-                        name="Consultas"
-                        component={ConsultasScreen}
-                        options={{ headerShown: false }}
-                    />
-                    
-                    <Stack.Screen 
-                        name="Examenes"
-                        component={ExamenScreen}
-                        options={{ headerShown: false }}
-                    />
-                    
-                    <Stack.Screen 
-                        name="Cirugias"
-                        component={CirugiaScreen}
-                        options={{ headerShown: false }}
-                    />
+                    <Stack.Screen name="HistorialMedico" component={HistorialMedicoScreen} />
+                    <Stack.Screen name="Vacunas" component={VacunaScreen} />
+                    <Stack.Screen name="Consultas" component={ConsultasScreen} />
+                    <Stack.Screen name="Examenes" component={ExamenScreen} />
+                    <Stack.Screen name="Cirugias" component={CirugiaScreen} />
 
                 </Stack.Navigator>
                 

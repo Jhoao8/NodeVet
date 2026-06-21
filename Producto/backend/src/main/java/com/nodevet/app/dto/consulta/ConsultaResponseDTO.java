@@ -9,6 +9,8 @@ import java.util.List;
 public class ConsultaResponseDTO {
     private Integer idConsulta;
     private Integer idReserva;
+    private String fecha;
+    private String profesional;
     private String diagnostico;
     private String notas;
     private String indicacionReceta;

@@ -196,22 +196,20 @@ public class UsuarioService implements UserDetailsService {
             throw new UsernameNotFoundException("El usuario se encuentra inactivo.");
         }
 
+        // Lógica estructural mejorada para determinar el rol del usuario
         List<GrantedAuthority> authorities = new ArrayList<>();
         
-        adminRepository.findByUsuario(usuario).ifPresent(admin -> {
+        // 1. ¿Es Admin? (Usamos la consulta nativa SQL para evitar problemas de mapeo)
+        if (adminRepository.checkIsAdmin(usuario.getIdUsuario()) > 0) {
             authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-        });
-
-        if (authorities.isEmpty()) {
-            veterinarioRepository.findByUsuario(usuario).ifPresent(vet -> {
-                authorities.add(new SimpleGrantedAuthority("ROLE_VET"));
-            });
-        }
-
-        if (authorities.isEmpty()) {
-            tutorRepository.findByUsuario(usuario).ifPresent(tutor -> {
-                authorities.add(new SimpleGrantedAuthority("ROLE_TUTOR"));
-            });
+        } 
+        // 2. Si no es Admin, ¿es Veterinario?
+        else if (veterinarioRepository.findByUsuario(usuario).isPresent()) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_VET"));
+        } 
+        // 3. Si no es ninguno de los anteriores, es Tutor (rol por defecto)
+        else {
+            authorities.add(new SimpleGrantedAuthority("ROLE_TUTOR"));
         }
 
         return new org.springframework.security.core.userdetails.User(
@@ -219,5 +217,23 @@ public class UsuarioService implements UserDetailsService {
                 usuario.getPassUsr(),
                 authorities 
         );
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Usuario> obtenerUsuarioPorCorreo(String correo) {
+        return usuarioRepository.findByCorreoUsr(correo);
+    }
+
+    @Transactional
+    public void actualizarUsuarioPorCorreo(String correo, UsuarioUpdateDTO dto) {
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        usuario.setNombreUsr(dto.getNombreUsr());
+        usuario.setApellidoUsr(dto.getApellidoUsr());
+        usuario.setTelefonoUsr(dto.getTelefonoUsr());
+        usuario.setCorreoUsr(dto.getCorreoUsr()); 
+
+        usuarioRepository.save(usuario);
     }
 }

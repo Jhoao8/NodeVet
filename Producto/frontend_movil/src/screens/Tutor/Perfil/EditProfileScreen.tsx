@@ -5,16 +5,16 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
-import { globalStyles } from '../../style/GlobalStyle';
-import { dashboardStyles } from '../../style/DashboardStyle';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
-import DashboardHeader from '../../components/DashboardHeader';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../api/axiosInstance';
+import { globalStyles } from '../../../style/GlobalStyle';
+import { dashboardStyles } from '../../../style/DashboardStyle';
+import { colors } from '../../../theme/colors';
+import { spacing } from '../../../theme/spacing';
+import { typography } from '../../../theme/typography';
+import DashboardHeader from '../../../components/DashboardHeader';
+import { useAuth } from '../../../context/AuthContext';
+import api from '../../../api/axiosInstance';
 import axios from 'axios';
-import { useCustomAlert } from '../../components/CustomAlert';
+import { useCustomAlert } from '../../../components/CustomAlert';
 
 interface UserProfile {
     idUsr?: number;

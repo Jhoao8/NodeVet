@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native'; 
+import AsyncStorage from '@react-native-async-storage/async-storage'; // <-- Añadido para guardar el rol
 import { Ionicons } from '@expo/vector-icons'; 
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -19,7 +20,6 @@ const LoginScreen = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     
-
     const { signIn } = useAuth();
 
     const handleLogin = async () => {
@@ -30,22 +30,30 @@ const LoginScreen = () => {
 
         setLoading(true);
         try {
-            const response = await api.post('/auth/login', {
+            const response = await api.post('/auth/login', { 
                 correoUsr: email,
                 passUsr: password,
-                isMobile: true // esto activa la expiracion extendida en el backend
+                isMobile: true 
             });
 
-            const token = response.data.token; 
+            const { token, rol } = response.data; 
 
             if (token) {
-                // Ya no usas AsyncStorage directo aquí, usas signIn del contexto
+                // 1. Guardamos el rol en la memoria del dispositivo
+                if (token) {
+                    console.log('Login exitoso. Rol detectado:', rol);
+                    await signIn(token, rol); // Pasamos ambos datos al contexto de un solo golpe
+                }
+                
+                console.log('Login exitoso. Rol detectado y guardado:', rol);
+                
+                // 2. Ejecutamos el inicio de sesión del contexto.
+                // Esto destruye esta pantalla (Login) y carga el AppNavigator automáticamente.
                 await signIn(token); 
-                console.log('Login exitoso y estado global actualizado');
-                // NO necesitas navigation.navigate, el AppNavigator cambiará solo
             }
 
         } catch (error: any) {
+            console.error("Error en login:", error);
             showAlert('Error', 'Credenciales incorrectas o problema de servidor.');
         } finally {
             setLoading(false);
@@ -67,7 +75,7 @@ const LoginScreen = () => {
                     <View style={globalStyles.headerRow}>
                         <View style={globalStyles.logoPlaceholder}>
                             <Image 
-                                source={require('@/assets/images/Logo.png')} 
+                                source={require('../../../assets/images/Logo.png')} 
                                 style={globalStyles.logo}
                                 resizeMode="contain" 
                             />
@@ -147,7 +155,7 @@ const LoginScreen = () => {
 
 const styles = StyleSheet.create({
     localMiddleSection: {
-        marginTop: spacing.xxl, // Mantiene el margen específico de esta pantalla
+        marginTop: spacing.xxl, 
     }
 });
 

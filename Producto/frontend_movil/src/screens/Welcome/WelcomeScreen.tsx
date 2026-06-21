@@ -13,7 +13,7 @@ const WelcomeScreen = () => {
       {/* Área del Logo / Ilustración */}
       <View style={styles.logoContainer}>
         <Image
-      source={require('@/assets/images/Logo.png')}                        // Logo temporal
+      source={require('../../../assets/images/Logo.png')}                        // Logo temporal
       style={styles.logo}
       resizeMode='contain'  
         />
