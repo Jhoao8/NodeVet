@@ -20,10 +20,11 @@ import java.time.LocalTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.nodevet.app.dto.agenda.VetDispDTO;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -66,6 +67,18 @@ public class AgendaService {
         LocalDate fechaInicio = anioMes.atDay(1);
         LocalDate fechaFin = anioMes.atEndOfMonth();
 
+        // --- NUEVO: Traemos los bloques que YA existen en este rango para no duplicarlos ---
+        List<BloqueHorario> bloquesExistentes = bloqueHorarioRepository.findByVeterinarioAndRangoFechas(
+                idVet,
+                fechaInicio.atStartOfDay(),
+                fechaFin.atTime(LocalTime.MAX)
+        );
+
+        // Set de horarios de inicio ya ocupados, para comparar rápido en memoria (O(1) por búsqueda)
+        Set<LocalDateTime> horariosExistentes = bloquesExistentes.stream()
+                .map(BloqueHorario::getFecHrInicio)
+                .collect(Collectors.toSet());
+
         List<BloqueHorario> nuevosBloques = new ArrayList<>();
 
         // 5. Recorrer cada día del mes (Ej: del 1 al 31)
@@ -92,15 +105,18 @@ public class AgendaService {
                     LocalDateTime fecHrInicioBloque = LocalDateTime.of(fecha, horaActual);
                     LocalDateTime fecHrFinBloque = LocalDateTime.of(fecha, horaActual.plusMinutes(duracion));
 
-                    // Construir el bloque usando el Builder de Lombok
-                    BloqueHorario bloque = BloqueHorario.builder()
-                            .veterinario(veterinario)
-                            .fecHrInicio(fecHrInicioBloque)
-                            .fecHrFin(fecHrFinBloque)
-                            .estadoBloque(estadoDisponible) // <-- CORRECCIÓN: Se asigna el estado aquí
-                            .build();
+                    // --- NUEVO: Solo creamos el bloque si NO existe ya uno idéntico ---
+                    if (!horariosExistentes.contains(fecHrInicioBloque)) {
+                        // Construir el bloque usando el Builder de Lombok
+                        BloqueHorario bloque = BloqueHorario.builder()
+                                .veterinario(veterinario)
+                                .fecHrInicio(fecHrInicioBloque)
+                                .fecHrFin(fecHrFinBloque)
+                                .estadoBloque(estadoDisponible) // <-- CORRECCIÓN: Se asigna el estado aquí
+                                .build();
 
-                    nuevosBloques.add(bloque);
+                        nuevosBloques.add(bloque);
+                    }
 
                     // Avanzar el reloj para el siguiente ciclo del bucle
                     horaActual = horaActual.plusMinutes(duracion);
@@ -160,12 +176,7 @@ public class AgendaService {
             String nombreCompleto = "Dr(a). " + vet.getUsuario().getNombreUsr() + " " + vet.getUsuario().getApellidoUsr();
 
             // Obtener la especialidad principal (Asumiendo que tienes mapeada la relación ManyToMany en tu entidad Veterinario)
-            // Si no la tienes mapeada en el modelo de Java, puedes dejar un valor por defecto o consultarla
             String especialidad = "Veterinario General";
-            // Ejemplo de uso si tienes mapeado 'getEspecialidades()' en tu entidad Veterinario:
-            // if (vet.getEspecialidades() != null && !vet.getEspecialidades().isEmpty()) {
-            //     especialidad = vet.getEspecialidades().get(0).getNomEsp();
-            // }
 
             // Mapear la lista de entidades BloqueHorario a BloqueHorarioDTO
             List<BloqueHorarioDTO> bloquesDTO = bloquesVet.stream()

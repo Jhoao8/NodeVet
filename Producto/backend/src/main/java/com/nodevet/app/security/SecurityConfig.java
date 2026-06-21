@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -58,13 +60,21 @@ public class SecurityConfig {
                     "/swagger-ui/**", 
                     "/v3/api-docs/**", 
                     "/swagger-ui.html",
-                    "/api/v1/pagos/confirmar"
+                    "/api/v1/pagos/confirmar",
+                    "/api/v1/pagos/webhook"    // <--- ¡ESTA ES LA LÍNEA MÁGICA!
                 ).permitAll()
                 
                 // 2. AÑADIMOS LAS REGLAS BASADAS EN ROLES
+                // --- Mi Perfil ---
                 .requestMatchers(HttpMethod.GET, "/api/v1/usuarios/perfil").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/actualizar").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/actualizar-foto").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/perfil").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/usuarios/perfil/foto").authenticated()
+                
+                // --- Gestión de Usuarios (Admin) ---
+                // Dejamos pasar la petición aquí para que el @PreAuthorize del Controller 
+                // haga la validación exacta del rol ADMIN.
+                .requestMatchers("/api/v1/usuarios", "/api/v1/usuarios/**").authenticated()
+                
                 // Gestión de Usuarios (GET, PUT, DELETE): solo Admins.
                 // El POST a /registro ya está permitido arriba.
                 .requestMatchers(HttpMethod.GET, "/api/v1/usuarios", "/api/v1/usuarios/**").hasRole("ADMIN")
@@ -75,12 +85,16 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/mascotas/**").hasRole("TUTOR")
                 .requestMatchers("/api/v1/reservas/**").hasRole("TUTOR")
                 // === RUTAS DE PAGOS ===
-                // El Tutor inicia el pago en la app:
                 .requestMatchers("/api/v1/pagos/iniciar").hasRole("TUTOR")
 
+                // === JORNADAS Y AGENDA: solo Admin puede configurar/generar ===
+                .requestMatchers("/api/v1/jornadas/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/agendas").hasRole("ADMIN")
+
                 // Especialidades:
-                .requestMatchers("/api/v1/especialidades/crear").hasRole("ADMIN")
-                .requestMatchers("/api/v1/especialidades").hasAnyRole("ADMIN", "VET")
+                // Solo Admin crea (POST), Admin y Vet pueden leer (GET)
+                .requestMatchers(HttpMethod.POST, "/api/v1/especialidades").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/especialidades").hasAnyRole("ADMIN", "VET")
 
                 // Admins y Veterinarios: solo un ADMIN puede registrar nuevos
                 .requestMatchers("/api/v1/admins/**").hasRole("ADMIN")

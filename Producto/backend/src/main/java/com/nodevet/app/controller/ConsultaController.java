@@ -19,35 +19,32 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/consultas")
 @RequiredArgsConstructor
-@Tag(name = "Ficha Clínica", description = "Endpoints para la gestión de atenciones médicas")
+@Tag(name = "Ficha Clínica", description = "Gestión del historial médico de los pacientes. Permite registrar diagnósticos, recetas y adjuntar resultados de exámenes.")
 public class ConsultaController {
 
     private final ConsultaService consultaService;
 
     @PostMapping
-    @Operation(summary = "Crear nueva consulta", description = "Guarda el diagnóstico y notas de una atención médica vinculada a una reserva.")
+    @Operation(summary = "Registrar nueva consulta", description = "Crea el registro clínico de una atención médica, validando previamente que la reserva asociada exista y esté confirmada.")
     public ResponseEntity<Map<String, Object>> crearConsulta(@RequestBody ConsultaRequestDTO request) {
         try {
-            // Llamamos al servicio para ejecutar la lógica de negocio
             Consulta nuevaConsulta = consultaService.crearConsulta(request);
             
-            // Armamos una respuesta limpia para el frontend
             Map<String, Object> response = new HashMap<>();
             response.put("mensaje", "Ficha clínica guardada con éxito");
             response.put("idConsulta", nuevaConsulta.getIdConsulta());
             
-            return new ResponseEntity<>(response, HttpStatus.CREATED); // 201 Created
+            return new ResponseEntity<>(response, HttpStatus.CREATED); 
             
         } catch (IllegalStateException | IllegalArgumentException e) {
-            // Si el servicio lanza un error (ej: la consulta ya existe), lo capturamos aquí
             Map<String, Object> error = new HashMap<>();
             error.put("error", e.getMessage());
-            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST); // 400 Bad Request
+            return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST); 
         }
     }
 
     @PostMapping("/{id}/archivos")
-    @Operation(summary = "Adjuntar documento", description = "Guarda la URL de un archivo (imagen, PDF) vinculado a una ficha clínica.")
+    @Operation(summary = "Adjuntar archivo médico", description = "Vincula un documento externo (ej. radiografía, examen de sangre en PDF) a una ficha clínica existente mediante su URL de almacenamiento (Cloudinary o S3).")
     public ResponseEntity<Map<String, String>> adjuntarArchivo(
             @PathVariable("id") Integer idConsulta, 
             @RequestBody ArchivoAdjuntoRequestDTO request) {
@@ -67,13 +64,13 @@ public class ConsultaController {
     }
 
     @GetMapping("/reserva/{idReserva}")
-    @Operation(summary = "Obtener ficha clínica", description = "Devuelve los detalles de la consulta y sus archivos adjuntos usando el ID de la reserva.")
+    @Operation(summary = "Obtener consulta por reserva", description = "Recupera la ficha clínica completa, incluyendo la lista de URLs de sus archivos adjuntos, a partir del ID de la reserva original.")
     public ResponseEntity<ConsultaResponseDTO> obtenerConsulta(@PathVariable Integer idReserva) {
         try {
             ConsultaResponseDTO response = consultaService.obtenerConsultaPorReserva(idReserva);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // 404 si no existe
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND); 
         }
     }
 
