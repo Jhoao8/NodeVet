@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPrecioCita, setPrecioCita, formatCLP } from '../../config/precioCita';
+import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import UserMenu from '../../components/UserMenu';
 import '../../styles/Dashboard.css';
 
 export default function ConfigPrecio() {
   const navigate = useNavigate();
+  const nombreUsuario = useNombreUsuario();
 
   const [precio, setPrecio] = useState<string>(() => {
     const actual = getPrecioCita();
@@ -42,8 +45,7 @@ export default function ConfigPrecio() {
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</div>
         <div className="user-section">
           <span className="notification">🔔</span>
-          <span className="username">Admin</span>
-          <button className="user-menu" onClick={handleLogout}>Cerrar Sesión</button>
+          <UserMenu nombre={nombreUsuario} onLogout={handleLogout} />
         </div>
       </header>
 

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
+import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import UserMenu from '../../components/UserMenu';
 import '../../styles/Dashboard.css';
 
 // 1 = Lunes ... 7 = Domingo (coincide con DayOfWeek.getValue() del backend)
@@ -29,6 +31,7 @@ function mensajeError(err: any, fallback: string): string {
 
 export default function GenerarAgenda() {
   const navigate = useNavigate();
+  const nombreUsuario = useNombreUsuario();
 
   // Pre-rellena con el último veterinario creado (si lo hay) para mayor comodidad.
   const [idVet, setIdVet] = useState<string>(() => localStorage.getItem('ultimoVetIdVet') || '');
@@ -135,8 +138,7 @@ export default function GenerarAgenda() {
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</div>
         <div className="user-section">
           <span className="notification">🔔</span>
-          <span className="username">Admin</span>
-          <button className="user-menu" onClick={handleLogout}>Cerrar Sesión</button>
+          <UserMenu nombre={nombreUsuario} onLogout={handleLogout} />
         </div>
       </header>
 

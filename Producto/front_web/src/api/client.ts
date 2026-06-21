@@ -30,6 +30,12 @@ api.interceptors.response.use(
   },
   (error) => {
     const status = error.response?.status;
+    const url: string = error.config?.url || '';
+
+    // Los endpoints de autenticación (login, recuperación de clave, etc.) manejan su
+    // propio error: un 401 ahí es "credenciales inválidas", NO una sesión expirada.
+    // No debemos cerrar sesión ni redirigir, o se pierde el mensaje de error en pantalla.
+    const esEndpointAuth = url.includes('/auth/');
 
     // El backend reescribe los 403 (usuario autenticado pero SIN permisos) como 401:
     // al denegar el acceso reenvía la petición a /error y, como la sesión es stateless,
@@ -38,7 +44,7 @@ api.interceptors.response.use(
     const esForbiddenEnmascarado =
       status === 401 && error.response?.data?.path === '/error';
 
-    if (status === 401 && !esForbiddenEnmascarado) {
+    if (status === 401 && !esForbiddenEnmascarado && !esEndpointAuth) {
       // 401 real: token ausente, inválido o expirado.
       console.error('Error 401 - Token inválido o expirado');
       localStorage.removeItem('token');

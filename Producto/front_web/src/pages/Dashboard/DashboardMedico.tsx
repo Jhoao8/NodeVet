@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
+import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import UserMenu from '../../components/UserMenu';
 import '../../styles/Dashboard.css';
 
 interface Cita {
@@ -22,7 +24,7 @@ interface Control {
 
 export default function DashboardMedico() {
   const navigate = useNavigate();
-  const [medico, setMedico] = useState({ nombre: 'Médico' });
+  const nombreUsuario = useNombreUsuario();
   const [proximasCitas, setProximasCitas] = useState<Cita[]>([]);
   const [proximosControles, setProximosControles] = useState<Control[]>([]);
   const [, setCitasPasadas] = useState<Cita[]>([]);
@@ -42,17 +44,6 @@ export default function DashboardMedico() {
         }
 
         console.log('DashboardMedico - Token presente');
-
-        // Decodificar token para obtener nombre del usuario
-        if (token) {
-          try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            setMedico({ nombre: payload.sub || 'Médico' });
-            console.log('Médico:', payload.sub);
-          } catch (e) {
-            console.error('Error al decodificar el token:', e);
-          }
-        }
 
         // Intentar cargar datos de citas
         try {
@@ -117,8 +108,7 @@ export default function DashboardMedico() {
         </nav>
         <div className="user-section">
           <span className="notification">🔔</span>
-          <span className="username">{medico.nombre}</span>
-          <button className="user-menu" onClick={handleLogout}>Cerrar Sesión</button>
+          <UserMenu nombre={nombreUsuario} onLogout={handleLogout} />
         </div>
       </header>
 
@@ -128,10 +118,7 @@ export default function DashboardMedico() {
           <h3>Menú</h3>
           <nav className="sidebar-nav">
             <button className="nav-item active">🏠 Home</button>
-            <button className="nav-item">👤 Perfil</button>
-            <button className="nav-item">👥 Pacientes</button>
-            <button className="nav-item">📅 Próximas Citas</button>
-            <button className="nav-item">📋 Citas Pasadas</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/medico/atencion')}>🩺 Atender consulta</button>
           </nav>
         </aside>
 

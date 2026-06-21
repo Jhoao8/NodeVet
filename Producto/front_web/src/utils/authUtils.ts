@@ -1,29 +1,44 @@
+import api from '../api/client';
+
+// Acceso denegado = 403 directo, o 403 enmascarado como 401 (el backend reenvía a /error
+// y, al ser stateless, pierde la autenticación). En ambos casos el usuario está
+// autenticado pero no tiene ese rol: seguimos probando el siguiente.
+const esAccesoDenegado = (error: any): boolean => {
+  const status = error?.response?.status;
+  return status === 403 || (status === 401 && error?.response?.data?.path === '/error');
+};
+
 /**
- * Obtiene el rol del usuario basándose en el email
- * Si es admin conocido, devuelve ADMIN
- * Si no, devuelve TUTOR por defecto
- * 
- * NOTA: Una solución mejor sería que el backend incluya el rol en la respuesta de login
+ * Detecta el rol del usuario probando endpoints protegidos por rol en el backend.
+ * No hay endpoint que devuelva el rol directamente, así que lo deducimos por permisos:
+ *   - GET /v1/usuarios        -> exclusivo de ADMIN
+ *   - GET /v1/especialidades  -> ADMIN o VET (el admin ya quedó descartado)
+ *   - en cualquier otro caso  -> TUTOR
+ * Requiere que el token ya esté en localStorage (Login lo guarda antes de llamar).
  */
-export const getUserRole = async (email: string): Promise<'ADMIN' | 'VETERINARIO' | 'TUTOR'> => {
+export const getUserRole = async (_email?: string): Promise<'ADMIN' | 'VETERINARIO' | 'TUTOR'> => {
+  // 1. ¿Administrador?
   try {
-    console.log('Detectando rol del usuario:', email);
-
-    // Hardcoded: si es el admin conocido, es admin
-    // En un sistema real, esto debería venir del backend
-    if (email === 'admin@nodevet.com') {
-      console.log('Email reconocido como admin');
-      return 'ADMIN';
+    await api.get('/v1/usuarios');
+    return 'ADMIN';
+  } catch (error) {
+    if (!esAccesoDenegado(error)) {
+      console.error('Error inesperado detectando rol (admin):', error);
     }
-
-    // Por defecto, es tutor
-    console.log('Usuario es TUTOR (por defecto)');
-    return 'TUTOR';
-
-  } catch (error: any) {
-    console.error('Error al obtener rol del usuario:', error);
-    return 'TUTOR'; // Default role
   }
+
+  // 2. ¿Veterinario?
+  try {
+    await api.get('/v1/especialidades');
+    return 'VETERINARIO';
+  } catch (error) {
+    if (!esAccesoDenegado(error)) {
+      console.error('Error inesperado detectando rol (veterinario):', error);
+    }
+  }
+
+  // 3. Por defecto, tutor.
+  return 'TUTOR';
 };
 
 /**

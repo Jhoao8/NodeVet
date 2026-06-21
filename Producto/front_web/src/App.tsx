@@ -9,6 +9,7 @@ import FormularioAgendarCita from './pages/AgendarCita/Formulario';
 import PagoResultado from './pages/AgendarCita/PagoResultado';
 import DashboardTutor from './pages/Dashboard/DashboardTutor';
 import DashboardMedico from './pages/Dashboard/DashboardMedico';
+import AtencionConsulta from './pages/Dashboard/AtencionConsulta';
 import DashboardAdmin from './pages/Dashboard/DashboardAdmin';
 import GenerarAgenda from './pages/Dashboard/GenerarAgenda';
 import ConfigPrecio from './pages/Dashboard/ConfigPrecio';
@@ -39,9 +40,13 @@ function App() {
           path="/dashboard/tutor" 
           element={<DashboardTutor />} 
         />
-        <Route 
-          path="/dashboard/medico" 
-          element={<ProtectedRoute element={<DashboardMedico />} requiredRole="VETERINARIO" />} 
+        <Route
+          path="/dashboard/medico"
+          element={<ProtectedRoute element={<DashboardMedico />} requiredRole="VETERINARIO" />}
+        />
+        <Route
+          path="/dashboard/medico/atencion"
+          element={<ProtectedRoute element={<AtencionConsulta />} requiredRole="VETERINARIO" />}
         />
         <Route
           path="/dashboard/admin"

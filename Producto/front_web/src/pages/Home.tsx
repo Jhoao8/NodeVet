@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import { useNombreUsuario } from '../hooks/useNombreUsuario';
+import UserMenu from '../components/UserMenu';
 import '../styles/Home.css';
 import Logo from '../assets/images/Logo.png';
 
@@ -6,6 +8,7 @@ export default function Home() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const userRole = localStorage.getItem('userRole');
+  const nombreUsuario = useNombreUsuario();
 
   const handleDashboardClick = () => {
     if (!token || !userRole) {
@@ -58,17 +61,7 @@ export default function Home() {
               Reserva Online
             </button>
             {token ? (
-              <>
-                <span style={{ fontSize: '14px', color: '#666' }}>
-                  {userRole && `(${userRole})`}
-                </span>
-                <button className="btn-primary" onClick={handleDashboardClick}>
-                  Perfil
-                </button>
-                <button className="btn-outline" onClick={handleLogout}>
-                  Salir
-                </button>
-              </>
+              <UserMenu nombre={nombreUsuario} onLogout={handleLogout} />
             ) : (
               <button className="btn-primary" onClick={() => navigate('/login')}>
                 Ingresa

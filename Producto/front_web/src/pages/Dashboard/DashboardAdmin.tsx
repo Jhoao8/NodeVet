@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import '../../styles/Dashboard.css';
 import RegistrarVeterinarioForm from '../../components/forms/RegistrarVeterinarioForm';
+import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import UserMenu from '../../components/UserMenu';
 
 interface Usuario {
   idUsuario: string;
@@ -14,6 +16,7 @@ interface Usuario {
 
 export default function DashboardAdmin() {
   const navigate = useNavigate();
+  const nombreUsuario = useNombreUsuario();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -62,8 +65,7 @@ export default function DashboardAdmin() {
           <div className="logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</div>
           <div className="user-section">
             <span className="notification">🔔</span>
-            <span className="username">Admin</span>
-            <button className="user-menu" onClick={handleLogout}>Cerrar Sesión</button>
+            <UserMenu nombre={nombreUsuario} onLogout={handleLogout} />
           </div>
         </header>
 

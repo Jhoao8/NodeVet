@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
+import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import UserMenu from '../../components/UserMenu';
 import PetCard from '../../components/PetCard';
 import type { Mascota } from '../../components/PetCard/PetCard.types';
 import '../../styles/Dashboard.css';
@@ -24,7 +26,7 @@ interface Control {
 
 export default function DashboardTutor() {
   const navigate = useNavigate();
-  const [usuario, setUsuario] = useState({ nombre: 'Usuario' });
+  const nombreUsuario = useNombreUsuario();
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
   const [proximasCitas] = useState<Cita[]>([]);
   const [ultimosControles] = useState<Control[]>([]);
@@ -44,17 +46,6 @@ export default function DashboardTutor() {
         }
 
         console.log('✓ DashboardTutor - Token presente');
-
-        // Decodificar token para obtener nombre del usuario
-        if (token) {
-          try {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            setUsuario({ nombre: payload.sub || 'Usuario' });
-            console.log('✓ Usuario:', payload.sub);
-          } catch (e) {
-            console.error('❌ Error al decodificar el token:', e);
-          }
-        }
 
         // Intentar cargar mascotas
         try {
@@ -123,8 +114,7 @@ export default function DashboardTutor() {
         </nav>
         <div className="user-section">
           <span className="notification">🔔</span>
-          <span className="username">{usuario.nombre}</span>
-          <button className="user-menu" onClick={handleLogout}>Cerrar Sesión</button>
+          <UserMenu nombre={nombreUsuario} onLogout={handleLogout} />
         </div>
       </header>
 
