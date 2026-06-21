@@ -218,22 +218,4 @@ public class UsuarioService implements UserDetailsService {
                 authorities 
         );
     }
-
-    @Transactional(readOnly = true)
-    public Optional<Usuario> obtenerUsuarioPorCorreo(String correo) {
-        return usuarioRepository.findByCorreoUsr(correo);
-    }
-
-    @Transactional
-    public void actualizarUsuarioPorCorreo(String correo, UsuarioUpdateDTO dto) {
-        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        usuario.setNombreUsr(dto.getNombreUsr());
-        usuario.setApellidoUsr(dto.getApellidoUsr());
-        usuario.setTelefonoUsr(dto.getTelefonoUsr());
-        usuario.setCorreoUsr(dto.getCorreoUsr()); 
-
-        usuarioRepository.save(usuario);
-    }
 }
