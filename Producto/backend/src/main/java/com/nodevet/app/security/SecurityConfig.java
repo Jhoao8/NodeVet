@@ -60,7 +60,8 @@ public class SecurityConfig {
                     "/swagger-ui/**", 
                     "/v3/api-docs/**", 
                     "/swagger-ui.html",
-                    "/api/v1/pagos/confirmar"
+                    "/api/v1/pagos/confirmar",
+                    "/api/v1/pagos/webhook"    // <--- ¡ESTA ES LA LÍNEA MÁGICA!
                 ).permitAll()
                 
                 // 2. AÑADIMOS LAS REGLAS BASADAS EN ROLES
@@ -84,8 +85,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/mascotas/**").hasRole("TUTOR")
                 .requestMatchers("/api/v1/reservas/**").hasRole("TUTOR")
                 // === RUTAS DE PAGOS ===
-                // El Tutor inicia el pago en la app:
                 .requestMatchers("/api/v1/pagos/iniciar").hasRole("TUTOR")
+
+                // === JORNADAS Y AGENDA: solo Admin puede configurar/generar ===
+                .requestMatchers("/api/v1/jornadas/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/agendas").hasRole("ADMIN")
 
                 // Especialidades:
                 // Solo Admin crea (POST), Admin y Vet pueden leer (GET)

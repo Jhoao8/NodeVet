@@ -60,6 +60,12 @@ CREATE TABLE VALOR (
     monto INT NOT NULL
 );
 
+-- Valores de atención veterinaria
+INSERT INTO valor (id_valor, monto) VALUES (1, 15000);
+INSERT INTO valor (id_valor, monto) VALUES (2, 8000);
+INSERT INTO valor (id_valor, monto) VALUES (3, 25000);
+INSERT INTO valor (id_valor, monto) VALUES (4, 12000);
+
 CREATE TABLE ESTADO_PAGO (
     id_est_pago INT AUTO_INCREMENT PRIMARY KEY,
     nom_est_pago VARCHAR(15) NOT NULL

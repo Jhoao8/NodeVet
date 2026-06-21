@@ -23,11 +23,7 @@ public class VeterinarioController {
     @PostMapping
     @Operation(summary = "Registrar nuevo veterinario", description = "Crea una cuenta para un profesional de la salud, incluyendo su RUT y vinculando sus especialidades médicas. Esta acción es de uso exclusivo para Administradores.")
     public ResponseEntity<?> registrarVeterinario(@Valid @RequestBody VeterinarioRegistroDTO dto) {
-        try {
-            Veterinario vetGuardado = veterinarioService.registrarVeterinario(dto);
-            return new ResponseEntity<>(DtoMapper.toVeterinarioDTO(vetGuardado), HttpStatus.CREATED);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        Veterinario vetGuardado = veterinarioService.registrarVeterinario(dto);
+        return new ResponseEntity<>(DtoMapper.toVeterinarioDTO(vetGuardado), HttpStatus.CREATED);
     }
 }

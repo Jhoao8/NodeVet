@@ -109,7 +109,7 @@ public class ReservaService {
         pagoRepository.save(nuevoPago);
 
         // 7. Conexión con Flow
-        String ordenComercio = "RES-" + reservaGuardada.getIdReserva();
+        String ordenComercio = "RES-" + reservaGuardada.getIdReserva() + "-" + System.currentTimeMillis();
         String descripcion = "Reserva Veterinaria - Mascota: " + mascota.getNomMascota();
         String correoTutor = mascota.getTutor().getUsuario().getCorreoUsr();
         String urlDePago = flowService.crearOrdenDePago(ordenComercio, valor.getMonto(), correoTutor, descripcion);
@@ -128,17 +128,15 @@ public class ReservaService {
 
         // 1. Validar el token con Flow
         Map<String, Object> datosFlow = flowService.consultarEstadoPago(token);
-
-        // Flow nos devuelve un status numérico (2 significa PAGADO)
         Integer statusFlow = (Integer) datosFlow.get("status");
-
-        // Obtenemos nuestra orden (Ej: "RES-15") y extraemos el ID numérico
         String commerceOrder = (String) datosFlow.get("commerceOrder");
-        Integer idReserva = Integer.parseInt(commerceOrder.replace("RES-", ""));
+        Integer idReserva = Integer.parseInt(commerceOrder.split("-")[1]);
 
-        // 2. Buscar el pago en la base de datos
+        // 2. Buscar el pago en la BD
         com.nodevet.app.model.pago.Pago pago = pagoRepository.findByReserva_IdReserva(idReserva)
                 .orElseThrow(() -> new RuntimeException("Pago no encontrado para reserva: " + idReserva));
+
+        BloqueHorario bloque = pago.getReserva().getBloqueHorario();
 
         // 3. Procesar según la respuesta
         if (statusFlow == 2) { 
@@ -146,18 +144,21 @@ public class ReservaService {
             pago.setEstadoPago(estadoPagoRepository.findById(2).orElseThrow());
             pago.setCodTransaccion(datosFlow.get("flowOrder").toString()); 
 
-            pago.getReserva().setEstadoReserva(estadoReservaRepository.findById(2).orElseThrow());
+            // PRIMERO guardamos el pago para que Hibernate vacíe su memoria
+            pagoRepository.save(pago);
+
+            // SEGUNDO lanzamos el ataque directo a MySQL (nadie lo va a sobreescribir)
+            reservaRepository.actualizarEstadoNativo(idReserva, 2);
 
         } else if (statusFlow == 3 || statusFlow == 4) {
             // --- RECHAZADO O ANULADO ---
             pago.setEstadoPago(estadoPagoRepository.findById(3).orElseThrow());
-
-            BloqueHorario bloque = pago.getReserva().getBloqueHorario();
+            pagoRepository.save(pago); // Guardamos el pago primero
+            
+            reservaRepository.actualizarEstadoNativo(idReserva, 4); // Ataque nativo
+            
             bloque.setEstadoBloque(estadoBloqueRepository.findById(1).orElseThrow()); 
-
-            pago.getReserva().setEstadoReserva(estadoReservaRepository.findById(4).orElseThrow());
+            bloqueHorarioRepository.save(bloque); 
         }
-
-        pagoRepository.save(pago);
     }
 }
