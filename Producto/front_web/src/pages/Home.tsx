@@ -1,33 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { useNombreUsuario } from '../hooks/useNombreUsuario';
 import UserMenu from '../components/UserMenu';
+import Carousel from '../components/Carousel';
 import '../styles/Home.css';
 import Logo from '../assets/images/Logo.png';
 
 export default function Home() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
-  const userRole = localStorage.getItem('userRole');
   const nombreUsuario = useNombreUsuario();
-
-  const handleDashboardClick = () => {
-    if (!token || !userRole) {
-      navigate('/login');
-      return;
-    }
-
-    switch (userRole) {
-      case 'ADMIN':
-        navigate('/dashboard/admin');
-        break;
-      case 'VETERINARIO':
-        navigate('/dashboard/medico');
-        break;
-      case 'TUTOR':
-      default:
-        navigate('/dashboard/tutor');
-    }
-  };
 
   const handleLogout = () => {
     console.log('Logout iniciado');
@@ -48,14 +29,6 @@ export default function Home() {
             <img src={Logo} alt="NodeVet Logo" style={{ width: '40px', height: '40px' }} />
             <h1>NodeVet</h1>
           </div>
-          <nav className="nav-tabs">
-            <button className="nav-tab" onClick={handleDashboardClick}>Dashboard</button>
-            <button className="nav-tab">Two</button>
-            <button className="nav-tab">Three</button>
-            <button className="nav-tab">One</button>
-            <button className="nav-tab">Two</button>
-            <button className="nav-tab">Three</button>
-          </nav>
           <div className="header-buttons">
             <button className="btn-outline" onClick={() => navigate('/agendarCita')}>
               Reserva Online
@@ -97,16 +70,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="banner-carousel">
-            <div className="carousel-slide"></div>
-            <div className="carousel-controls">
-              <span className="dot active"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-            </div>
-          </div>
+          <Carousel />
         </div>
       </section>
 
