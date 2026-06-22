@@ -29,11 +29,17 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expirado o inválido
+    const status = error.response?.status;
+    const url: string = error.config?.url || '';
+
+    const esEndpointAuth = url.includes('/auth/');
+
+    const esForbiddenEnmascarado =
+      status === 401 && error.response?.data?.path === '/error';
+
+    if (status === 401 && !esForbiddenEnmascarado && !esEndpointAuth) {
       console.error('Error 401 - Token inválido o expirado');
       localStorage.removeItem('token');
-      // Redirigir al login si el token expira para evitar que la app quede en estado inconsistente
       window.location.href = '/login';
     }
     return Promise.reject(error);

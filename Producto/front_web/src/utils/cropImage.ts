@@ -3,7 +3,7 @@ export const createImage = (url: string): Promise<HTMLImageElement> =>
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
     image.addEventListener('error', (error) => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous'); // needed to avoid cross-origin issues
+    image.setAttribute('crossOrigin', 'anonymous');
     image.src = url;
   });
 
@@ -24,16 +24,13 @@ export default async function getCroppedImg(
     return null;
   }
 
-  // set canvas size to match the bounding box
   canvas.width = image.width;
   canvas.height = image.height;
 
-  // translate canvas context to a central location to allow rotating and flipping around the center
   ctx.translate(canvas.width / 2, canvas.height / 2);
   ctx.rotate(getRadianAngle(rotation));
   ctx.translate(-canvas.width / 2, -canvas.height / 2);
 
-  // draw rotated image
   ctx.drawImage(image, 0, 0);
 
   const croppedCanvas = document.createElement('canvas');
@@ -43,11 +40,9 @@ export default async function getCroppedImg(
     return null;
   }
 
-  // Set the size of the cropped canvas
   croppedCanvas.width = pixelCrop.width;
   croppedCanvas.height = pixelCrop.height;
 
-  // Draw the cropped image onto the new canvas
   croppedCtx.drawImage(
     canvas,
     pixelCrop.x,
@@ -60,7 +55,6 @@ export default async function getCroppedImg(
     pixelCrop.height
   );
 
-  // As a blob/file
   return new Promise((resolve) => {
     croppedCanvas.toBlob((blob) => {
       if (!blob) {

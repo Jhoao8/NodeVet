@@ -3,7 +3,7 @@ export interface Mascota {
   nomMascota: string;
   especie: string;
   raza?: string;
-  sexo: number; // 1 = Macho, 0 = Hembra
+  sexo: number;
   fecNac?: string;
   estFecNac?: number;
   peso?: number;

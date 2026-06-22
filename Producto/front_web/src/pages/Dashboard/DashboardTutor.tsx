@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
+import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import UserMenu from '../../components/UserMenu';
 import PetCard from '../../components/PetCard';
 import type { Mascota } from '../../components/PetCard/PetCard.types';
 import '../../styles/Dashboard.css';
@@ -24,7 +26,7 @@ interface Control {
 
 export default function DashboardTutor() {
   const navigate = useNavigate();
-  const [usuario, setUsuario] = useState({ nombre: 'Usuario' });
+  const nombreUsuario = useNombreUsuario();
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
   const [proximasCitas] = useState<Cita[]>([]);
   const [ultimosControles] = useState<Control[]>([]);
@@ -34,16 +36,34 @@ export default function DashboardTutor() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userData = await api.get('/v1/usuarios/perfil');
-        setUsuario(userData.data);
+        // Verificar autenticación
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          console.warn('❌ No hay token en localStorage, redirigiendo a login');
+          navigate('/login');
+          return;
+        }
 
-        const mascotasData = await api.get('/v1/mascotas/listar');
-        setMascotas(mascotasData.data);
+        console.log('✓ DashboardTutor - Token presente');
+
+        // Intentar cargar mascotas
+        try {
+          const mascotasData = await api.get('/v1/mascotas');
+          setMascotas(mascotasData.data);
+          console.log('✓ Mascotas cargadas:', mascotasData.data.length);
+        } catch (err: any) {
+          console.error('Error al cargar mascotas:', err);
+          if (err.response?.status === 401) {
+            throw err; // Token inválido
+          }
+        }
 
       } catch (error: any) {
-        console.error('Error al cargar datos:', error);
+        console.error('❌ Error al cargar datos:', error);
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
+          localStorage.removeItem('userRole');
           navigate('/login');
         } else {
           setError('Error al cargar los datos. Por favor, intenta de nuevo.');
@@ -62,7 +82,7 @@ export default function DashboardTutor() {
 
   const handleDeleteMascota = async (id: number) => {
     try {
-      await api.delete(`/v1/mascotas/eliminar/${id}`);
+      await api.delete(`/v1/mascotas/${id}`);
       setMascotas(mascotas.filter(m => m.idMascota !== id));
       alert('Mascota eliminada correctamente');
     } catch (error: any) {
@@ -72,9 +92,16 @@ export default function DashboardTutor() {
   };
 
   const handlePetCardClick = (mascota: Mascota) => {
-    // Aquí puedes navegar a la página de detalles de la mascota
     console.log('Ver detalles de:', mascota.nomMascota);
-    // navigate(`/mascota/${mascota.idMascota}`);
+  };
+
+  const handleLogout = () => {
+    console.log('Logout iniciado');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
+    console.log('✓ localStorage limpiado');
+    navigate('/login');
   };
 
   return (
@@ -83,14 +110,11 @@ export default function DashboardTutor() {
       <header className="dashboard-header">
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</div>
         <nav className="nav-tabs">
-          <button className="nav-tab">One</button>
-          <button className="nav-tab">Two</button>
-          <button className="nav-tab">Three</button>
+          <button className="nav-tab">Mis Mascotas</button>
         </nav>
         <div className="user-section">
           <span className="notification">🔔</span>
-          <span className="username">{usuario.nombre}</span>
-          <button className="user-menu" onClick={() => { localStorage.removeItem('token'); navigate('/login'); }}>Cerrar Sesión</button>
+          <UserMenu nombre={nombreUsuario} onLogout={handleLogout} />
         </div>
       </header>
 
@@ -102,7 +126,7 @@ export default function DashboardTutor() {
             <button className="nav-item active">👤 Perfil</button>
             <button className="nav-item">🏠 Home</button>
             <button className="nav-item">🐾 Mascotas</button>
-            <button className="nav-item">📅 Citas</button>
+            <button className="nav-item" onClick={() => navigate('/agendarCita')}>📅 Citas</button>
             <button className="nav-item">🏥 Control Médico</button>
           </nav>
         </aside>
@@ -117,16 +141,25 @@ export default function DashboardTutor() {
             <>
               {/* Próximas Citas */}
               <section className="dashboard-section">
-                <h2>Próximas Citas</h2>
-                <div className="citas-cards">
-                  {proximasCitas.slice(0, 2).map((cita) => (
-                    <div key={cita.id} className="cita-card">
-                      <h4>{cita.mascota}</h4>
-                      <p>📅 Fecha: {cita.fecha}</p>
-                      <p>🕐 Hora: {cita.hora}</p>
-                    </div>
-                  ))}
+                <div className="mascotas-header">
+                  <h2>Próximas Citas</h2>
+                  <button className="btn-add-mascota" onClick={() => navigate('/agendarCita')}>
+                    + Agendar Cita
+                  </button>
                 </div>
+                {proximasCitas.length === 0 ? (
+                  <p className="hint-text">No tienes citas próximas. Agenda una nueva hora médica.</p>
+                ) : (
+                  <div className="citas-cards">
+                    {proximasCitas.slice(0, 2).map((cita) => (
+                      <div key={cita.id} className="cita-card">
+                        <h4>{cita.mascota}</h4>
+                        <p>📅 Fecha: {cita.fecha}</p>
+                        <p>🕐 Hora: {cita.hora}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
               {/* Próximo Control */}

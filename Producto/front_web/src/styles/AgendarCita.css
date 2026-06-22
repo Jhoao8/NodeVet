@@ -53,6 +53,11 @@
   margin: 0 0 var(--spacing-xl) 0;
 }
 
+.especialidad-group {
+  max-width: 320px;
+  margin-bottom: var(--spacing-lg);
+}
+
 .calendar-controls {
   display: flex;
   justify-content: space-between;
@@ -94,114 +99,126 @@
   font-weight: var(--font-weight-semibold);
 }
 
-.calendar-grid {
-  border: 2px solid var(--color-gray-300);
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: var(--spacing-xl);
-  background-color: var(--color-white);
-}
-
-.day-headers {
+.dia-picker {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background: linear-gradient(135deg, var(--color-dark-green) 0%, var(--color-dark-d-green) 100%);
-  border-bottom: 2px solid var(--color-light-green);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
 }
 
-.day-header {
-  padding: var(--spacing-lg);
-  text-align: center;
-  border-right: 1px solid rgba(158, 181, 125, 0.3);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-light-yellow);
-}
-
-.day-header:last-child {
-  border-right: none;
-}
-
-.day-name {
-  display: block;
-  font-size: 12px;
-  color: var(--color-light-green);
-  margin-bottom: var(--spacing-xs);
-}
-
-.day-number {
-  display: block;
-  font-size: 18px;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-light-yellow);
-}
-
-.time-slots {
-  max-height: 600px;
-  overflow-y: auto;
-}
-
-.time-row {
-  display: grid;
-  grid-template-columns: 60px repeat(7, 1fr);
-  border-bottom: 1px solid var(--color-gray-300);
-}
-
-.time-label {
-  padding: var(--spacing-md);
-  background-color: var(--color-gray-50);
-  font-size: 12px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-gray-600);
-  border-right: 2px solid var(--color-gray-300);
-  text-align: center;
-}
-
-.slot {
-  padding: var(--spacing-sm);
-  border-right: 1px solid var(--color-gray-200);
-  min-height: 50px;
+.dia-card {
+  border: 2px solid var(--color-gray-300);
+  background-color: var(--color-white);
+  border-radius: 10px;
+  padding: var(--spacing-md) var(--spacing-sm);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
   cursor: pointer;
-  font-size: 11px;
   transition: all 0.3s;
 }
 
-.slot:last-child {
-  border-right: none;
+.dia-card:hover {
+  border-color: var(--color-light-green);
+  background-color: rgba(158, 181, 125, 0.1);
 }
 
-.slot.available {
+.dia-card.selected {
+  background: linear-gradient(135deg, var(--color-dark-green) 0%, var(--color-dark-d-green) 100%);
+  border-color: var(--color-dark-green);
+}
+
+.dia-card .day-name {
+  display: block;
+  font-size: 12px;
+  color: var(--color-gray-600);
+  margin-bottom: var(--spacing-xs);
+}
+
+.dia-card .day-number {
+  display: block;
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-dark-green);
+}
+
+.dia-card.selected .day-name {
+  color: var(--color-light-green);
+}
+
+.dia-card.selected .day-number {
+  color: var(--color-light-yellow);
+}
+
+.hint-text {
+  color: var(--color-gray-600);
+  font-size: 14px;
+  padding: var(--spacing-md) 0;
+}
+
+.disponibilidad-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.vet-card {
+  border: 2px solid var(--color-gray-300);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
   background-color: var(--color-white);
 }
 
-.slot.available:hover {
-  background-color: rgba(158, 181, 125, 0.1);
-  border: 2px solid var(--color-light-green);
+.vet-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
 }
 
-.slot.occupied {
+.vet-nombre {
+  font-size: 16px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-dark-green);
+}
+
+.vet-especialidad {
+  font-size: 13px;
+  color: var(--color-gray-600);
   background-color: var(--color-gray-100);
-  color: var(--color-gray-500);
+  padding: 2px var(--spacing-sm);
+  border-radius: 6px;
 }
 
-.slot.selected {
+.bloques-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.bloque-slot {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 2px solid var(--color-gray-300);
+  background-color: var(--color-white);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-700);
+  transition: all 0.3s;
+}
+
+.bloque-slot:hover {
+  border-color: var(--color-light-green);
+  background-color: rgba(158, 181, 125, 0.1);
+}
+
+.bloque-slot.selected {
   background-color: var(--color-dark-green);
   color: var(--color-light-yellow);
+  border-color: var(--color-dark-green);
   font-weight: var(--font-weight-bold);
-  box-shadow: inset 0 0 8px rgba(65, 100, 40, 0.3);
-}
-
-.mascota {
-  background-color: rgba(255, 255, 255, 0.8);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: 4px;
-  font-size: 10px;
-}
-
-.slot.selected .mascota {
-  background-color: rgba(251, 239, 186, 0.3);
 }
 
 .btn-lg {
@@ -333,6 +350,124 @@
   border: 1px solid #f5c6cb;
 }
 
+.resumen-cita {
+  background-color: var(--color-gray-50);
+  border: 1px solid var(--color-gray-300);
+  border-radius: 8px;
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+}
+
+.resumen-item {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.resumen-item:last-child {
+  border-bottom: none;
+}
+
+.resumen-label {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-gray-700);
+}
+
+.resumen-valor {
+  color: var(--color-dark-green);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Día pasado: no seleccionable */
+.dia-card.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+  background-color: var(--color-gray-100);
+}
+
+/* El selector de bloque ahora es un <button>: normalizamos la tipografía */
+.bloque-slot {
+  font-family: inherit;
+}
+
+/* Bloque ya reservado / no disponible: deshabilitado visualmente (criterio de aceptación) */
+.bloque-slot.occupied,
+.bloque-slot:disabled {
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-400, #9ca3af);
+  border-color: var(--color-gray-200);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+
+.bloque-slot.occupied:hover,
+.bloque-slot:disabled:hover {
+  border-color: var(--color-gray-200);
+  background-color: var(--color-gray-100);
+}
+
+/* Botón grande deshabilitado (sin bloque seleccionado / cargando) */
+.btn-lg:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ===== Página de resultado de pago ===== */
+.pago-resultado-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: var(--spacing-xl);
+  min-height: 60vh;
+}
+
+.pago-resultado-card {
+  background-color: var(--color-white);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 27, 13, 0.12);
+  padding: var(--spacing-xl) var(--spacing-xl);
+  max-width: 520px;
+  width: 100%;
+  text-align: center;
+  margin-top: var(--spacing-xl);
+  border-top: 6px solid var(--color-dark-green);
+}
+
+.pago-resultado-card.exito { border-top-color: #2e7d32; }
+.pago-resultado-card.pendiente { border-top-color: #f59e0b; }
+.pago-resultado-card.rechazado { border-top-color: #c62828; }
+
+.pago-resultado-icono {
+  font-size: 56px;
+  line-height: 1;
+  margin-bottom: var(--spacing-md);
+}
+
+.pago-resultado-card h2 {
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-dark-green);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.pago-resultado-card p {
+  color: var(--color-gray-700);
+  font-size: 15px;
+  margin: 0 0 var(--spacing-xl) 0;
+  line-height: 1.5;
+}
+
+.pago-resultado-acciones {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 1024px) {
   .form-content {
     grid-template-columns: 1fr;
@@ -362,5 +497,15 @@
 
   .time-row {
     grid-template-columns: 50px repeat(4, 1fr);
+  }
+
+  .dia-picker {
+    grid-template-columns: repeat(4, 1fr);
+    overflow-x: auto;
+  }
+
+  .vet-card-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

@@ -1,0 +1,25 @@
+import { Navigate } from 'react-router-dom';
+
+interface ProtectedRouteProps {
+  element: React.ReactElement;
+  requiredRole?: 'ADMIN' | 'VETERINARIO' | 'TUTOR';
+}
+
+export const ProtectedRoute = ({ element, requiredRole }: ProtectedRouteProps) => {
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+
+  console.log('ProtectedRoute - Token:', !!token, 'Rol:', userRole, 'Required:', requiredRole);
+
+  if (!token) {
+    console.warn('ProtectedRoute - No hay token, redirigiendo a login');
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRole && userRole !== requiredRole) {
+    console.warn('ProtectedRoute - Rol no coincide, redirigiendo a home');
+    return <Navigate to="/home" replace />;
+  }
+
+  return element;
+};

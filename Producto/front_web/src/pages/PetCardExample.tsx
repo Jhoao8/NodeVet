@@ -1,93 +1,279 @@
-import React, { useEffect, useState } from 'react';
-import { Mascota } from '../interfaces/Mascota';
-import PetCard from '../components/PetCard';
-import client from '../api/client';
-import './PetCardExample.css';
+import { useState, useEffect } from 'react';
+import api from '../api/client';
+import type { AxiosResponse } from 'axios';
+import type { Especialidad } from '../interfaces/Especialidad';
 
-/**
- * Ejemplo de página que usa el componente PetCard
- * Este archivo muestra cómo integrar las tarjetas de mascotas en tu aplicación
- */
+interface Props {
+  onSuccess: () => void;
+  onCancel: () => void;
+}
 
-const PetCardExample: React.FC = () => {
-  const [mascotas, setMascotas] = useState<Mascota[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props) {
+  const [nombreUsr, setNombreUsr] = useState('');
+  const [apellidoUsr, setApellidoUsr] = useState('');
+  const [correoUsr, setCorreoUsr] = useState('');
+  const [passUsr, setPassUsr] = useState('');
+  const [telefonoUsr, setTelefonoUsr] = useState('');
+  const [runVet, setRunVet] = useState<number | ''>('');
+  const [dvVet, setDvVet] = useState('');
+  const [especialidadesIds, setEspecialidadesIds] = useState<number[]>([]);
 
-  // Cargar mascotas al montar el componente
+  const [especialidades, setEspecialidades] = useState<Especialidad[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Errores de validación por campo
+  const [passError, setPassError] = useState('');
+  const [runError, setRunError] = useState('');
+  const [dvError, setDvError] = useState('');
+
+  const validarPassword = (value: string): string => {
+    if (value.length < 8) {
+      return 'La contraseña debe tener al menos 8 caracteres.';
+    }
+    if (!/[A-Z]/.test(value)) {
+      return 'La contraseña debe contener al menos 1 mayúscula.';
+    }
+    if (!/[0-9]/.test(value)) {
+      return 'La contraseña debe contener al menos 1 número.';
+    }
+    if (!/[^A-Za-z0-9]/.test(value)) {
+      return 'La contraseña debe contener al menos 1 símbolo.';
+    }
+    return '';
+  };
+
+  const validarRun = (value: number | ''): string => {
+    if (value === '') {
+      return 'El RUN es obligatorio.';
+    }
+    // Solo dígitos (sin puntos ni guion) y mínimo 7 dígitos
+    const digitos = String(value);
+    if (!/^\d+$/.test(digitos) || digitos.length < 7) {
+      return 'El RUN debe ser numérico y tener al menos 7 dígitos.';
+    }
+    return '';
+  };
+
+  const validarDv = (value: string): string => {
+    if (value.length !== 1) {
+      return 'El dígito verificador debe tener exactamente 1 carácter.';
+    }
+    if (!/^[0-9kK]$/.test(value)) {
+      return 'El dígito verificador debe ser un número del 0 al 9, o la letra K.';
+    }
+    return '';
+  };
+
+  // Estado para la creación de una nueva especialidad
+  const [nuevaEspecialidad, setNuevaEspecialidad] = useState('');
+  const [creandoEspecialidad, setCreandoEspecialidad] = useState(false);
+  const [errorEspecialidad, setErrorEspecialidad] = useState('');
+
+  const cargarEspecialidades = () => {
+    return api.get<Especialidad[]>('/v1/especialidades')
+      .then((response: AxiosResponse<Especialidad[]>) => {
+        setEspecialidades(response.data);
+      })
+      .catch((err: unknown) => {
+        console.error('Error fetching specialities:', err);
+        setError('No se pudieron cargar las especialidades.');
+      });
+  };
+
   useEffect(() => {
-    fetchMascotas();
+    cargarEspecialidades();
   }, []);
 
-  const fetchMascotas = async () => {
+  const handleEspecialidadChange = (id: number) => {
+    setEspecialidadesIds(prev =>
+      prev.includes(id) ? prev.filter(espId => espId !== id) : [...prev, id]
+    );
+  };
+
+  const handleCrearEspecialidad = async () => {
+    const nombre = nuevaEspecialidad.trim();
+    if (!nombre) {
+      setErrorEspecialidad('Ingresa un nombre para la especialidad.');
+      return;
+    }
+    // Evitar duplicados visibles en el cliente (case-insensitive)
+    const yaExiste = especialidades.some(
+      esp => esp.nombre.toLowerCase() === nombre.toLowerCase()
+    );
+    if (yaExiste) {
+      setErrorEspecialidad('Esa especialidad ya existe.');
+      return;
+    }
+
+    setCreandoEspecialidad(true);
+    setErrorEspecialidad('');
     try {
-      setLoading(true);
-      const response = await client.get('/v1/mascotas/listar');
-      setMascotas(response.data);
-      setError(null);
-    } catch (err) {
-      console.error('Error al cargar mascotas:', err);
-      setError('No se pudieron cargar las mascotas');
+      const response = await api.post<Especialidad>('/v1/especialidades/crear', { nombre });
+      const creada = response.data;
+      setEspecialidades(prev => [...prev, creada]);
+      // Seleccionarla automáticamente para el veterinario que se está registrando
+      setEspecialidadesIds(prev => [...prev, creada.id]);
+      setNuevaEspecialidad('');
+    } catch (err: any) {
+      console.error('Error creating speciality:', err);
+      setErrorEspecialidad(err.response?.data?.message || 'No se pudo crear la especialidad.');
+    } finally {
+      setCreandoEspecialidad(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    // Validar contraseña, RUN y dígito verificador antes de enviar
+    const passMsg = validarPassword(passUsr);
+    const runMsg = validarRun(runVet);
+    const dvMsg = validarDv(dvVet);
+
+    setPassError(passMsg);
+    setRunError(runMsg);
+    setDvError(dvMsg);
+
+    if (passMsg || runMsg || dvMsg) {
+      setError('Revisa los campos marcados antes de continuar.');
+      return;
+    }
+
+    setLoading(true);
+
+    const vetData = {
+      nombreUsr,
+      apellidoUsr,
+      correoUsr,
+      passUsr,
+      telefonoUsr,
+      runVet,
+      dvVet,
+      especialidadesIds,
+    };
+
+    try {
+      await api.post('/v1/veterinarios/registrar', vetData);
+      onSuccess();
+    } catch (err: any) {
+      console.error('Error registering veterinarian:', err);
+      setError(err.response?.data?.message || 'Ocurrió un error al registrar el veterinario.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteMascota = async (id: number) => {
-    try {
-      await client.delete(`/v1/mascotas/eliminar/${id}`);
-      setMascotas(mascotas.filter(m => m.idMascota !== id));
-      alert('Mascota eliminada correctamente');
-    } catch (err) {
-      console.error('Error al eliminar mascota:', err);
-      alert('Error al eliminar la mascota');
-    }
-  };
-
-  const handleEditMascota = (mascota: Mascota) => {
-    // Aquí puedes redirigir a la página de edición o abrir un modal
-    console.log('Editar mascota:', mascota);
-    // Ejemplo: navigate('/editar-mascota', { state: { mascota } });
-  };
-
-  const handlePetCardClick = (mascota: Mascota) => {
-    // Aquí puedes redirigir a los detalles de la mascota
-    console.log('Ver detalles de:', mascota.nomMascota);
-    // Ejemplo: navigate(`/mascota/${mascota.idMascota}`);
-  };
-
-  if (loading) {
-    return <div className="pet-list-container"><p>Cargando mascotas...</p></div>;
-  }
-
-  if (error) {
-    return <div className="pet-list-container"><p className="error">{error}</p></div>;
-  }
-
   return (
-    <div className="pet-list-container">
-      <h1>Mis Mascotas</h1>
-      
-      {mascotas.length === 0 ? (
-        <div className="no-pets">
-          <p>No tienes mascotas registradas aún</p>
-          {/* Aquí puedes poner un botón para agregar mascota */}
-        </div>
-      ) : (
-        <div className="pet-cards-grid">
-          {mascotas.map((mascota) => (
-            <PetCard
-              key={mascota.idMascota}
-              mascota={mascota}
-              onEdit={handleEditMascota}
-              onDelete={handleDeleteMascota}
-              onClick={() => handlePetCardClick(mascota)}
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>Registrar Nuevo Veterinario</h2>
+        {error && <div className="error-message">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="form-grid">
+            <input type="text" placeholder="Nombre" value={nombreUsr} onChange={e => setNombreUsr(e.target.value)} required />
+            <input type="text" placeholder="Apellido" value={apellidoUsr} onChange={e => setApellidoUsr(e.target.value)} required />
+            <input type="email" placeholder="Correo Electrónico" value={correoUsr} onChange={e => setCorreoUsr(e.target.value)} required />
+            <div className="field-with-error">
+              <input
+                type="password"
+                placeholder="Contraseña"
+                value={passUsr}
+                onChange={e => {
+                  setPassUsr(e.target.value);
+                  if (passError) setPassError('');
+                }}
+                onBlur={() => setPassError(validarPassword(passUsr))}
+                required
+              />
+              {passError && <span className="field-error">{passError}</span>}
+            </div>
+            <input type="text" placeholder="Teléfono" value={telefonoUsr} onChange={e => setTelefonoUsr(e.target.value)} />
+            <div className="field-with-error">
+              <input
+                type="number"
+                placeholder="RUN (sin dígito verificador)"
+                value={runVet}
+                onChange={e => {
+                  setRunVet(e.target.value === '' ? '' : Number(e.target.value));
+                  if (runError) setRunError('');
+                }}
+                onBlur={() => setRunError(validarRun(runVet))}
+                required
+              />
+              {runError && <span className="field-error">{runError}</span>}
+            </div>
+            <div className="field-with-error">
+              <input
+                type="text"
+                placeholder="Dígito Verificador"
+                value={dvVet}
+                onChange={e => {
+                  setDvVet(e.target.value);
+                  if (dvError) setDvError('');
+                }}
+                onBlur={() => setDvError(validarDv(dvVet))}
+                maxLength={1}
+                required
+              />
+              {dvError && <span className="field-error">{dvError}</span>}
+            </div>
+          </div>
+          <p className="password-hint">
+            La contraseña debe tener al menos 8 caracteres, 1 mayúscula, 1 número y 1 símbolo.
+          </p>
+
+          <h4>Especialidades</h4>
+
+          <div className="nueva-especialidad-row">
+            <input
+              type="text"
+              placeholder="Nueva especialidad (ej. Cirugía)"
+              value={nuevaEspecialidad}
+              onChange={e => {
+                setNuevaEspecialidad(e.target.value);
+                if (errorEspecialidad) setErrorEspecialidad('');
+              }}
+              disabled={creandoEspecialidad}
             />
-          ))}
-        </div>
-      )}
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={handleCrearEspecialidad}
+              disabled={creandoEspecialidad || !nuevaEspecialidad.trim()}
+            >
+              {creandoEspecialidad ? 'Agregando...' : '+ Agregar especialidad'}
+            </button>
+          </div>
+          {errorEspecialidad && <div className="error-message">{errorEspecialidad}</div>}
+
+          <div className="checkbox-group">
+            {especialidades.length === 0 && (
+              <span className="checkbox-group-empty">Aún no hay especialidades registradas.</span>
+            )}
+            {especialidades.map(esp => (
+              <label key={esp.id}>
+                <input
+                  type="checkbox"
+                  checked={especialidadesIds.includes(esp.id)}
+                  onChange={() => handleEspecialidadChange(esp.id)}
+                />
+                {esp.nombre}
+              </label>
+            ))}
+          </div>
+
+          <div className="form-actions">
+            <button type="button" className="btn-secondary" onClick={onCancel} disabled={loading}>
+              Cancelar
+            </button>
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Registrando...' : 'Registrar'}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
-};
-
-export default PetCardExample;
+}

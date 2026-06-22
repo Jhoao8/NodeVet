@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
+import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import UserMenu from '../../components/UserMenu';
 import '../../styles/Dashboard.css';
 
 interface Cita {
@@ -20,36 +23,71 @@ interface Control {
 }
 
 export default function DashboardMedico() {
-  const [medico, setMedico] = useState({ nombre: 'Médico' });
+  const navigate = useNavigate();
+  const nombreUsuario = useNombreUsuario();
   const [proximasCitas, setProximasCitas] = useState<Cita[]>([]);
   const [proximosControles, setProximosControles] = useState<Control[]>([]);
-  const [citasPasadas, setCitasPasadas] = useState<Cita[]>([]);
+  const [, setCitasPasadas] = useState<Cita[]>([]);
   const [loading, setLoading] = useState(true);
   const [vista, setVista] = useState<'dia' | 'semana' | 'mes'>('semana');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const medicoData = await api.get('/v1/medico/perfil');
-        setMedico(medicoData.data);
+        // Verificar autenticación
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          console.warn('No hay token, redirigiendo a login');
+          navigate('/login');
+          return;
+        }
 
-        const citasData = await api.get('/v1/citas/medico/proximas');
-        setProximasCitas(citasData.data);
+        console.log('DashboardMedico - Token presente');
 
-        const controlesData = await api.get('/v1/controles/medico/proximos');
-        setProximosControles(controlesData.data);
+        // Intentar cargar datos de citas
+        try {
+          const citasData = await api.get('/v1/citas/medico/proximas');
+          setProximasCitas(citasData.data);
+        } catch (err) {
+          console.log('Endpoint /v1/citas/medico/proximas no disponible');
+        }
 
-        const citasPasadasData = await api.get('/v1/citas/medico/pasadas');
-        setCitasPasadas(citasPasadasData.data);
-      } catch (error) {
+        try {
+          const controlesData = await api.get('/v1/controles/medico/proximos');
+          setProximosControles(controlesData.data);
+        } catch (err) {
+          console.log('Endpoint /v1/controles/medico/proximos no disponible');
+        }
+
+        try {
+          const citasPasadasData = await api.get('/v1/citas/medico/pasadas');
+          setCitasPasadas(citasPasadasData.data);
+        } catch (err) {
+          console.log('Endpoint /v1/citas/medico/pasadas no disponible');
+        }
+      } catch (error: any) {
         console.error('Error al cargar datos:', error);
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('userRole');
+          navigate('/login');
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [navigate]);
+
+  const handleLogout = () => {
+    console.log('Logout');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
+    navigate('/login');
+  };
 
   const horariosDisponibles = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
   const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -58,16 +96,19 @@ export default function DashboardMedico() {
     <div className="dashboard-container">
       {/* Header */}
       <header className="dashboard-header">
-        <div className="logo">NodeVet</div>
+        <div className="logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</div>
         <nav className="nav-tabs">
-          <button className="nav-tab">One</button>
-          <button className="nav-tab">Two</button>
-          <button className="nav-tab">Three</button>
+          <button 
+            className="nav-tab"
+            onClick={() => navigate('/dashboard/medico')}
+            title="Mi Dashboard de Médico"
+          >
+            ⚕️ Mis Citas
+          </button>
         </nav>
         <div className="user-section">
           <span className="notification">🔔</span>
-          <span className="username">{medico.nombre}</span>
-          <button className="user-menu">👤</button>
+          <UserMenu nombre={nombreUsuario} onLogout={handleLogout} />
         </div>
       </header>
 
@@ -77,10 +118,7 @@ export default function DashboardMedico() {
           <h3>Menú</h3>
           <nav className="sidebar-nav">
             <button className="nav-item active">🏠 Home</button>
-            <button className="nav-item">👤 Perfil</button>
-            <button className="nav-item">👥 Pacientes</button>
-            <button className="nav-item">📅 Próximas Citas</button>
-            <button className="nav-item">📋 Citas Pasadas</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/medico/atencion')}>🩺 Atender consulta</button>
           </nav>
         </aside>
 

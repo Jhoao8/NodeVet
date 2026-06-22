@@ -129,8 +129,6 @@
     padding: 30px 20px;
   }
 }
-  transition: background 0.3s;
-}
 
 .auth-box button:hover:not(:disabled) {
   background: #45a049;
