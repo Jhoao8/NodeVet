@@ -101,7 +101,8 @@ export default function EditProfileScreen({ navigation }: any) {
                 telefonoUsr: formData.telefonoUsr?.trim() || '',
             };
 
-            await api.put('/v1/usuarios/actualizar', updateData);
+            // CORRECCIÓN: Ruta /v1/usuarios/perfil
+            await api.put('/v1/usuarios/perfil', updateData);
             
             showAlert('¡Éxito!', 'Perfil actualizado correctamente.');
             setTimeout(() => {

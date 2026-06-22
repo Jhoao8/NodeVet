@@ -2,11 +2,12 @@ import api from './axiosInstance';
 
 export const forgotPassword = async (email: string) => {
     // Usamos el nombre de campo exacto que definimos en el DTO de Java
-    return await api.post('/auth/forgot-password', { correo_usr: email });
+    return await api.post('/auth/recuperacion', { correo_usr: email });
 };
 
 export const resetPassword = async (token: string, nuevaPass: string) => {
-    return await api.post('/auth/reset-password', { 
+    // CORRECCIÓN: Método PUT y ruta /auth/password
+    return await api.put('/auth/password', { 
         token: token, 
         nueva_pass: nuevaPass 
     });
@@ -33,7 +34,6 @@ export const registro = async (userData: RegistroData) => {
     return await api.post('/v1/usuarios/registro', userData);
 };
 
-// Ya que estamos modularizando, te dejo también la del login por si quieres agregarla:
 export const login = async (correoUsr: string, passUsr: string) => {
     return await api.post('/auth/login', {
         correoUsr,
@@ -41,7 +41,6 @@ export const login = async (correoUsr: string, passUsr: string) => {
     });
 };
 
-//Traer datos del usuario autenticado (sin necesidad de pasar ID)
 export const obtenerPerfilUsuario = async () => {
     return await api.get('/v1/usuarios/perfil');
 };

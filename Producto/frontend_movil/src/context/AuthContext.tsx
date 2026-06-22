@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [userToken, setUserToken] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string | null>(null); 
-    const [userData, setUserData] = useState<UsuarioData | null>(null); // ════════ Agregado para cumplir con TS
+    const [userData, setUserData] = useState<UsuarioData | null>(null); 
     const [isLoading, setIsLoading] = useState(true);
 
     // Cargar token y rol al abrir la app
@@ -31,7 +31,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 
                 if (token) {
                     try {
-                        await api.get('/auth/validate', { 
+                        // CORRECCIÓN: Validamos el token intentando acceder al perfil
+                        await api.get('/v1/usuarios/perfil', { 
                             headers: { 'Authorization': `Bearer ${token}` }
                         });
                         
@@ -83,12 +84,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     };
 
-    // ════════ Agregado para cumplir con TS (Puedes llenarlo con tu lógica real después)
     const fetchUserData = async () => {
         try {
-            // Aquí irá tu petición a la API para traer los datos del usuario
-            // const response = await api.get('/usuarios/perfil');
-            // setUserData(response.data);
+            const response = await api.get('/v1/usuarios/perfil');
+            setUserData(response.data);
             console.log("fetchUserData ejecutado");
         } catch (error) {
             console.error("Error obteniendo datos del usuario", error);
@@ -96,7 +95,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     return (
-        // ════════ Agregamos userData y fetchUserData a los values exportados
         <AuthContext.Provider value={{ userToken, userRole, userData, isLoading, signIn, signOut, fetchUserData }}>
             {children}
         </AuthContext.Provider>

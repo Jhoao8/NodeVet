@@ -86,7 +86,7 @@ export default function EditarMascota({ route, navigation }: any) {
       };
 
       // Se envía la petición PUT a la ruta confirmada en el backend
-      await api.put(`/v1/mascotas/actualizar/${mascota.idMascota}`, payload);
+      await api.put(`/v1/mascotas/${mascota.idMascota}`, payload);
       
       showAlert("¡Éxito!", `Datos actualizados correctamente.`);
       navigation.goBack(); // Regresamos a la pantalla de detalles

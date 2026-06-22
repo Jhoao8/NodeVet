@@ -83,7 +83,8 @@ export default function AgendarHoraScreen({ navigation }: any) {
             const fetchTutorPets = async () => {
                 try {
                     setLoadingPets(true);
-                    const response = await api.get('/v1/mascotas/listar'); 
+                    // Mantenemos la corrección de las mascotas
+                    const response = await api.get('/v1/mascotas'); 
                     setPets(response.data);
                 } catch (error) {
                     console.error("Error al obtener mascotas:", error);
@@ -102,7 +103,8 @@ export default function AgendarHoraScreen({ navigation }: any) {
                 setLoadingAgenda(true);
                 setBloqueSeleccionado(null); 
                 
-                const response = await api.get(`/v1/agendas/disponibles-por-fecha?fecha=${selectedDate}`);
+                // CORRECCIÓN APLICADA AQUÍ: Ruta exacta del backend
+                const response = await api.get(`/v1/agendas/disponibilidad?fecha=${selectedDate}`);
                 setProfesionales(response.data);
             } catch (error) {
                 console.error("Error al obtener la agenda diaria:", error);

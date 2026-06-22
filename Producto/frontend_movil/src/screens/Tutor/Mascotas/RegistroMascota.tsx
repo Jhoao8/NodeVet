@@ -25,7 +25,7 @@ export default function RegistroMascota() {
   const [showPicker, setShowPicker] = useState(false);
   const [showEspecieModal, setShowEspecieModal] = useState(false);
   const [showRazaModal, setShowRazaModal] = useState(false);
-  const [razaSearch, setRazaSearch] = useState(''); // Estado para la búsqueda de razas
+  const [razaSearch, setRazaSearch] = useState('');
 
   const [form, setForm] = useState({
     nomMascota: '',
@@ -36,11 +36,8 @@ export default function RegistroMascota() {
     peso: '',
   });
 
-  // Generamos la lista de especies leyendo las llaves de nuestro PET_DATA
   const ESPECIES = Object.keys(PET_DATA) as EspecieMascota[];
-  // Dependiendo de lo que haya en form.especie, obtenemos sus razas
   const razasList = form.especie ? PET_DATA[form.especie as EspecieMascota] : [];
-  // Filtramos la lista de razas basándonos en lo que el usuario haya escrito
   const razasFiltradas = razasList.filter(raza => 
     raza.toLowerCase().includes(razaSearch.toLowerCase())
   );
@@ -62,7 +59,6 @@ export default function RegistroMascota() {
     if (!result.canceled) setImage(result.assets[0].uri);
   };
 
-  // --- FUNCIÓN DE SUBIDA A CLOUDINARY (ESPECÍFICA PARA MASCOTAS) ---
   const subirImagenCloudinary = async (uri: string) => {
     const data = new FormData();
     
@@ -72,7 +68,6 @@ export default function RegistroMascota() {
       name: 'foto_mascota.jpg',
     } as any);
     
-    // Usamos el preset que configuraste para la carpeta de mascotas
     data.append('upload_preset', 'mascotas_preset'); 
 
     try {
@@ -108,7 +103,6 @@ export default function RegistroMascota() {
     try {
       let imageUrl = null;
 
-      // 1. Solo subimos si el usuario eligió una imagen
       if (image) {
         imageUrl = await subirImagenCloudinary(image);
         if (!imageUrl) {
@@ -118,7 +112,11 @@ export default function RegistroMascota() {
         }
       }
 
-      const fechaFormateada = date.toISOString().split('T')[0];
+      // CORRECCIÓN: Fecha local exacta para evitar saltos de zona horaria
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const fechaFormateada = `${year}-${month}-${day}`;
 
       const payload = {
         nomMascota: form.nomMascota,
@@ -128,10 +126,11 @@ export default function RegistroMascota() {
         fecNac: fechaFormateada,
         fecNacEst: form.fecNacEst,
         peso: parseFloat(form.peso),
-        imagenMascota: imageUrl // Enviamos la URL o null si no hay foto
+        imagenMascota: imageUrl 
       };
 
-      await api.post('/v1/mascotas/registrar', payload);
+      // CORRECCIÓN: Ruta ajustada para evitar el Error 500
+      await api.post('/v1/mascotas', payload);
       
       showAlert("¡Éxito!", `${form.nomMascota} registrado correctamente.`);
       navigation.goBack();
@@ -146,10 +145,8 @@ export default function RegistroMascota() {
   return (
     <ScrollView style={[globalStyles.scrollContainer, dashboardStyles.lightBackground]}>
       
-      {/* Contenedor principal dividido en 2 columnas: Izquierda (Foto) y Derecha (Especie/Raza) */}
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
         
-        {/* Lado izquierdo: Foto */}
         <View style={{ flex: 1, marginRight: 15 }}>
           <TouchableOpacity style={[globalStyles.imagePicker, { marginVertical: 0, height: 160 }]} onPress={pickImage}>
             {image ? (
@@ -163,7 +160,6 @@ export default function RegistroMascota() {
           </TouchableOpacity>
         </View>
 
-        {/* Lado derecho: Especie (Arriba) y Raza (Abajo) */}
         <View style={{ flex: 1.2, height: 160, justifyContent: 'space-between' }}>
           
           <View>
@@ -273,7 +269,6 @@ export default function RegistroMascota() {
         </TouchableOpacity>
       </View>
 
-      {/* Modal para Seleccionar Especie */}
       <Modal
         visible={showEspecieModal}
         transparent={true}
@@ -293,10 +288,9 @@ export default function RegistroMascota() {
                 <TouchableOpacity 
                   style={{ paddingVertical: 15, borderBottomWidth: 1, borderColor: colors.lightGreen }}
                   onPress={() => {
-                    // Al cambiar la especie, reseteamos la raza para no dejar una raza incongruente
                     setForm({ ...form, especie: item, raza: '' });
                     setShowEspecieModal(false);
-                    setRazaSearch(''); // Limpiamos la búsqueda anterior
+                    setRazaSearch(''); 
                   }}
                 >
                   <Text style={{ color: colors.darkDGreen, textAlign: 'center', fontSize: 16 }}>{item}</Text>
@@ -307,7 +301,6 @@ export default function RegistroMascota() {
         </TouchableOpacity>
       </Modal>
 
-      {/* Modal para Seleccionar Raza */}
       <Modal
         visible={showRazaModal}
         transparent={true}
@@ -318,13 +311,12 @@ export default function RegistroMascota() {
           activeOpacity={1}
           onPress={() => {
             setShowRazaModal(false);
-            setRazaSearch(''); // Limpiamos si el usuario cierra el modal sin elegir nada
+            setRazaSearch(''); 
           }}
         >
           <View style={{ width: '80%', maxHeight: '70%', backgroundColor: colors.white, borderRadius: 12, padding: 20 }}>
             <Text style={[globalStyles.darkLabel, { textAlign: 'center', fontSize: 18, marginBottom: 15 }]}>Selecciona la raza</Text>
             
-            {/* Buscador de raza */}
             <View style={[globalStyles.phoneInputContainer, { marginBottom: 15 }]}>
               <Ionicons name="search" size={20} color={colors.darkGreen} style={{ marginLeft: 10 }} />
               <TextInput 
@@ -345,7 +337,7 @@ export default function RegistroMascota() {
                   onPress={() => {
                     setForm({ ...form, raza: item });
                     setShowRazaModal(false);
-                    setRazaSearch(''); // Limpiamos la búsqueda al seleccionar
+                    setRazaSearch(''); 
                   }}
                 >
                   <Text style={{ color: colors.darkDGreen, textAlign: 'center', fontSize: 16 }}>{item}</Text>
@@ -358,6 +350,9 @@ export default function RegistroMascota() {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      {/* CORRECCIÓN: Componente de Alerta renderizado para que funcionen los mensajes */}
+      <AlertComponent />
 
     </ScrollView>
   );

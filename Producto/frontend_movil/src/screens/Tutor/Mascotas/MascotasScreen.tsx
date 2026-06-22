@@ -27,7 +27,8 @@ export default function MascotasScreen() {
         }
 
         try {
-            const response = await api.get('/v1/mascotas/listar');
+            // CORRECCIÓN: Se eliminó '/listar' para evitar el Error 500
+            const response = await api.get('/v1/mascotas');
             setMascotas(response.data || []);
         } catch (error: any) {
             // Silenciar errores 401 (sin token válido) y 404 (no encontrado)

@@ -7,6 +7,7 @@ import { spacing } from '../../../theme/spacing';
 import { typography } from '../../../theme/typography';
 import api from '../../../api/axiosInstance';
 import { globalStyles } from '../../../style/GlobalStyle';
+
 export const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [code, setCode] = useState(''); 
@@ -38,7 +39,8 @@ export const ForgotPassword = () => {
         if (!isEmailValid) return;
         setLoading(true);
         try {
-            const response = await api.post('/auth/forgot-password', { correo_usr: email });
+            // CORRECCIÓN: Ruta /auth/recuperacion
+            const response = await api.post('/auth/recuperacion', { correo_usr: email });
             if (response.status === 200) {
                 setIsCodeSent(true); 
                 setCode('');
@@ -56,7 +58,8 @@ export const ForgotPassword = () => {
         if (!isCodeValid) return;
         setLoading(true);
         try {
-            const response = await api.post('/auth/verify-code', { correo_usr: email, codigo: code });
+            // CORRECCIÓN: Ruta /auth/verificacion
+            const response = await api.post('/auth/verificacion', { correo_usr: email, codigo: code });
             if (response.status === 200) {
                 navigation.navigate('ResetPassword', { email: email, code: code });
             }
