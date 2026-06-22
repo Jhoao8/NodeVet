@@ -40,7 +40,8 @@ export const ResetPassword = () => {
         if (!doPasswordsMatch) return;
         setLoading(true);
         try {
-            const response = await api.post('/auth/reset-password', {
+            // CORRECCIÓN: Método PUT y ruta /auth/password
+            const response = await api.put('/auth/password', {
                 correo_usr: email,
                 codigo: code,
                 nueva_pass: password 

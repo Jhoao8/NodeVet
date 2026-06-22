@@ -27,7 +27,7 @@ export default function ProfileScreen({ navigation }: any) {
     const { userToken, signOut } = useAuth();
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
-    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false); // Nuevo estado para la foto
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false); 
     
     const { showAlert, AlertComponent } = useCustomAlert();
 
@@ -57,7 +57,6 @@ export default function ProfileScreen({ navigation }: any) {
         }, [userToken])
     );
 
-    // ════════ LÓGICA DE FOTO DE PERFIL ════════
     const subirImagenCloudinary = async (uri: string) => {
         const data = new FormData();
         data.append('file', {
@@ -65,7 +64,7 @@ export default function ProfileScreen({ navigation }: any) {
             type: 'image/jpeg',
             name: 'foto_perfil.jpg',
         } as any);
-        data.append('upload_preset', 'mascotas_preset'); // Sugerencia: Cambia a 'usuarios_preset' si lo creas luego
+        data.append('upload_preset', 'mascotas_preset'); 
 
         try {
             const response = await fetch('https://api.cloudinary.com/v1_1/dkryb2g4m/image/upload', {
@@ -93,12 +92,9 @@ export default function ProfileScreen({ navigation }: any) {
                 return;
             }
 
-            // Aquí actualizamos solo la foto. 
-            // Nota: Si tu backend requiere todos los datos en /actualizar, 
-            // asegúrate de tener un endpoint dedicado como /actualizar-foto o mandar el payload completo.
-            await api.put('/v1/usuarios/actualizar-foto', { fotoUsr: imageUrl });
+            // CORRECCIÓN: Ruta /v1/usuarios/perfil/foto
+            await api.put('/v1/usuarios/perfil/foto', { fotoUsr: imageUrl });
             
-            // Actualizamos la UI localmente al instante
             setUser(prev => prev ? { ...prev, fotoUsr: imageUrl } : null);
             showAlert('¡Éxito!', 'Tu foto de perfil ha sido actualizada.');
 
@@ -121,7 +117,6 @@ export default function ProfileScreen({ navigation }: any) {
         if (!result.canceled) {
             const selectedUri = result.assets[0].uri;
             
-            // Lanzamos el modal de confirmación antes de subir
             showAlert(
                 'Actualizar foto',
                 '¿Deseas establecer esta imagen como tu nueva foto de perfil?',
@@ -140,7 +135,6 @@ export default function ProfileScreen({ navigation }: any) {
             );
         }
     };
-    // ══════════════════════════════════════════
 
     const handleLogout = () => {
         showAlert(
@@ -168,7 +162,6 @@ export default function ProfileScreen({ navigation }: any) {
             <DashboardHeader />
 
             <ScrollView contentContainerStyle={globalStyles.scrollContainer} showsVerticalScrollIndicator={false}>
-                {/* ════════ TÍTULO DE SECCIÓN ════════ */}
                 <View style={dashboardStyles.greetingContainer}>
                     <View style={styles.titleRow}>
                         <Text style={[dashboardStyles.greetingText, dashboardStyles.darkText]}>
@@ -181,7 +174,6 @@ export default function ProfileScreen({ navigation }: any) {
                     <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider]} />
                 </View>
 
-                {/* ════════ TARJETA DE INFORMACIÓN ════════ */}
                 {loading ? (
                     <View style={{ justifyContent: 'center', alignItems: 'center', marginVertical: spacing.xl }}>
                         <ActivityIndicator size="large" color={colors.darkGreen} />
@@ -190,7 +182,6 @@ export default function ProfileScreen({ navigation }: any) {
                     <View style={styles.profileMainContainer}>
                         <View style={styles.topRowInfoContainer}>
                             
-                            {/* FOTO DE PERFIL (Ahora es editable) */}
                             <TouchableOpacity 
                                 style={styles.imagePlaceholder} 
                                 activeOpacity={0.8}
@@ -202,7 +193,6 @@ export default function ProfileScreen({ navigation }: any) {
                                 ) : user?.fotoUsr ? (
                                     <>
                                         <Image source={{ uri: user.fotoUsr }} style={styles.profileImage} />
-                                        {/* Pequeño icono flotante para indicar que es editable */}
                                         <View style={styles.editPhotoBadge}>
                                             <Ionicons name="camera" size={14} color="white" />
                                         </View>
@@ -212,7 +202,6 @@ export default function ProfileScreen({ navigation }: any) {
                                 )}
                             </TouchableOpacity>
 
-                            {/* Datos Laterales */}
                             <View style={styles.sideInfoContainer}>
                                 <View style={styles.infoBlock}>
                                     <Text style={styles.labelText}>Nombre:</Text>
@@ -230,7 +219,6 @@ export default function ProfileScreen({ navigation }: any) {
                             </View>
                         </View>
 
-                        {/* FILA INFERIOR: Email */}
                         <View style={styles.fullWidthInfoBlock}>
                             <Text style={styles.labelText}>Email:</Text>
                             <View style={styles.valueBox}>
@@ -242,7 +230,6 @@ export default function ProfileScreen({ navigation }: any) {
 
                 <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider, { marginVertical: spacing.lg }]} />
 
-                {/* ════════ MENÚ DE OPCIONES ════════ */}
                 <View style={styles.menuContainer}>
                     <TouchableOpacity style={styles.menuButton}>
                         <Text style={styles.menuButtonText}>Cambiar contraseña</Text>
@@ -255,7 +242,6 @@ export default function ProfileScreen({ navigation }: any) {
                     </TouchableOpacity>
                 </View>
 
-                {/* ════════ BOTÓN CERRAR SESIÓN ════════ */}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Text style={styles.logoutButtonText}>Cerrar Sesión</Text>
                 </TouchableOpacity>
@@ -266,7 +252,6 @@ export default function ProfileScreen({ navigation }: any) {
     );
 }
 
-// ════════ ESTILOS LOCALES ════════
 const styles = StyleSheet.create({
     titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
     editIcon: { padding: spacing.xs },
@@ -283,7 +268,7 @@ const styles = StyleSheet.create({
     imagePlaceholder: {
         width: 120, height: 120, borderWidth: 1.5, borderColor: colors.darkDGreen,
         justifyContent: 'center', alignItems: 'center', marginRight: spacing.lg,
-        overflow: 'hidden', position: 'relative', borderRadius: 60, // Circular para que se vea como foto de perfil moderna (opcional, puedes quitar el borderRadius si la prefieres cuadrada)
+        overflow: 'hidden', position: 'relative', borderRadius: 60, 
     },
     profileImage: { width: '100%', height: '100%', resizeMode: 'cover' },
     editPhotoBadge: {

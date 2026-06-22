@@ -27,7 +27,8 @@ const PetSummaryList = () => {
             const loadMascotas = async () => {
                 try {
                     setLoading(true);
-                    const response = await api.get('/v1/mascotas/listar');
+                    // CORRECCIÓN: Se eliminó '/listar' para evitar el Error 500
+                    const response = await api.get('/v1/mascotas');
                     setMascotas(response.data);
                 } catch (error: any) {
                     if (error.response?.status !== 401 && error.response?.status !== 404) {
@@ -39,7 +40,7 @@ const PetSummaryList = () => {
             };
             
             loadMascotas();
-        }, [userToken]) // ← AÑADE userToken AQUÍ
+        }, [userToken]) 
     );
 
     if (loading) {
