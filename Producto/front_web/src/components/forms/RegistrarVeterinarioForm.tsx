@@ -23,9 +23,18 @@ export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props)
   const [error, setError] = useState('');
 
   // Errores de validación por campo
+  const [nombreError, setNombreError] = useState('');
   const [passError, setPassError] = useState('');
   const [runError, setRunError] = useState('');
   const [dvError, setDvError] = useState('');
+  const [telefonoError, setTelefonoError] = useState('');
+
+  const validarNombre = (value: string): string => {
+    if (value.trim().length < 3) {
+      return 'El nombre debe tener al menos 3 caracteres.';
+    }
+    return '';
+  };
 
   const validarPassword = (value: string): string => {
     if (value.length < 8) {
@@ -61,6 +70,18 @@ export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props)
     }
     if (!/^[0-9kK]$/.test(value)) {
       return 'El dígito verificador debe ser un número del 0 al 9, o la letra K.';
+    }
+    return '';
+  };
+
+  const validarTelefono = (value: string): string => {
+    // Campo opcional: vacío es válido, pero si se ingresa debe ser 9 dígitos comenzando con 9.
+    const v = value.trim();
+    if (v === '') {
+      return '';
+    }
+    if (!/^9\d{8}$/.test(v)) {
+      return 'El teléfono debe comenzar con 9 y tener 9 dígitos.';
     }
     return '';
   };
@@ -127,16 +148,20 @@ export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props)
     e.preventDefault();
     setError('');
 
-    // Validar contraseña, RUN y dígito verificador antes de enviar
+    // Validar nombre, contraseña, RUN, dígito verificador y teléfono antes de enviar
+    const nombreMsg = validarNombre(nombreUsr);
     const passMsg = validarPassword(passUsr);
     const runMsg = validarRun(runVet);
     const dvMsg = validarDv(dvVet);
+    const telMsg = validarTelefono(telefonoUsr);
 
+    setNombreError(nombreMsg);
     setPassError(passMsg);
     setRunError(runMsg);
     setDvError(dvMsg);
+    setTelefonoError(telMsg);
 
-    if (passMsg || runMsg || dvMsg) {
+    if (nombreMsg || passMsg || runMsg || dvMsg || telMsg) {
       setError('Revisa los campos marcados antes de continuar.');
       return;
     }
@@ -190,10 +215,16 @@ export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props)
                     id="nombreUsr"
                     type="text"
                     placeholder="Ej. Javiera"
+                    className={nombreError ? 'input-error' : ''}
                     value={nombreUsr}
-                    onChange={e => setNombreUsr(e.target.value)}
+                    onChange={e => {
+                      setNombreUsr(e.target.value);
+                      if (nombreError) setNombreError('');
+                    }}
+                    onBlur={() => setNombreError(validarNombre(nombreUsr))}
                     required
                   />
+                  {nombreError && <span className="field-error">{nombreError}</span>}
                 </div>
                 <div className="form-field">
                   <label htmlFor="apellidoUsr">Apellido</label>
@@ -224,10 +255,22 @@ export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props)
                   <input
                     id="telefonoUsr"
                     type="text"
-                    placeholder="+56 9 1234 5678"
+                    inputMode="numeric"
+                    maxLength={9}
+                    placeholder="Ej. 912345678"
+                    className={telefonoError ? 'input-error' : ''}
                     value={telefonoUsr}
-                    onChange={e => setTelefonoUsr(e.target.value)}
+                    onChange={e => {
+                      setTelefonoUsr(e.target.value.replace(/\D/g, ''));
+                      if (telefonoError) setTelefonoError('');
+                    }}
+                    onBlur={() => setTelefonoError(validarTelefono(telefonoUsr))}
                   />
+                  {telefonoError ? (
+                    <span className="field-error">{telefonoError}</span>
+                  ) : (
+                    <span className="field-hint">Opcional. Si lo ingresas: 9 dígitos comenzando con 9.</span>
+                  )}
                 </div>
                 <div className="form-field span-2">
                   <label htmlFor="passUsr">Contraseña</label>

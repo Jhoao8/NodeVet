@@ -471,6 +471,22 @@
   overflow: hidden;
 }
 
+/* El form ocupa el alto restante y acota el cuerpo desplazable, de modo que el
+   footer (con el botón de envío) permanezca siempre visible aunque aparezca el
+   mensaje de error o el contenido sea más alto que la ventana. */
+.modal-content > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.modal-content > .modal-header,
+.modal-content > .error-message {
+  flex-shrink: 0;
+}
+
 .modal-header {
   padding: var(--spacing-lg) var(--spacing-xl);
   background: linear-gradient(135deg, var(--color-dark-green) 0%, var(--color-dark-d-green) 100%);
@@ -492,6 +508,8 @@
 .modal-body {
   padding: var(--spacing-xl);
   overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .form-section {
@@ -708,6 +726,7 @@
   padding: var(--spacing-lg) var(--spacing-xl);
   background-color: var(--color-gray-50);
   border-top: 1px solid var(--color-gray-200);
+  flex-shrink: 0;
 }
 
 .btn-cancel {
