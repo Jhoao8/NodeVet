@@ -172,7 +172,7 @@ const RegisterScreen = () => {
     return (
         <KeyboardAvoidingView 
             style={globalStyles.container} 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <ScrollView 
                 contentContainerStyle={{
@@ -192,7 +192,7 @@ const RegisterScreen = () => {
                 <View style={globalStyles.headerRow}>
                     <View style={globalStyles.logoPlaceholder}>
                         <Image 
-                            source={require('@/assets/images/Logo.png')} 
+                            source={require('../../../assets/images/Logo.png')} 
                             style={globalStyles.logo}
                             resizeMode="contain" 
                         />

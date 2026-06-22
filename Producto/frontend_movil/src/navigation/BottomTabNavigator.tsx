@@ -5,10 +5,10 @@ import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Importación de pantallas
-import MascotasScreen from '../screens/Mascotas/MascotasScreen';
-import HomeScreen from '../screens/HomeScreen';
+import MascotasScreen from '../screens/Tutor/Mascotas/MascotasScreen';
+import HomeScreen from '../screens/Tutor/HomeScreen';
 import ProfileStack from './ProfileStack';
-import AgendarHoraScreen from '../screens/Agendamiento/AgendarHoraScreen';
+import AgendarHoraScreen from '../screens/Tutor/Agendamiento/AgendarHoraScreen';
 
 import { colors } from '@/src/theme/colors';
 

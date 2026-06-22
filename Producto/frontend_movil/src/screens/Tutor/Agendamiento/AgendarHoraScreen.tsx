@@ -8,16 +8,16 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
 
 // Importaciones del sistema de diseño corporativo
-import { globalStyles } from '../../style/GlobalStyle';
-import { dashboardStyles } from '../../style/DashboardStyle';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
-import { customCalendarTheme } from '../../theme/calendarTheme';
-import DashboardHeader from '../../components/DashboardHeader';
-import ReservaModals from '@/src/screens/Agendamiento/ReservaModal';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../api/axiosInstance';
+import { globalStyles } from '../../../style/GlobalStyle';
+import { dashboardStyles } from '../../../style/DashboardStyle';
+import { colors } from '../../../theme/colors';
+import { spacing } from '../../../theme/spacing';
+import { typography } from '../../../theme/typography';
+import { customCalendarTheme } from '../../../theme/calendarTheme';
+import DashboardHeader from '../../../components/DashboardHeader';
+import ReservaModals from '@/src/screens/Tutor/Agendamiento/ReservaModal';
+import { useAuth } from '../../../context/AuthContext';
+import api from '../../../api/axiosInstance';
 
 
 // ════════ INTERFACES DEFINIDAS PARA TYPESCRIPT ════════

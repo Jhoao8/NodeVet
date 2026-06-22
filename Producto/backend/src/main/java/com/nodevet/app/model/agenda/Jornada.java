@@ -14,7 +14,12 @@ import com.nodevet.app.model.usuario.Veterinario;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "JORNADA")
+@Table(name = "JORNADA", uniqueConstraints = {
+    @UniqueConstraint(
+        name = "uk_jornada_unica", 
+        columnNames = {"id_vet", "dia_semana", "hora_inicio", "hora_fin"}
+    )
+})
 public class Jornada {
 
     @Id

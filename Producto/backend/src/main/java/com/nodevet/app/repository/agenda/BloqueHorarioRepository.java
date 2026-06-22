@@ -31,4 +31,13 @@ public interface BloqueHorarioRepository extends JpaRepository<BloqueHorario, In
                 "ORDER BY b.fec_hr_inicio ASC", 
         nativeQuery = true)
     List<BloqueHorario> findBloquesDisponibles(@Param("idVet") Integer idVet, @Param("fechaActual") LocalDateTime fechaActual);
+
+    @Query("SELECT b FROM BloqueHorario b " +
+        "WHERE b.veterinario.id = :idVet " +
+        "AND b.fecHrInicio BETWEEN :inicio AND :fin")
+    List<BloqueHorario> findByVeterinarioAndRangoFechas(
+            @Param("idVet") Integer idVet,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fin") LocalDateTime fin
+    );
 }

@@ -4,11 +4,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import WelcomeScreen from '../screens/Welcome/WelcomeScreen';
 import RegisterScreen from '../screens/Welcome/RegisterScreen';
 import LoginScreen from '../screens/Welcome/LoginScreen';
-import { ForgotPassword } from '../screens/ForgotPassword/ForgotPassword';
-import { ResetPassword } from '../screens/ForgotPassword/ResetPassword';
+import { ForgotPassword } from '../screens/Tutor/ForgotPassword/ForgotPassword';
+import { ResetPassword } from '../screens/Tutor/ForgotPassword/ResetPassword';
 import BottomTabNavigator from './BottomTabNavigator';
-import RegistroMascotaScreen from '../screens/Mascotas/RegistroMascota';
-import EditarMascota from '../screens/Mascotas/EditarMascota';
+import RegistroMascotaScreen from '../screens/Tutor/Mascotas/RegistroMascota';
+import EditarMascota from '../screens/Tutor/Mascotas/EditarMascota';
 
 const Stack = createNativeStackNavigator();
 
