@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react';
 
-// Carga automática de las imágenes del carrusel.
-// Deja tus imágenes en src/assets/images/carousel/ y aparecen aquí solas.
-// Orden: alfabético por nombre de archivo.
 const modulos = import.meta.glob(
   '../assets/images/carousel/*.{png,jpg,jpeg,webp,gif,svg}',
   { eager: true, import: 'default' },
@@ -17,7 +14,6 @@ const INTERVALO_MS = 4000;
 export default function Carousel() {
   const [indice, setIndice] = useState(0);
 
-  // Auto-rotación (solo si hay más de una imagen)
   useEffect(() => {
     if (imagenes.length <= 1) return;
     const id = setInterval(() => {

@@ -8,14 +8,11 @@ interface Props {
   onLogout: () => void;
 }
 
-// Menú desplegable de usuario: el nombre actúa como disparador y abre
-// un panel con "Perfil" y "Cerrar sesión". Reutilizable en todos los headers.
 export default function UserMenu({ nombre, onLogout }: Props) {
   const navigate = useNavigate();
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  // Cerrar al hacer clic fuera del menú
   useEffect(() => {
     const handleClickFuera = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {

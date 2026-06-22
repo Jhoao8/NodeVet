@@ -7,7 +7,6 @@ import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import UserMenu from '../../components/UserMenu';
 import '../../styles/Dashboard.css';
 
-// Valor (costo) por defecto; no hay endpoint para listarlos, igual que en reservas.
 const ID_VALOR_PLACEHOLDER = 1;
 
 function parseIds(s: string): number[] {
@@ -70,8 +69,6 @@ export default function AtencionConsulta() {
   const handleCerrarConsulta = async () => {
     setError('');
     setOk('');
-
-    // Validaciones (criterio de aceptación: no permitir consulta vacía)
     if (!idReservaValido) {
       setError('Ingresa el ID de la reserva que estás atendiendo.');
       return;
@@ -95,7 +92,6 @@ export default function AtencionConsulta() {
 
       const idConsulta = resp.data?.idConsulta;
 
-      // Adjuntar archivos (solo los que tienen URL) una vez creada la ficha
       const archivosValidos = archivos.filter((a) => a.archivoUrl.trim() !== '');
       let adjuntados = 0;
       for (const a of archivosValidos) {
@@ -107,15 +103,12 @@ export default function AtencionConsulta() {
           });
           adjuntados++;
         } catch {
-          // Si un archivo falla, no abortamos la consulta ya creada; lo informamos.
         }
       }
 
       const detalleArchivos =
         archivosValidos.length > 0 ? ` Archivos adjuntados: ${adjuntados}/${archivosValidos.length}.` : '';
       setOk(`Consulta cerrada exitosamente (ID ${idConsulta}).${detalleArchivos}`);
-
-      // Limpiar el formulario para la siguiente atención
       setNotas('');
       setDiagnostico('');
       setIndicacionReceta('');
@@ -160,7 +153,7 @@ export default function AtencionConsulta() {
             {error && <div className="error-message">{error}</div>}
             {ok && <div className="error-message" style={okStyle}>{ok}</div>}
 
-            {/* Paso 1: Reserva */}
+            {}
             <div className="form-section">
               <h3 className="form-section-title"><span className="step-badge">1</span>Reserva</h3>
               <div className="form-grid">
@@ -177,7 +170,7 @@ export default function AtencionConsulta() {
               </div>
             </div>
 
-            {/* Paso 2: Atención (diagnóstico / receta) */}
+            {}
             <div className="form-section">
               <h3 className="form-section-title"><span className="step-badge">2</span>Diagnóstico y receta</h3>
               <div className="form-field" style={{ marginBottom: '14px' }}>
@@ -194,7 +187,7 @@ export default function AtencionConsulta() {
               </div>
             </div>
 
-            {/* Paso 3: Exámenes y vacunas */}
+            {}
             <div className="form-section">
               <h3 className="form-section-title"><span className="step-badge">3</span>Exámenes y vacunas (opcional)</h3>
               <div className="form-grid">
@@ -211,7 +204,7 @@ export default function AtencionConsulta() {
               </div>
             </div>
 
-            {/* Paso 4: Archivos adjuntos */}
+            {}
             <div className="form-section">
               <h3 className="form-section-title"><span className="step-badge">4</span>Archivos adjuntos (opcional)</h3>
               <ArchivoAdjuntoUploader archivos={archivos} onChange={setArchivos} />

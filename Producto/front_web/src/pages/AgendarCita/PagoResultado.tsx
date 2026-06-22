@@ -5,10 +5,6 @@ import '../../styles/AgendarCita.css';
 
 type Estado = 'exito' | 'pendiente' | 'rechazado';
 
-// Página de retorno tras el pago en Flow (flow.return-url = /pago/resultado).
-// La confirmación definitiva la realiza el backend vía webhook; aquí solo mostramos
-// el resultado al usuario. Si Flow (o el flujo) entrega un parámetro de estado, lo
-// respetamos; por defecto mostramos "Pago Exitoso".
 const CONTENIDO: Record<Estado, { icono: string; titulo: string; mensaje: string; clase: string }> = {
   exito: {
     icono: '✅',

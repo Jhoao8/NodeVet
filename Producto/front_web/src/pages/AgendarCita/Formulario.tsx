@@ -13,8 +13,6 @@ interface Mascota {
   especie?: string;
 }
 
-// Valor (precio) hardcodeado: no existe un endpoint accesible para listar tarifas.
-// El backend exige un idValor válido; usamos el valor por defecto sembrado.
 const ID_VALOR_PLACEHOLDER = 1;
 
 export default function FormularioAgendarCita() {
@@ -37,7 +35,6 @@ export default function FormularioAgendarCita() {
     }
   });
 
-  // Si se llegó aquí sin selección previa, volver al inicio del flujo.
   useEffect(() => {
     if (!citaSeleccionada) navigate('/agendarCita');
   }, [citaSeleccionada, navigate]);
@@ -50,7 +47,7 @@ export default function FormularioAgendarCita() {
     let cancelado = false;
     const fetchMascotas = async () => {
       try {
-        const resp = await api.get<Mascota[]>('/v1/mascotas/listar');
+        const resp = await api.get<Mascota[]>('/v1/mascotas');
         if (!cancelado) setMascotas(Array.isArray(resp.data) ? resp.data : []);
       } catch {
         if (!cancelado) setError('No se pudieron cargar tus mascotas.');
@@ -89,11 +86,8 @@ export default function FormularioAgendarCita() {
       localStorage.removeItem('citaSeleccionada');
 
       if (urlPago) {
-        // Flujo real: redirige a la pasarela de pago (Flow). Al terminar, Flow vuelve
-        // a /pago/resultado.
         window.location.href = urlPago;
       } else {
-        // Sin URL de pago: vamos directo a la pantalla de resultado.
         navigate('/pago/resultado');
       }
     } catch (err) {

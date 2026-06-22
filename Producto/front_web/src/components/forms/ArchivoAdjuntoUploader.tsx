@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { subirArchivoCloudinary } from '../../services/cloudinaryService';
 
-// Componente para adjuntar archivos (ARCHIVO_ADJUNTO) a una consulta.
-// El usuario elige un archivo desde el explorador; se sube a Cloudinary y se
-// guarda su URL pública. El backend solo recibe la URL ya persistida.
 export interface ArchivoEntry {
   nomArchivo: string;
   archivoUrl: string;
@@ -26,7 +23,7 @@ export default function ArchivoAdjuntoUploader({ archivos, onChange }: Props) {
 
   const handleArchivoElegido = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    e.target.value = ''; // permite volver a elegir el mismo archivo
+    e.target.value = '';
     if (!file) return;
 
     setError('');
@@ -111,7 +108,7 @@ export default function ArchivoAdjuntoUploader({ archivos, onChange }: Props) {
 
       {error && <div className="error-message">{error}</div>}
 
-      {/* El <label> abre el explorador de forma nativa (no depende de .click() por JS). */}
+      {}
       <label
         className="btn-submit"
         style={{

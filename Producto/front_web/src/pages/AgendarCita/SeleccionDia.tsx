@@ -8,14 +8,8 @@ import '../../styles/AgendarCita.css';
 
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-// Horario comercial estándar (cada hora) usado para dibujar la grilla completa del día.
-// Los bloques realmente disponibles se marcan como seleccionables; el resto se muestra
-// deshabilitado ("Reservado / no disponible"), cumpliendo el criterio de aceptación de
-// bloquear visualmente las horas ya tomadas.
 const HORAS_ESTANDAR = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
 
-// Formatea una fecha como YYYY-MM-DD en hora LOCAL (evita el corrimiento de día que
-// produce toISOString() al convertir a UTC).
 function formatearFechaLocal(fecha: Date): string {
   const y = fecha.getFullYear();
   const m = String(fecha.getMonth() + 1).padStart(2, '0');
@@ -23,14 +17,13 @@ function formatearFechaLocal(fecha: Date): string {
   return `${y}-${m}-${d}`;
 }
 
-// Extrae "HH:mm" de un LocalDateTime ISO sin recurrir a Date (evita zonas horarias).
 function horaDeBloque(iso: string): string {
   return iso.slice(11, 16);
 }
 
 interface SlotDia {
   hora: string;
-  bloque: BloqueHorarioDTO | null; // null => no disponible (reservado / fuera de agenda)
+  bloque: BloqueHorarioDTO | null;
 }
 
 export default function SeleccionDia() {
@@ -46,7 +39,6 @@ export default function SeleccionDia() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Genera los 7 días de la semana visible (offset por semanaActual).
   const fechas = useMemo(() => {
     const inicio = new Date();
     inicio.setHours(0, 0, 0, 0);
@@ -60,7 +52,6 @@ export default function SeleccionDia() {
 
   const hoyStr = formatearFechaLocal(new Date());
 
-  // Carga la disponibilidad cada vez que cambia el día seleccionado.
   useEffect(() => {
     if (!fechaSeleccionada || !token) return;
 
@@ -72,14 +63,12 @@ export default function SeleccionDia() {
       setVetSeleccionado(null);
       setBloqueSeleccionado(null);
       try {
-        const resp = await api.get<VetDisponibilidad[]>('/v1/agendas/disponibles-por-fecha', {
+        const resp = await api.get<VetDisponibilidad[]>('/v1/agendas/disponibilidad', {
           params: { fecha: fechaSeleccionada },
         });
         if (!cancelado) setVets(Array.isArray(resp.data) ? resp.data : []);
       } catch (err) {
         if (!cancelado) {
-          // No usamos console.error para no ensuciar la consola en flujos esperados;
-          // mostramos el problema en la UI.
           const msg = axios.isAxiosError(err)
             ? (typeof err.response?.data === 'string' ? err.response.data : 'No se pudo cargar la disponibilidad.')
             : 'No se pudo cargar la disponibilidad.';
@@ -96,8 +85,6 @@ export default function SeleccionDia() {
     };
   }, [fechaSeleccionada, token]);
 
-  // Especialidades disponibles ese día (derivadas de la respuesta, ya que el endpoint
-  // de especialidades está restringido a ADMIN/VET).
   const especialidades = useMemo(() => {
     const set = new Set(vets.map((v) => v.especialidad).filter(Boolean));
     return Array.from(set).sort();
@@ -110,7 +97,7 @@ export default function SeleccionDia() {
 
   const handleSeleccionarDia = (fecha: Date) => {
     const str = formatearFechaLocal(fecha);
-    if (str < hoyStr) return; // no se agenda en el pasado
+    if (str < hoyStr) return;
     setFechaSeleccionada(str);
     setEspecialidadFiltro('todas');
   };
@@ -120,8 +107,7 @@ export default function SeleccionDia() {
     setBloqueSeleccionado(bloque);
   };
 
-  // Construye la grilla de slots de un veterinario: une las horas estándar con las horas
-  // realmente disponibles. Cada slot trae su bloque si está libre, o null si está tomado.
+
   const construirSlots = (vet: VetDisponibilidad): SlotDia[] => {
     const disponiblesPorHora = new Map<string, BloqueHorarioDTO>();
     for (const b of vet.bloquesDisponibles) {
@@ -174,7 +160,7 @@ export default function SeleccionDia() {
         <div className="calendar-section">
           <h2>Agenda tu hora</h2>
 
-          {/* Paso 1: día */}
+          {}
           <div className="calendar-controls">
             <div className="nav-controls">
               <button onClick={() => setSemanaActual((s) => Math.max(0, s - 1))} disabled={semanaActual === 0}>←</button>
@@ -204,7 +190,7 @@ export default function SeleccionDia() {
             })}
           </div>
 
-          {/* Paso 2: especialidad (derivada de la disponibilidad del día) */}
+          {}
           {fechaSeleccionada && especialidades.length > 0 && (
             <div className="especialidad-group form-group">
               <label>Especialidad</label>
@@ -217,7 +203,7 @@ export default function SeleccionDia() {
             </div>
           )}
 
-          {/* Paso 3 y 4: veterinario + bloque horario */}
+          {}
           <div className="disponibilidad-section">
             {error && <div className="error-message">{error}</div>}
 

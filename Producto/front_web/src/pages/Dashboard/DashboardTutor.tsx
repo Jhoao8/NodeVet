@@ -49,7 +49,7 @@ export default function DashboardTutor() {
 
         // Intentar cargar mascotas
         try {
-          const mascotasData = await api.get('/v1/mascotas/listar');
+          const mascotasData = await api.get('/v1/mascotas');
           setMascotas(mascotasData.data);
           console.log('✓ Mascotas cargadas:', mascotasData.data.length);
         } catch (err: any) {
@@ -82,7 +82,7 @@ export default function DashboardTutor() {
 
   const handleDeleteMascota = async (id: number) => {
     try {
-      await api.delete(`/v1/mascotas/eliminar/${id}`);
+      await api.delete(`/v1/mascotas/${id}`);
       setMascotas(mascotas.filter(m => m.idMascota !== id));
       alert('Mascota eliminada correctamente');
     } catch (error: any) {

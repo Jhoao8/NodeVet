@@ -3,7 +3,6 @@
   display: inline-block;
 }
 
-/* Disparador: el nombre del usuario (sobre header verde oscuro) */
 .user-menu-trigger {
   display: flex;
   align-items: center;
@@ -33,7 +32,6 @@
   transform: rotate(180deg);
 }
 
-/* Panel desplegable */
 .user-menu-panel {
   position: absolute;
   top: calc(100% + 8px);

@@ -5,7 +5,6 @@ import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import UserMenu from '../../components/UserMenu';
 import '../../styles/Dashboard.css';
 
-// 1 = Lunes ... 7 = Domingo (coincide con DayOfWeek.getValue() del backend)
 const DIAS = [
   { n: 1, label: 'Lunes' },
   { n: 2, label: 'Martes' },
@@ -33,15 +32,12 @@ export default function GenerarAgenda() {
   const navigate = useNavigate();
   const nombreUsuario = useNombreUsuario();
 
-  // Pre-rellena con el último veterinario creado (si lo hay) para mayor comodidad.
   const [idVet, setIdVet] = useState<string>(() => localStorage.getItem('ultimoVetIdVet') || '');
 
-  // Jornada
-  const [diasSel, setDiasSel] = useState<number[]>([1, 2, 3, 4, 5]); // L-V por defecto
+  const [diasSel, setDiasSel] = useState<number[]>([1, 2, 3, 4, 5]);
   const [horaInicio, setHoraInicio] = useState('09:00');
   const [horaFin, setHoraFin] = useState('18:00');
 
-  // Bloques
   const [anio, setAnio] = useState<number>(hoy.getFullYear());
   const [mes, setMes] = useState<number>(hoy.getMonth() + 1);
   const [duracion, setDuracion] = useState<number>(30);
@@ -118,7 +114,7 @@ export default function GenerarAgenda() {
 
     setGenerando(true);
     try {
-      const resp = await api.post('/v1/agendas/generar', null, {
+      const resp = await api.post('/v1/agendas', null, {
         params: { idVet: idVetNum, anio, mes, duracionMinutos: duracion },
       });
       const cantidad = Array.isArray(resp.data) ? resp.data.length : 0;

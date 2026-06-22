@@ -1,12 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../api/client';
 
-/**
- * Devuelve el nombre real del usuario logueado (nombreCompleto) consultando
- * GET /v1/usuarios/perfil. El JWT solo trae el correo, no el nombre, por eso
- * se obtiene del perfil. Disponible para cualquier rol (endpoint authenticated).
- * Retorna '' mientras carga o si no hay sesión.
- */
 export function useNombreUsuario(): string {
   const [nombre, setNombre] = useState('');
 

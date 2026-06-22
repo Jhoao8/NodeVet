@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import '../../styles/Dashboard.css';
 import RegistrarVeterinarioForm from '../../components/forms/RegistrarVeterinarioForm';
+import EditarUsuarioForm from '../../components/forms/EditarUsuarioForm';
 import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import { getUserInfoFromToken } from '../../utils/authUtils';
 import UserMenu from '../../components/UserMenu';
 
 interface Usuario {
@@ -21,6 +23,17 @@ export default function DashboardAdmin() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [ultimoVet, setUltimoVet] = useState<{ idVeterinario?: number; nombreCompleto?: string } | null>(null);
+  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
+
+  const [correoAdmin] = useState<string>(() => {
+    const token = localStorage.getItem('token');
+    return (token && getUserInfoFromToken(token)?.username) || '';
+  });
+
+  const esCuentaPropia = (usuario: Usuario): boolean =>
+    !!correoAdmin && usuario.correoUsr?.toLowerCase() === correoAdmin.toLowerCase();
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -28,7 +41,7 @@ export default function DashboardAdmin() {
   };
 
   const fetchUsers = async () => {
-    // No need to set loading here as it's for the whole page
+
     try {
       const usuariosData = await api.get('/v1/usuarios');
       setUsuarios(usuariosData.data);
@@ -44,10 +57,38 @@ export default function DashboardAdmin() {
 
   const handleSuccess = (vet?: { idVeterinario?: number; nombreCompleto?: string }) => {
     setShowModal(false);
-    fetchUsers(); // Refresh user list
+    fetchUsers();
     if (vet?.idVeterinario) {
       setUltimoVet({ idVeterinario: vet.idVeterinario, nombreCompleto: vet.nombreCompleto });
       localStorage.setItem('ultimoVetIdVet', String(vet.idVeterinario));
+    }
+  };
+
+  const handleEditSuccess = () => {
+    setEditingUser(null);
+    fetchUsers();
+  };
+
+  const handleDelete = async (usuario: Usuario) => {
+    // Salvaguarda: aunque el botón está deshabilitado, evitamos el auto-borrado por si acaso.
+    if (esCuentaPropia(usuario)) {
+      setActionError('No puedes eliminar tu propia cuenta de administrador.');
+      return;
+    }
+
+    const confirmar = window.confirm(`¿Eliminar al usuario ${usuario.nombreCompleto}?`);
+    if (!confirmar) return;
+
+    setActionError('');
+    setDeletingId(usuario.idUsuario);
+    try {
+      await api.delete(`/v1/usuarios/${usuario.idUsuario}`);
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error al desactivar usuario:', error);
+      setActionError(`No se pudo desactivar la cuenta de ${usuario.nombreCompleto}.`);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -57,6 +98,13 @@ export default function DashboardAdmin() {
         <RegistrarVeterinarioForm
           onSuccess={handleSuccess}
           onCancel={() => setShowModal(false)}
+        />
+      )}
+      {editingUser && (
+        <EditarUsuarioForm
+          usuario={editingUser}
+          onSuccess={handleEditSuccess}
+          onCancel={() => setEditingUser(null)}
         />
       )}
       <div className="dashboard-container">
@@ -101,6 +149,7 @@ export default function DashboardAdmin() {
                         Veterinario creado: {ultimoVet.nombreCompleto} — <strong>ID de veterinario: {ultimoVet.idVeterinario}</strong>. Úsalo en "Generar Agenda".
                       </div>
                     )}
+                    {actionError && <div className="error-message">{actionError}</div>}
                     <table className="data-table">
                       <thead>
                         <tr>
@@ -109,29 +158,54 @@ export default function DashboardAdmin() {
                           <th>Email</th>
                           <th>Teléfono</th>
                           <th>Estado</th>
+                          <th>Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {usuarios.map((usuario) => (
-                          <tr key={usuario.idUsuario}>
-                            <td>{usuario.idUsuario}</td>
-                            <td>{usuario.nombreCompleto}</td>
-                            <td>{usuario.correoUsr}</td>
-                            <td>{usuario.telefonoUsr}</td>
-                            <td>
-                              <span className={`status ${usuario.estadoUsr === 1 ? 'active' : 'inactive'}`}>
-                                {usuario.estadoUsr === 1 ? 'Activo' : 'Inactivo'}
-                              </span>
+                        {usuarios.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} style={{ textAlign: 'center', color: 'var(--color-gray-500)' }}>
+                              No hay usuarios registrados.
                             </td>
                           </tr>
-                        ))}
+                        ) : (
+                          usuarios.map((usuario) => (
+                            <tr key={usuario.idUsuario}>
+                              <td>{usuario.idUsuario}</td>
+                              <td>{usuario.nombreCompleto}</td>
+                              <td>{usuario.correoUsr}</td>
+                              <td>{usuario.telefonoUsr}</td>
+                              <td>
+                                <span className={`status ${usuario.estadoUsr === 1 ? 'active' : 'inactive'}`}>
+                                  {usuario.estadoUsr === 1 ? 'Activo' : 'Inactivo'}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="table-actions">
+                                  <button
+                                    className="btn-row edit"
+                                    onClick={() => setEditingUser(usuario)}
+                                    disabled={deletingId === usuario.idUsuario}
+                                  >
+                                    Modificar
+                                  </button>
+                                  <button
+                                    className="btn-row danger"
+                                    onClick={() => handleDelete(usuario)}
+                                    disabled={deletingId === usuario.idUsuario || esCuentaPropia(usuario)}
+                                    title={esCuentaPropia(usuario) ? 'No puedes eliminar tu propia cuenta' : undefined}
+                                  >
+                                    {deletingId === usuario.idUsuario ? 'Eliminando...' : 'Eliminar'}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
                       </tbody>
                     </table>
                     <div className="action-buttons">
                       <button className="btn-secondary" onClick={() => setShowModal(true)}>Crear Médico</button>
-                      <button className="btn-secondary">Listar</button>
-                      <button className="btn-secondary">Modificar</button>
-                      <button className="btn-secondary">Eliminar</button>
                     </div>
                   </section>
                 </div>

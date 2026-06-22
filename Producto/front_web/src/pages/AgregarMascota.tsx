@@ -110,10 +110,10 @@ export default function AgregarMascota() {
       };
 
       if (isEditing && mascotaToEdit?.idMascota) {
-        await api.put(`/v1/mascotas/actualizar/${mascotaToEdit.idMascota}`, payload);
+        await api.put(`/v1/mascotas/${mascotaToEdit.idMascota}`, payload);
         alert('Mascota actualizada correctamente');
       } else {
-        await api.post('/v1/mascotas/registrar', payload);
+        await api.post('/v1/mascotas', payload);
         alert('Mascota agregada correctamente');
       }
       

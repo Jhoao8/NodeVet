@@ -4,7 +4,7 @@
 export interface BloqueHorarioDTO {
   idBloque: number;
   idVet: number;
-  fecHrInicio: string; // LocalDateTime ISO sin zona, ej: "2026-06-20T09:00:00"
+  fecHrInicio: string;
   fecHrFin: string;
 }
 
@@ -15,12 +15,11 @@ export interface VetDisponibilidad {
   bloquesDisponibles: BloqueHorarioDTO[];
 }
 
-// Selección que viaja desde SeleccionDia -> Formulario (persistida en localStorage).
 export interface CitaSeleccionada {
   idVet: number;
   idBloque: number;
   nombreVet: string;
   especialidad: string;
-  fecha: string; // YYYY-MM-DD (local)
-  hora: string; // HH:mm
+  fecha: string;
+  hora: string;
 }

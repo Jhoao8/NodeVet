@@ -3,7 +3,7 @@
 export const subirArchivoCloudinary = async (file: File): Promise<string | null> => {
   const data = new FormData();
   data.append('file', file);
-  data.append('upload_preset', 'mascotas_preset'); // preset unsigned ya existente en la cuenta
+  data.append('upload_preset', 'mascotas_preset');
 
   try {
     const response = await fetch('https://api.cloudinary.com/v1_1/dkryb2g4m/auto/upload', {

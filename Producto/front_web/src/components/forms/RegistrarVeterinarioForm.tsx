@@ -109,7 +109,7 @@ export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props)
     setCreandoEspecialidad(true);
     setErrorEspecialidad('');
     try {
-      const response = await api.post<Especialidad>('/v1/especialidades/crear', { nombre });
+      const response = await api.post<Especialidad>('/v1/especialidades', { nombre });
       const creada = response.data;
       setEspecialidades(prev => [...prev, creada]);
       // Seleccionarla automáticamente para el veterinario que se está registrando
@@ -155,7 +155,7 @@ export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props)
     };
 
     try {
-      const resp = await api.post('/v1/veterinarios/registrar', vetData);
+      const resp = await api.post('/v1/veterinarios', vetData);
       onSuccess(resp.data);
     } catch (err: any) {
       console.error('Error registering veterinarian:', err);

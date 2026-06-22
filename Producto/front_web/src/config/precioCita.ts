@@ -1,6 +1,3 @@
-// Precio de la cita configurable por el administrador.
-// NOTA: es solo informativo (se muestra al tutor en el resumen). NO cambia el monto
-// que realmente cobra el backend/Flow, que depende de la tabla VALOR.
 const KEY = 'precioCitaCLP';
 
 export function getPrecioCita(): number | null {
