@@ -8,7 +8,7 @@ USE nodevet_db;
 -- ========================================================
 -- 1. TABLAS INDEPENDIENTES Y DICCIONARIOS (Sin dependencias)
 -- ========================================================
-CREATE TABLE AUDITORIA (
+CREATE TABLE auditoria (
     id_log INT AUTO_INCREMENT PRIMARY KEY,
     tabla_afectada VARCHAR(100) NOT NULL,
     id_reg_afectado INT NOT NULL,
@@ -17,45 +17,57 @@ CREATE TABLE AUDITORIA (
     fec_evento TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
-CREATE TABLE ESPECIALIDAD (
+CREATE TABLE especialidad (
     id_esp INT AUTO_INCREMENT PRIMARY KEY,
     nom_esp VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE ESTADO_RESERVA (
+INSERT INTO especialidad (nom_esp) VALUES
+('Medicina General'),
+('Cardiología'),
+('Cirugía'),
+('Dermatología'),
+('Neurología'),
+('Oftalmología'),
+('Traumatología'),
+('Oncología'),
+('Nutrición Animal'),
+('Etología');
+
+CREATE TABLE estado_reserva (
     id_est_reserva INT AUTO_INCREMENT PRIMARY KEY,
     nom_est_reserva VARCHAR(50) NOT NULL
 );
 
 -- Poblar tabla estado_reserva (Los 5 estados del ciclo clínico)
-INSERT INTO ESTADO_RESERVA (nom_est_reserva)
-SELECT 'PENDIENTE' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ESTADO_RESERVA WHERE nom_est_reserva = 'PENDIENTE');
+INSERT INTO estado_reserva (nom_est_reserva)
+SELECT 'PENDIENTE' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM estado_reserva WHERE nom_est_reserva = 'PENDIENTE');
 
-INSERT INTO ESTADO_RESERVA (nom_est_reserva)
-SELECT 'CONFIRMADA' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ESTADO_RESERVA WHERE nom_est_reserva = 'CONFIRMADA');
+INSERT INTO estado_reserva (nom_est_reserva)
+SELECT 'CONFIRMADA' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM estado_reserva WHERE nom_est_reserva = 'CONFIRMADA');
 
-INSERT INTO ESTADO_RESERVA (nom_est_reserva)
-SELECT 'COMPLETADA' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ESTADO_RESERVA WHERE nom_est_reserva = 'COMPLETADA');
+INSERT INTO estado_reserva (nom_est_reserva)
+SELECT 'COMPLETADA' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM estado_reserva WHERE nom_est_reserva = 'COMPLETADA');
 
-INSERT INTO ESTADO_RESERVA (nom_est_reserva)
-SELECT 'CANCELADA' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ESTADO_RESERVA WHERE nom_est_reserva = 'CANCELADA');
+INSERT INTO estado_reserva (nom_est_reserva)
+SELECT 'CANCELADA' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM estado_reserva WHERE nom_est_reserva = 'CANCELADA');
 
-INSERT INTO ESTADO_RESERVA (nom_est_reserva)
-SELECT 'AUSENTE' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ESTADO_RESERVA WHERE nom_est_reserva = 'AUSENTE');
+INSERT INTO estado_reserva (nom_est_reserva)
+SELECT 'AUSENTE' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM estado_reserva WHERE nom_est_reserva = 'AUSENTE');
 
-CREATE TABLE ESTADO_BLOQUE (
+CREATE TABLE estado_bloque (
     id_est_bloque INT AUTO_INCREMENT PRIMARY KEY,
     nom_est_bloque VARCHAR(20) NOT NULL
 );
 
 -- Poblar tabla estado_bloque (Disponibilidad de la agenda)
-INSERT INTO ESTADO_BLOQUE (nom_est_bloque)
-SELECT 'DISPONIBLE' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ESTADO_BLOQUE WHERE nom_est_bloque = 'DISPONIBLE');
+INSERT INTO estado_bloque (nom_est_bloque)
+SELECT 'DISPONIBLE' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM estado_bloque WHERE nom_est_bloque = 'DISPONIBLE');
 
-INSERT INTO ESTADO_BLOQUE (nom_est_bloque)
-SELECT 'OCUPADO' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ESTADO_BLOQUE WHERE nom_est_bloque = 'OCUPADO');
+INSERT INTO estado_bloque (nom_est_bloque)
+SELECT 'OCUPADO' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM estado_bloque WHERE nom_est_bloque = 'OCUPADO');
 
-CREATE TABLE VALOR (
+CREATE TABLE valor (
     id_valor INT AUTO_INCREMENT PRIMARY KEY,
     monto INT NOT NULL
 );
@@ -66,31 +78,31 @@ INSERT INTO valor (id_valor, monto) VALUES (2, 8000);
 INSERT INTO valor (id_valor, monto) VALUES (3, 25000);
 INSERT INTO valor (id_valor, monto) VALUES (4, 12000);
 
-CREATE TABLE ESTADO_PAGO (
+CREATE TABLE estado_pago (
     id_est_pago INT AUTO_INCREMENT PRIMARY KEY,
     nom_est_pago VARCHAR(15) NOT NULL
 );
 
 -- Poblar tabla estado_pago (Validando que no existan previamente)
-INSERT INTO ESTADO_PAGO (nom_est_pago)
-SELECT 'PENDIENTE' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ESTADO_PAGO WHERE nom_est_pago = 'PENDIENTE');
+INSERT INTO estado_pago (nom_est_pago)
+SELECT 'PENDIENTE' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM estado_pago WHERE nom_est_pago = 'PENDIENTE');
 
-INSERT INTO ESTADO_PAGO (nom_est_pago)
-SELECT 'PAGADO' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ESTADO_PAGO WHERE nom_est_pago = 'PAGADO');
+INSERT INTO estado_pago (nom_est_pago)
+SELECT 'PAGADO' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM estado_pago WHERE nom_est_pago = 'PAGADO');
 
-INSERT INTO ESTADO_PAGO (nom_est_pago)
-SELECT 'RECHAZADO' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM ESTADO_PAGO WHERE nom_est_pago = 'RECHAZADO');
+INSERT INTO estado_pago (nom_est_pago)
+SELECT 'RECHAZADO' FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM estado_pago WHERE nom_est_pago = 'RECHAZADO');
 
-CREATE TABLE TIPO_ARCHIVO (
+CREATE TABLE tipo_archivo (
     id_tipo_archivo INT AUTO_INCREMENT PRIMARY KEY,
     nom_tipo_archivo VARCHAR(15) NOT NULL
 );
 
-CREATE TABLE SERVICIO (
+CREATE TABLE servicio (
     id_serv INT AUTO_INCREMENT PRIMARY KEY
 );
 
-CREATE TABLE VACUNA (
+CREATE TABLE vacuna (
     id_vac INT AUTO_INCREMENT PRIMARY KEY,
     nom_vacuna VARCHAR(50) NOT NULL,
     laboratorio VARCHAR(20) NOT NULL,
@@ -99,7 +111,7 @@ CREATE TABLE VACUNA (
     serie INT NOT NULL
 );
 
-CREATE TABLE TIPO_EXAMEN (
+CREATE TABLE tipo_examen (
     id_tipo_exam INT AUTO_INCREMENT PRIMARY KEY,
     nom_tipo_exam VARCHAR(50) NOT NULL
 );
@@ -107,7 +119,7 @@ CREATE TABLE TIPO_EXAMEN (
 -- ========================================================
 -- 2. TABLAS PRINCIPALES (Usuarios y Perfiles)
 -- ========================================================
-CREATE TABLE USUARIO (
+CREATE TABLE usuario (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombre_usr VARCHAR(75) NOT NULL,
     apellido_usr VARCHAR(75) NOT NULL,
@@ -120,69 +132,69 @@ CREATE TABLE USUARIO (
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE CODIGO_VERIFICACION (
+CREATE TABLE codigo_verificacion (
     id_codigo INT AUTO_INCREMENT PRIMARY KEY,
     codigo VARCHAR(6) NOT NULL,
     fec_expiracion TIMESTAMP NOT NULL,
     id_usuario INT UNIQUE NOT NULL,
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT fk_codigo_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+    CONSTRAINT fk_codigo_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
 );
 
-CREATE TABLE ADMIN (
+CREATE TABLE admin (
     id_admin INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
     nivel_acceso VARCHAR(50) NOT NULL,
-    CONSTRAINT fk_admin_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+    CONSTRAINT fk_admin_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
 );
 
-CREATE TABLE TUTOR (
+CREATE TABLE tutor (
     id_tutor INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
-    CONSTRAINT fk_tutor_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+    CONSTRAINT fk_tutor_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
 );
 
-CREATE TABLE VETERINARIO (
+CREATE TABLE veterinario (
     id_vet INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
     run_vet INT NOT NULL,
     dv_vet VARCHAR(1) NOT NULL,
-    CONSTRAINT fk_vet_usuario FOREIGN KEY (id_usuario) REFERENCES USUARIO(id_usuario) ON DELETE CASCADE
+    CONSTRAINT fk_vet_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario) ON DELETE CASCADE
 );
 
-CREATE TABLE VET_ESP (
+CREATE TABLE vet_esp (
     id_vet INT NOT NULL,
     id_esp INT NOT NULL,
     PRIMARY KEY (id_vet, id_esp),
-    CONSTRAINT fk_vetesp_vet FOREIGN KEY (id_vet) REFERENCES VETERINARIO(id_vet) ON DELETE CASCADE,
-    CONSTRAINT fk_vetesp_esp FOREIGN KEY (id_esp) REFERENCES ESPECIALIDAD(id_esp) ON DELETE CASCADE
+    CONSTRAINT fk_vetesp_vet FOREIGN KEY (id_vet) REFERENCES veterinario(id_vet) ON DELETE CASCADE,
+    CONSTRAINT fk_vetesp_esp FOREIGN KEY (id_esp) REFERENCES especialidad(id_esp) ON DELETE CASCADE
 );
 
 -- ========================================================
 -- 3. TABLAS DE NEGOCIO (Jornadas, Bloques, Mascotas, Reservas, etc.)
 -- ========================================================
-CREATE TABLE JORNADA (
+CREATE TABLE jornada (
     id_jornada INT AUTO_INCREMENT PRIMARY KEY,
     id_vet INT NOT NULL,
     dia_semana INT NOT NULL COMMENT '1=Lunes, 2=Martes, 3=Miercoles, 4=Jueves, 5=Viernes, 6=Sabado, 7=Domingo',
     hora_inicio TIME NOT NULL,
     hora_fin TIME NOT NULL,
     est_jornada INT DEFAULT 1 NOT NULL,
-    CONSTRAINT fk_jornada_vet FOREIGN KEY (id_vet) REFERENCES VETERINARIO(id_vet) ON DELETE CASCADE,
+    CONSTRAINT fk_jornada_vet FOREIGN KEY (id_vet) REFERENCES veterinario(id_vet) ON DELETE CASCADE,
     CONSTRAINT uk_jornada_unica UNIQUE (id_vet, dia_semana, hora_inicio, hora_fin)
 );
 
-CREATE TABLE BLOQUE_HORARIO (
+CREATE TABLE bloque_horario (
     id_bloque INT AUTO_INCREMENT PRIMARY KEY,
     fec_hr_inicio DATETIME NOT NULL,
     fec_hr_fin DATETIME NOT NULL,
     id_vet INT NOT NULL,
     id_est_bloque INT DEFAULT 1 NOT NULL,
-    CONSTRAINT fk_bloque_vet FOREIGN KEY (id_vet) REFERENCES VETERINARIO(id_vet) ON DELETE CASCADE,
-    CONSTRAINT fk_bloque_estado FOREIGN KEY (id_est_bloque) REFERENCES ESTADO_BLOQUE(id_est_bloque)
+    CONSTRAINT fk_bloque_vet FOREIGN KEY (id_vet) REFERENCES veterinario(id_vet) ON DELETE CASCADE,
+    CONSTRAINT fk_bloque_estado FOREIGN KEY (id_est_bloque) REFERENCES estado_bloque(id_est_bloque)
 );
 
-CREATE TABLE MASCOTA (
+CREATE TABLE mascota (
     id_mascota INT AUTO_INCREMENT PRIMARY KEY,
     id_tutor INT NOT NULL,
     nom_mascota VARCHAR(50) NOT NULL,
@@ -196,10 +208,10 @@ CREATE TABLE MASCOTA (
     estado_masc INT DEFAULT 1 NOT NULL,
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_mascota_tutor FOREIGN KEY (id_tutor) REFERENCES TUTOR(id_tutor) ON DELETE CASCADE
+    CONSTRAINT fk_mascota_tutor FOREIGN KEY (id_tutor) REFERENCES tutor(id_tutor) ON DELETE CASCADE
 );
 
-CREATE TABLE RESERVA (
+CREATE TABLE reserva (
     id_reserva INT AUTO_INCREMENT PRIMARY KEY,
     id_mascota INT NOT NULL,
     id_vet INT NOT NULL,
@@ -208,14 +220,14 @@ CREATE TABLE RESERVA (
     id_est_res INT DEFAULT 1 NOT NULL,
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_res_mascota FOREIGN KEY (id_mascota) REFERENCES MASCOTA(id_mascota),
-    CONSTRAINT fk_res_vet FOREIGN KEY (id_vet) REFERENCES VETERINARIO(id_vet),
-    CONSTRAINT fk_res_bloque FOREIGN KEY (id_bloque) REFERENCES BLOQUE_HORARIO(id_bloque),
-    CONSTRAINT fk_res_valor FOREIGN KEY (id_valor) REFERENCES VALOR(id_valor),
-    CONSTRAINT fk_res_estado FOREIGN KEY (id_est_res) REFERENCES ESTADO_RESERVA(id_est_reserva)
+    CONSTRAINT fk_res_mascota FOREIGN KEY (id_mascota) REFERENCES mascota(id_mascota),
+    CONSTRAINT fk_res_vet FOREIGN KEY (id_vet) REFERENCES veterinario(id_vet),
+    CONSTRAINT fk_res_bloque FOREIGN KEY (id_bloque) REFERENCES bloque_horario(id_bloque),
+    CONSTRAINT fk_res_valor FOREIGN KEY (id_valor) REFERENCES valor(id_valor),
+    CONSTRAINT fk_res_estado FOREIGN KEY (id_est_res) REFERENCES estado_reserva(id_est_reserva)
 );
 
-CREATE TABLE CONSULTA (
+CREATE TABLE consulta (
     id_consulta INT AUTO_INCREMENT PRIMARY KEY,
     id_reserva INT UNIQUE NOT NULL,
     id_valor INT NOT NULL,
@@ -225,63 +237,63 @@ CREATE TABLE CONSULTA (
     is_deleted TINYINT(1) DEFAULT 0 NOT NULL,
     fec_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     fec_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_cons_reserva FOREIGN KEY (id_reserva) REFERENCES RESERVA(id_reserva),
-    CONSTRAINT fk_cons_valor FOREIGN KEY (id_valor) REFERENCES VALOR(id_valor) 
+    CONSTRAINT fk_cons_reserva FOREIGN KEY (id_reserva) REFERENCES reserva(id_reserva),
+    CONSTRAINT fk_cons_valor FOREIGN KEY (id_valor) REFERENCES valor(id_valor) 
 );
 
-CREATE TABLE ARCHIVO_ADJUNTO (
+CREATE TABLE archivo_adjunto (
     id_archivo_adjunto INT AUTO_INCREMENT PRIMARY KEY,
     id_consulta INT NOT NULL,
     nom_archivo VARCHAR(255) NOT NULL,
     archivo_url VARCHAR(500) NOT NULL,
     id_tipo_archivo INT NOT NULL,
-    CONSTRAINT fk_adj_consulta FOREIGN KEY (id_consulta) REFERENCES CONSULTA(id_consulta) ON DELETE CASCADE,
-    CONSTRAINT fk_adj_tipo FOREIGN KEY (id_tipo_archivo) REFERENCES TIPO_ARCHIVO(id_tipo_archivo)
+    CONSTRAINT fk_adj_consulta FOREIGN KEY (id_consulta) REFERENCES consulta(id_consulta) ON DELETE CASCADE,
+    CONSTRAINT fk_adj_tipo FOREIGN KEY (id_tipo_archivo) REFERENCES tipo_archivo(id_tipo_archivo)
 );
 
-CREATE TABLE PAGO (
+CREATE TABLE pago (
     id_pago INT AUTO_INCREMENT PRIMARY KEY,
     id_reserva INT NOT NULL,
     monto INT NOT NULL,
     id_est_pago INT NOT NULL,
     cod_transaccion VARCHAR(100) NOT NULL,
     fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT fk_pago_reserva FOREIGN KEY (id_reserva) REFERENCES RESERVA(id_reserva),
-    CONSTRAINT fk_pago_estado FOREIGN KEY (id_est_pago) REFERENCES ESTADO_PAGO(id_est_pago)
+    CONSTRAINT fk_pago_reserva FOREIGN KEY (id_reserva) REFERENCES reserva(id_reserva),
+    CONSTRAINT fk_pago_estado FOREIGN KEY (id_est_pago) REFERENCES estado_pago(id_est_pago)
 );
 
 -- ========================================================
 -- 4. TABLAS DE SERVICIOS Y EXÁMENES INTERMEDIAS
 -- ========================================================
-CREATE TABLE VAL_SERV (
+CREATE TABLE val_serv (
     id_valor INT NOT NULL,
     id_serv INT NOT NULL,
     PRIMARY KEY (id_valor, id_serv),
-    CONSTRAINT fk_valserv_valor FOREIGN KEY (id_valor) REFERENCES VALOR(id_valor) ON DELETE CASCADE,
-    CONSTRAINT fk_valserv_serv FOREIGN KEY (id_serv) REFERENCES SERVICIO(id_serv) ON DELETE CASCADE
+    CONSTRAINT fk_valserv_valor FOREIGN KEY (id_valor) REFERENCES valor(id_valor) ON DELETE CASCADE,
+    CONSTRAINT fk_valserv_serv FOREIGN KEY (id_serv) REFERENCES servicio(id_serv) ON DELETE CASCADE
 );
 
-CREATE TABLE VAC_SERV (
+CREATE TABLE vac_serv (
     id_vac INT NOT NULL,
     id_serv INT NOT NULL,
     PRIMARY KEY (id_vac, id_serv),
-    CONSTRAINT fk_vacserv_vac FOREIGN KEY (id_vac) REFERENCES VACUNA(id_vac) ON DELETE CASCADE,
-    CONSTRAINT fk_vacserv_serv FOREIGN KEY (id_serv) REFERENCES SERVICIO(id_serv) ON DELETE CASCADE
+    CONSTRAINT fk_vacserv_vac FOREIGN KEY (id_vac) REFERENCES vacuna(id_vac) ON DELETE CASCADE,
+    CONSTRAINT fk_vacserv_serv FOREIGN KEY (id_serv) REFERENCES servicio(id_serv) ON DELETE CASCADE
 );
 
-CREATE TABLE EXAMEN (
+CREATE TABLE examen (
     id_examen INT AUTO_INCREMENT PRIMARY KEY,
     nom_exam VARCHAR(50) NOT NULL,
     fec_exam DATE NOT NULL,
     result_exam TEXT NOT NULL,
     id_tipo_exam INT NOT NULL,
-    CONSTRAINT fk_exam_tipo FOREIGN KEY (id_tipo_exam) REFERENCES TIPO_EXAMEN(id_tipo_exam)
+    CONSTRAINT fk_exam_tipo FOREIGN KEY (id_tipo_exam) REFERENCES tipo_examen(id_tipo_exam)
 );
 
-CREATE TABLE EXAM_SERV (
+CREATE TABLE exam_serv (
     id_exam INT NOT NULL,
     id_serv INT NOT NULL,
     PRIMARY KEY (id_exam, id_serv),
-    CONSTRAINT fk_examserv_exam FOREIGN KEY (id_exam) REFERENCES EXAMEN(id_examen) ON DELETE CASCADE,
-    CONSTRAINT fk_examserv_serv FOREIGN KEY (id_serv) REFERENCES SERVICIO(id_serv) ON DELETE CASCADE
+    CONSTRAINT fk_examserv_exam FOREIGN KEY (id_exam) REFERENCES examen(id_examen) ON DELETE CASCADE,
+    CONSTRAINT fk_examserv_serv FOREIGN KEY (id_serv) REFERENCES servicio(id_serv) ON DELETE CASCADE
 );
