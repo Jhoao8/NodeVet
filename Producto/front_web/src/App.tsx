@@ -8,6 +8,8 @@ import SeleccionDia from './pages/AgendarCita/SeleccionDia';
 import FormularioAgendarCita from './pages/AgendarCita/Formulario';
 import PagoResultado from './pages/AgendarCita/PagoResultado';
 import DashboardTutor from './pages/Dashboard/DashboardTutor';
+import PerfilTutor from './pages/Perfil/PerfilTutor';
+import DetalleMascota from './pages/Mascota/DetalleMascota';
 import DashboardMedico from './pages/Dashboard/DashboardMedico';
 import AtencionConsulta from './pages/Dashboard/AtencionConsulta';
 import DashboardAdmin from './pages/Dashboard/DashboardAdmin';
@@ -36,9 +38,17 @@ function App() {
         <Route path="/pago/resultado" element={<PagoResultado />} />
         
         {/* Dashboard Routes - Protegidas por Rol */}
-        <Route 
-          path="/dashboard/tutor" 
-          element={<DashboardTutor />} 
+        <Route
+          path="/dashboard/tutor"
+          element={<DashboardTutor />}
+        />
+        <Route
+          path="/dashboard/tutor/perfil"
+          element={<PerfilTutor />}
+        />
+        <Route
+          path="/dashboard/tutor/mascota/:id"
+          element={<DetalleMascota />}
         />
         <Route
           path="/dashboard/medico"

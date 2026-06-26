@@ -25,7 +25,12 @@ export default function UserMenu({ nombre, onLogout }: Props) {
 
   const irAPerfil = () => {
     setAbierto(false);
-    navigate(getDashboardPath());
+    // El tutor tiene una página de perfil propia; los demás roles van a su dashboard.
+    if (localStorage.getItem('userRole') === 'TUTOR') {
+      navigate('/dashboard/tutor/perfil');
+    } else {
+      navigate(getDashboardPath());
+    }
   };
 
   const cerrarSesion = () => {

@@ -92,7 +92,7 @@ export default function DashboardTutor() {
   };
 
   const handlePetCardClick = (mascota: Mascota) => {
-    console.log('Ver detalles de:', mascota.nomMascota);
+    navigate(`/dashboard/tutor/mascota/${mascota.idMascota}`, { state: { mascota } });
   };
 
   const handleLogout = () => {
@@ -123,8 +123,8 @@ export default function DashboardTutor() {
         <aside className="sidebar">
           <h3>Menú</h3>
           <nav className="sidebar-nav">
-            <button className="nav-item active">👤 Perfil</button>
-            <button className="nav-item">🏠 Home</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/tutor/perfil')}>👤 Perfil</button>
+            <button className="nav-item active">🏠 Home</button>
             <button className="nav-item">🐾 Mascotas</button>
             <button className="nav-item" onClick={() => navigate('/agendarCita')}>📅 Citas</button>
             <button className="nav-item">🏥 Control Médico</button>
