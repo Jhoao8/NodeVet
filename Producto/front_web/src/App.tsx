@@ -6,10 +6,15 @@ import RequestPassword from './pages/ForgotPassword/RequestPassword';
 import ResetPassword from './pages/ForgotPassword/ResetPassword';
 import SeleccionDia from './pages/AgendarCita/SeleccionDia';
 import FormularioAgendarCita from './pages/AgendarCita/Formulario';
+import PagoResultado from './pages/AgendarCita/PagoResultado';
 import DashboardTutor from './pages/Dashboard/DashboardTutor';
 import DashboardMedico from './pages/Dashboard/DashboardMedico';
+import AtencionConsulta from './pages/Dashboard/AtencionConsulta';
 import DashboardAdmin from './pages/Dashboard/DashboardAdmin';
+import GenerarAgenda from './pages/Dashboard/GenerarAgenda';
+import ConfigPrecio from './pages/Dashboard/ConfigPrecio';
 import AgregarMascota from './pages/AgregarMascota';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import './index.css';
 
 function App() {
@@ -28,11 +33,33 @@ function App() {
         {/* Agendar Cita Routes */}
         <Route path="/agendarCita" element={<SeleccionDia />} />
         <Route path="/agendarCita/formulario" element={<FormularioAgendarCita />} />
+        <Route path="/pago/resultado" element={<PagoResultado />} />
         
-        {/* Dashboard Routes */}
-        <Route path="/dashboard/tutor" element={<DashboardTutor />} />
-        <Route path="/dashboard/medico" element={<DashboardMedico />} />
-        <Route path="/dashboard/admin" element={<DashboardAdmin />} />
+        {/* Dashboard Routes - Protegidas por Rol */}
+        <Route 
+          path="/dashboard/tutor" 
+          element={<DashboardTutor />} 
+        />
+        <Route
+          path="/dashboard/medico"
+          element={<ProtectedRoute element={<DashboardMedico />} requiredRole="VETERINARIO" />}
+        />
+        <Route
+          path="/dashboard/medico/atencion"
+          element={<ProtectedRoute element={<AtencionConsulta />} requiredRole="VETERINARIO" />}
+        />
+        <Route
+          path="/dashboard/admin"
+          element={<ProtectedRoute element={<DashboardAdmin />} requiredRole="ADMIN" />}
+        />
+        <Route
+          path="/dashboard/admin/agenda"
+          element={<ProtectedRoute element={<GenerarAgenda />} requiredRole="ADMIN" />}
+        />
+        <Route
+          path="/dashboard/admin/precio"
+          element={<ProtectedRoute element={<ConfigPrecio />} requiredRole="ADMIN" />}
+        />
 
         {/* Mascotas */}
         <Route path="/agregar-mascota" element={<AgregarMascota />} />

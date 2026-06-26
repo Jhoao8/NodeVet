@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/client';
+import { getUserRole, getUserInfoFromToken } from '../utils/authUtils';
 import '../styles/Auth.css';
 import Logo from '../assets/images/Logo.png';
 
@@ -17,30 +18,66 @@ export default function Login() {
     setError('');
 
     try {
-      const response = await api.post('/auth/login', { correoUsr, passUsr });
-      console.log('Login exitoso - Respuesta completa:', response.data);
+      console.log('=== INICIO DE LOGIN ===');
+      console.log('Email:', correoUsr);
       
-      // Verificar qué campo contiene el token
-      const token = response.data.jwt || response.data.token || response.data.access_token;
+      // 1. Enviar credenciales al servidor
+      console.log('Enviando credenciales a /auth/login...');
+      const response = await api.post('/auth/login', { 
+        correoUsr, 
+        passUsr,
+        isMobile: false
+      });
+      
+      console.log('Respuesta del servidor:', response.data);
+      
+      // 2. Extraer el token - El backend devuelve { token: "..." }
+      const token = response.data.token;
       
       if (!token) {
-        setError('No se recibió token de autenticación. Verifica la respuesta del servidor.');
-        console.error('Token no encontrado en respuesta:', response.data);
+        console.error('❌ Token no encontrado en la respuesta:', response.data);
+        setError('No se recibió token del servidor. Respuesta: ' + JSON.stringify(response.data));
+        setLoading(false);
         return;
       }
       
-      localStorage.setItem('token', token);
-      console.log('Token guardado en localStorage:', token);
-      alert('Sesión iniciada');
+      console.log('✓ Token recibido correctamente');
       
-      // Pequeño delay para asegurar que el token esté guardado
+      // 3. Guardar token en localStorage
+      localStorage.setItem('token', token);
+      console.log('✓ Token guardado en localStorage');
+      
+      // 4. Extraer información del token
+      const userInfo = getUserInfoFromToken(token);
+      if (userInfo?.username) {
+        localStorage.setItem('username', userInfo.username);
+        console.log('✓ Username guardado:', userInfo.username);
+      }
+      
+      // 5. Obtener el rol basado en el email
+      const role = await getUserRole(correoUsr);
+      console.log('✓ Rol determinado:', role);
+      localStorage.setItem('userRole', role);
+      
+      // 6. Redirigir al dashboard correspondiente
+      console.log('Redirigiendo a:', role);
       setTimeout(() => {
-        navigate('/dashboard/tutor');
+        switch (role) {
+          case 'ADMIN':
+            navigate('/dashboard/admin');
+            break;
+          case 'VETERINARIO':
+            navigate('/dashboard/medico');
+            break;
+          default:
+            navigate('/dashboard/tutor');
+        }
       }, 100);
+      
     } catch (err: any) {
-      console.error('Error en login:', err.response?.data || err.message);
-      setError(err.response?.data?.error || 'Error al iniciar sesión');
-    } finally {
+      console.error('❌ Error en login:', err);
+      const errorMsg = err.response?.data?.error || err.message || 'Error desconocido';
+      setError('Error al iniciar sesión: ' + errorMsg);
       setLoading(false);
     }
   };
@@ -62,6 +99,7 @@ export default function Login() {
             value={correoUsr}
             onChange={(e) => setCorreoUsr(e.target.value)}
             required
+            disabled={loading}
           />
           <input
             type="password"
@@ -69,6 +107,7 @@ export default function Login() {
             value={passUsr}
             onChange={(e) => setPassUsr(e.target.value)}
             required
+            disabled={loading}
           />
           <button type="submit" disabled={loading}>
             {loading ? 'Iniciando...' : 'Iniciar Sesión'}

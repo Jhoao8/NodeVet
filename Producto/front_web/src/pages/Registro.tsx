@@ -18,15 +18,23 @@ export default function Registro() {
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    // El teléfono solo admite dígitos (chileno: 9 dígitos comenzando con 9).
+    const nuevoValor = name === 'telefonoUsr' ? value.replace(/\D/g, '') : value;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: nuevoValor
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (formData.nombreUsr.trim().length < 3) {
+      setError('El nombre debe tener al menos 3 caracteres.');
+      return;
+    }
 
     const pass = formData.passUsr;
     const passErrors: string[] = [];
@@ -51,6 +59,13 @@ export default function Registro() {
 
     if (formData.passUsr !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
+      return;
+    }
+
+    // El teléfono es opcional, pero si se ingresa debe comenzar con 9 y tener 9 dígitos.
+    const telefono = formData.telefonoUsr.trim();
+    if (telefono !== '' && !/^9\d{8}$/.test(telefono)) {
+      setError('El teléfono debe comenzar con 9 y tener 9 dígitos.');
       return;
     }
 
@@ -112,9 +127,12 @@ export default function Registro() {
           <input
             type="tel"
             name="telefonoUsr"
-            placeholder="Teléfono (opcional)"
+            placeholder="Teléfono (opcional, ej. 912345678)"
             value={formData.telefonoUsr}
             onChange={handleChange}
+            inputMode="numeric"
+            maxLength={9}
+            pattern="9[0-9]{8}"
           />
           <input
             type="password"

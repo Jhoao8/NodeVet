@@ -24,7 +24,7 @@ export default function RequestPassword() {
     setSuccess('');
 
     try {
-      await api.post('/auth/forgot-password', { correo_usr: emailToSubmit });
+      await api.post('/auth/recuperacion', { correo_usr: emailToSubmit });
       setSuccess('Se ha enviado un código de verificación a tu correo');
       setCodigoEnviado(true);
       setCorreo(emailToSubmit);
@@ -50,7 +50,7 @@ export default function RequestPassword() {
     setError('');
 
     try {
-      await api.post('/auth/verify-code', {
+      await api.post('/auth/verificacion', {
         correo_usr: emailToSubmit,
         codigo: codeToSubmit,
       });
@@ -70,7 +70,7 @@ export default function RequestPassword() {
     setError('');
     setSuccess('');
     try {
-      await api.post('/auth/forgot-password', { correo_usr: correo.trim() });
+      await api.post('/auth/recuperacion', { correo_usr: correo.trim() });
       setSuccess('Código reenviado a tu correo');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Error al reenviar el código');

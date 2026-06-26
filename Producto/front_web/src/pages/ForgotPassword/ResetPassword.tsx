@@ -37,7 +37,7 @@ export default function ResetPassword() {
         return;
       }
 
-      await api.post('/auth/reset-password', {
+      await api.put('/auth/password', {
         correo_usr: resetCorreo,
         codigo: resetCodigo,
         nueva_pass: nuevaPassword,

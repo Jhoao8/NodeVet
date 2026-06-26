@@ -1,10 +1,24 @@
 import { useNavigate } from 'react-router-dom';
+import { useNombreUsuario } from '../hooks/useNombreUsuario';
+import UserMenu from '../components/UserMenu';
+import Carousel from '../components/Carousel';
 import '../styles/Home.css';
 import Logo from '../assets/images/Logo.png';
 
 export default function Home() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
+  const nombreUsuario = useNombreUsuario();
+
+  const handleLogout = () => {
+    console.log('Logout iniciado');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('username');
+    console.log('localStorage limpiado');
+    // Recargar la página para actualizar el estado de autenticación
+    window.location.href = '/home';
+  };
 
   return (
     <div className="home-container">
@@ -15,22 +29,12 @@ export default function Home() {
             <img src={Logo} alt="NodeVet Logo" style={{ width: '40px', height: '40px' }} />
             <h1>NodeVet</h1>
           </div>
-          <nav className="nav-tabs">
-            <button className="nav-tab" onClick={() => navigate('/dashboard/tutor')}>Dashboard</button>
-            <button className="nav-tab">Two</button>
-            <button className="nav-tab">Three</button>
-            <button className="nav-tab">One</button>
-            <button className="nav-tab">Two</button>
-            <button className="nav-tab">Three</button>
-          </nav>
           <div className="header-buttons">
             <button className="btn-outline" onClick={() => navigate('/agendarCita')}>
               Reserva Online
             </button>
             {token ? (
-              <button className="btn-primary" onClick={() => navigate('/dashboard/tutor')}>
-                Perfil
-              </button>
+              <UserMenu nombre={nombreUsuario} onLogout={handleLogout} />
             ) : (
               <button className="btn-primary" onClick={() => navigate('/login')}>
                 Ingresa
@@ -66,16 +70,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="banner-carousel">
-            <div className="carousel-slide"></div>
-            <div className="carousel-controls">
-              <span className="dot active"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-            </div>
-          </div>
+          <Carousel />
         </div>
       </section>
 

@@ -1,210 +1,219 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import '../../styles/Dashboard.css';
+import RegistrarVeterinarioForm from '../../components/forms/RegistrarVeterinarioForm';
+import EditarUsuarioForm from '../../components/forms/EditarUsuarioForm';
+import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import { getUserInfoFromToken } from '../../utils/authUtils';
+import UserMenu from '../../components/UserMenu';
 
 interface Usuario {
-  id: string;
-  nombre: string;
-  email: string;
-  telefono: string;
-  tipo: string;
-}
-
-interface Mascota {
-  id: string;
-  nombre: string;
-  tutor: string;
-  fecha: string;
-  estado: string;
-}
-
-interface Cita {
-  id: string;
-  mascota: string;
-  tutor: string;
-  medico: string;
-  tipoConsulta: string;
-  fecha: string;
-  estado: string;
+  idUsuario: string;
+  nombreCompleto: string;
+  correoUsr: string;
+  telefonoUsr: string;
+  estadoUsr: number;
 }
 
 export default function DashboardAdmin() {
-  const [admin, setAdmin] = useState({ nombre: 'Admin' });
+  const navigate = useNavigate();
+  const nombreUsuario = useNombreUsuario();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [mascotas, setMascotas] = useState<Mascota[]>([]);
-  const [citas, setCitas] = useState<Cita[]>([]);
-  const [stats, setStats] = useState({
-    medicos: 0,
-    tutores: 0,
-    mascotas: 0,
-  });
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [ultimoVet, setUltimoVet] = useState<{ idVeterinario?: number; nombreCompleto?: string } | null>(null);
+  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
+
+  const [correoAdmin] = useState<string>(() => {
+    const token = localStorage.getItem('token');
+    return (token && getUserInfoFromToken(token)?.username) || '';
+  });
+
+  const esCuentaPropia = (usuario: Usuario): boolean =>
+    !!correoAdmin && usuario.correoUsr?.toLowerCase() === correoAdmin.toLowerCase();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
+
+  const fetchUsers = async () => {
+
+    try {
+      const usuariosData = await api.get('/v1/usuarios');
+      setUsuarios(usuariosData.data);
+    } catch (error) {
+      console.error('Error al cargar lista de usuarios:', error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const adminData = await api.get('/v1/admin/perfil');
-        setAdmin(adminData.data);
-
-        const statsData = await api.get('/v1/admin/stats');
-        setStats(statsData.data);
-
-        const usuariosData = await api.get('/v1/admin/usuarios');
-        setUsuarios(usuariosData.data);
-
-        const mascotasData = await api.get('/v1/admin/mascotas');
-        setMascotas(mascotasData.data);
-
-        const citasData = await api.get('/v1/admin/citas');
-        setCitas(citasData.data);
-      } catch (error) {
-        console.error('Error al cargar datos:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    setLoading(true);
+    fetchUsers().finally(() => setLoading(false));
   }, []);
 
+  const handleSuccess = (vet?: { idVeterinario?: number; nombreCompleto?: string }) => {
+    setShowModal(false);
+    fetchUsers();
+    if (vet?.idVeterinario) {
+      setUltimoVet({ idVeterinario: vet.idVeterinario, nombreCompleto: vet.nombreCompleto });
+      localStorage.setItem('ultimoVetIdVet', String(vet.idVeterinario));
+    }
+  };
+
+  const handleEditSuccess = () => {
+    setEditingUser(null);
+    fetchUsers();
+  };
+
+  const handleDelete = async (usuario: Usuario) => {
+    // Salvaguarda: aunque el botón está deshabilitado, evitamos el auto-borrado por si acaso.
+    if (esCuentaPropia(usuario)) {
+      setActionError('No puedes eliminar tu propia cuenta de administrador.');
+      return;
+    }
+
+    const confirmar = window.confirm(`¿Eliminar al usuario ${usuario.nombreCompleto}?`);
+    if (!confirmar) return;
+
+    setActionError('');
+    setDeletingId(usuario.idUsuario);
+    try {
+      await api.delete(`/v1/usuarios/${usuario.idUsuario}`);
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error al desactivar usuario:', error);
+      setActionError(`No se pudo desactivar la cuenta de ${usuario.nombreCompleto}.`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
-    <div className="dashboard-container">
-      {/* Header */}
-      <header className="dashboard-header">
-        <div className="logo">NodeVet</div>
-        <nav className="nav-tabs">
-          <button className="nav-tab">One</button>
-          <button className="nav-tab">Two</button>
-          <button className="nav-tab">Three</button>
-        </nav>
-        <div className="user-section">
-          <span className="notification">🔔</span>
-          <span className="username">{admin.nombre}</span>
-          <button className="user-menu">👤</button>
-        </div>
-      </header>
+    <>
+      {showModal && (
+        <RegistrarVeterinarioForm
+          onSuccess={handleSuccess}
+          onCancel={() => setShowModal(false)}
+        />
+      )}
+      {editingUser && (
+        <EditarUsuarioForm
+          usuario={editingUser}
+          onSuccess={handleEditSuccess}
+          onCancel={() => setEditingUser(null)}
+        />
+      )}
+      <div className="dashboard-container">
+        {/* Header */}
+        <header className="dashboard-header">
+          <div className="logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</div>
+          <div className="user-section">
+            <span className="notification">🔔</span>
+            <UserMenu nombre={nombreUsuario} onLogout={handleLogout} />
+          </div>
+        </header>
 
-      <div className="dashboard-content">
-        {/* Sidebar */}
-        <aside className="sidebar">
-          <h3>Menú</h3>
-          <nav className="sidebar-nav">
-            <button className="nav-item active">🏠 Home</button>
-            <button className="nav-item">👥 Usuarios</button>
-            <button className="nav-item">🐾 Mascotas</button>
-            <button className="nav-item">📅 Citas</button>
-            <button className="nav-item">📊 Controles</button>
-          </nav>
-        </aside>
+        <div className="dashboard-content">
+          {/* Sidebar */}
+          <aside className="sidebar">
+            <h3>Menú</h3>
+            <nav className="sidebar-nav">
+              <button className="nav-item active" onClick={() => navigate('/dashboard/admin')}>👥 Usuarios</button>
+              <button className="nav-item" onClick={() => navigate('/dashboard/admin/agenda')}>🗓️ Generar Agenda</button>
+              <button className="nav-item" onClick={() => navigate('/dashboard/admin/precio')}>💲 Valor de citas</button>
+            </nav>
+          </aside>
 
-        {/* Main Content */}
-        <main className="main-content">
-          {loading ? (
-            <div className="loading">Cargando...</div>
-          ) : (
-            <>
-              {/* Dashboard Stats */}
-              <section className="dashboard-section">
-                <h2>Dashboard</h2>
-                <div className="stats-grid">
-                  <div className="stat-card">
-                    <span className="stat-icon">⚕️</span>
-                    <h4>Médicos</h4>
-                    <p className="stat-number">{stats.medicos}</p>
-                  </div>
-                  <div className="stat-card">
-                    <span className="stat-icon">👤</span>
-                    <h4>Tutores</h4>
-                    <p className="stat-number">{stats.tutores}</p>
-                  </div>
-                  <div className="stat-card">
-                    <span className="stat-icon">🐾</span>
-                    <h4>Mascotas</h4>
-                    <p className="stat-number">{stats.mascotas}</p>
-                  </div>
+          {/* Main Content */}
+          <main className="main-content">
+            {loading ? (
+              <div className="loading">Cargando...</div>
+            ) : (
+              <>
+                <section className="dashboard-section">
+                  <h2>Dashboard</h2>
+                </section>
+
+                <div className="admin-grid">
+                  <section className="dashboard-section">
+                    <h3>Usuarios</h3>
+                    {ultimoVet?.idVeterinario && (
+                      <div
+                        className="error-message"
+                        style={{ background: '#e6f4ea', color: '#1e4620', border: '1px solid #b7e1c4' }}
+                      >
+                        Veterinario creado: {ultimoVet.nombreCompleto} — <strong>ID de veterinario: {ultimoVet.idVeterinario}</strong>. Úsalo en "Generar Agenda".
+                      </div>
+                    )}
+                    {actionError && <div className="error-message">{actionError}</div>}
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Nombre</th>
+                          <th>Email</th>
+                          <th>Teléfono</th>
+                          <th>Estado</th>
+                          <th>Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {usuarios.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} style={{ textAlign: 'center', color: 'var(--color-gray-500)' }}>
+                              No hay usuarios registrados.
+                            </td>
+                          </tr>
+                        ) : (
+                          usuarios.map((usuario) => (
+                            <tr key={usuario.idUsuario}>
+                              <td>{usuario.idUsuario}</td>
+                              <td>{usuario.nombreCompleto}</td>
+                              <td>{usuario.correoUsr}</td>
+                              <td>{usuario.telefonoUsr}</td>
+                              <td>
+                                <span className={`status ${usuario.estadoUsr === 1 ? 'active' : 'inactive'}`}>
+                                  {usuario.estadoUsr === 1 ? 'Activo' : 'Inactivo'}
+                                </span>
+                              </td>
+                              <td>
+                                <div className="table-actions">
+                                  <button
+                                    className="btn-row edit"
+                                    onClick={() => setEditingUser(usuario)}
+                                    disabled={deletingId === usuario.idUsuario}
+                                  >
+                                    Modificar
+                                  </button>
+                                  <button
+                                    className="btn-row danger"
+                                    onClick={() => handleDelete(usuario)}
+                                    disabled={deletingId === usuario.idUsuario || esCuentaPropia(usuario)}
+                                    title={esCuentaPropia(usuario) ? 'No puedes eliminar tu propia cuenta' : undefined}
+                                  >
+                                    {deletingId === usuario.idUsuario ? 'Eliminando...' : 'Eliminar'}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                    <div className="action-buttons">
+                      <button className="btn-secondary" onClick={() => setShowModal(true)}>Crear Médico</button>
+                    </div>
+                  </section>
                 </div>
-              </section>
-
-              <div className="admin-grid">
-                {/* Usuarios Section */}
-                <section className="dashboard-section">
-                  <h3>Usuarios</h3>
-                  <div className="action-buttons">
-                    <button className="btn-secondary">Crear Médico</button>
-                    <button className="btn-secondary">Listar</button>
-                    <button className="btn-secondary">Modificar</button>
-                    <button className="btn-secondary">Eliminar</button>
-                  </div>
-                </section>
-
-                {/* Citas Section */}
-                <section className="dashboard-section">
-                  <h3>Citas</h3>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Mascota</th>
-                        <th>Tutor</th>
-                        <th>Médico</th>
-                        <th>Tipo Consulta</th>
-                        <th>Fecha</th>
-                        <th>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {citas.map((cita) => (
-                        <tr key={cita.id}>
-                          <td>{cita.mascota}</td>
-                          <td>{cita.tutor}</td>
-                          <td>{cita.medico}</td>
-                          <td>{cita.tipoConsulta}</td>
-                          <td>{cita.fecha}</td>
-                          <td>
-                            <span className={`status ${cita.estado.toLowerCase()}`}>
-                              {cita.estado}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </section>
-
-                {/* Mascotas Section */}
-                <section className="dashboard-section">
-                  <h3>Mascotas</h3>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>ID</th>
-                        <th>Mascota</th>
-                        <th>Tutor</th>
-                        <th>Fecha</th>
-                        <th>Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {mascotas.map((mascota) => (
-                        <tr key={mascota.id}>
-                          <td>{mascota.id}</td>
-                          <td>{mascota.nombre}</td>
-                          <td>{mascota.tutor}</td>
-                          <td>{mascota.fecha}</td>
-                          <td>
-                            <span className={`status ${mascota.estado.toLowerCase()}`}>
-                              {mascota.estado}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </section>
-              </div>
-            </>
-          )}
-        </main>
+              </>
+            )}
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

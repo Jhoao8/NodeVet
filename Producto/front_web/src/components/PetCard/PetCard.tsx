@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { PetCardProps, Mascota } from './PetCard.types.js';
+import type { PetCardProps } from './PetCard.types.js';
 import './PetCard.css';
 
 const PetCard: React.FC<PetCardProps> = ({ 
