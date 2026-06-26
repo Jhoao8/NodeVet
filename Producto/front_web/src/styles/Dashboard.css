@@ -180,6 +180,7 @@
   font-size: 18px;
   font-weight: var(--font-weight-bold);
   margin: 0 0 var(--spacing-md) 0;
+  color: var(--color-light-yellow);
 }
 
 .cita-card p {

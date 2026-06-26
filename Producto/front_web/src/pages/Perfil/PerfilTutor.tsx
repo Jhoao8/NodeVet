@@ -209,9 +209,8 @@ export default function PerfilTutor() {
           <nav className="sidebar-nav">
             <button className="nav-item active">👤 Perfil</button>
             <button className="nav-item" onClick={() => navigate('/dashboard/tutor')}>🏠 Home</button>
-            <button className="nav-item" onClick={() => navigate('/dashboard/tutor')}>🐾 Mascotas</button>
-            <button className="nav-item" onClick={() => navigate('/agendarCita')}>📅 Citas</button>
-            <button className="nav-item">🏥 Control Médico</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/tutor/citas')}>📅 Citas</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/tutor', { state: { scrollTo: 'controles' } })}>🏥 Control Médico</button>
           </nav>
         </aside>
 

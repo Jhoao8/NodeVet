@@ -4,6 +4,7 @@ import com.nodevet.app.dto.EspecialidadDTO;
 import com.nodevet.app.dto.agenda.BloqueHorarioDTO;
 import com.nodevet.app.dto.agenda.JornadaDTO;
 import com.nodevet.app.dto.reserva.ReservaDTO;
+import com.nodevet.app.dto.reserva.ReservaResponseDTO;
 import com.nodevet.app.dto.usuario.AdminDTO;
 import com.nodevet.app.dto.usuario.UsuarioDTO;
 import com.nodevet.app.dto.usuario.VeterinarioDTO;
@@ -94,5 +95,28 @@ public class DtoMapper {
                 reserva.getFecCreacion(),
                 null
         );
+    }
+
+    public static ReservaResponseDTO toReservaResponseDTO(com.nodevet.app.model.reserva.Reserva reserva) {
+        com.nodevet.app.model.Mascota mascota = reserva.getMascota();
+        Usuario tutorUsuario = mascota.getTutor().getUsuario();
+        Usuario vetUsuario = reserva.getVeterinario().getUsuario();
+        BloqueHorario bloque = reserva.getBloqueHorario();
+        com.nodevet.app.model.reserva.EstadoReserva estado = reserva.getEstadoReserva();
+
+        return ReservaResponseDTO.builder()
+                .idReserva(reserva.getIdReserva())
+                .idMascota(mascota.getIdMascota())
+                .nombreMascota(mascota.getNomMascota())
+                .idVet(reserva.getVeterinario().getId())
+                .nombreVeterinario(vetUsuario.getNombreUsr() + " " + vetUsuario.getApellidoUsr())
+                .nombreTutor(tutorUsuario.getNombreUsr() + " " + tutorUsuario.getApellidoUsr())
+                .fecHrInicio(bloque.getFecHrInicio())
+                .fecHrFin(bloque.getFecHrFin())
+                .idEstadoReserva(estado.getIdEstReserva())
+                .estadoReserva(estado.getNomEstReserva())
+                .monto(reserva.getValor().getMonto())
+                .fecCreacion(reserva.getFecCreacion())
+                .build();
     }
 }

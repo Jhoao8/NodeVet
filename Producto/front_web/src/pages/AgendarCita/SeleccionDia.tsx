@@ -83,7 +83,11 @@ export default function SeleccionDia() {
     return () => {
       cancelado = true;
     };
-  }, [fechaSeleccionada, token]);
+    // 'token' NO va en las dependencias a propósito: el backend renueva el token
+    // en cada respuesta (cabecera New-Token), por lo que incluirlo provocaba un
+    // bucle infinito de peticiones. El interceptor de axios ya envía el token vigente.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fechaSeleccionada]);
 
   const especialidades = useMemo(() => {
     const set = new Set(vets.map((v) => v.especialidad).filter(Boolean));

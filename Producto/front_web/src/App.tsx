@@ -10,6 +10,7 @@ import PagoResultado from './pages/AgendarCita/PagoResultado';
 import DashboardTutor from './pages/Dashboard/DashboardTutor';
 import PerfilTutor from './pages/Perfil/PerfilTutor';
 import DetalleMascota from './pages/Mascota/DetalleMascota';
+import MisCitas from './pages/Citas/MisCitas';
 import DashboardMedico from './pages/Dashboard/DashboardMedico';
 import AtencionConsulta from './pages/Dashboard/AtencionConsulta';
 import DashboardAdmin from './pages/Dashboard/DashboardAdmin';
@@ -49,6 +50,10 @@ function App() {
         <Route
           path="/dashboard/tutor/mascota/:id"
           element={<DetalleMascota />}
+        />
+        <Route
+          path="/dashboard/tutor/citas"
+          element={<MisCitas />}
         />
         <Route
           path="/dashboard/medico"

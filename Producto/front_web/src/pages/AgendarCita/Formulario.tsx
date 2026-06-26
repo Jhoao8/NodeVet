@@ -59,7 +59,11 @@ export default function FormularioAgendarCita() {
     return () => {
       cancelado = true;
     };
-  }, [token]);
+    // 'token' NO va en las dependencias: el backend lo renueva en cada respuesta
+    // (cabecera New-Token) y tenerlo aquí provocaba un bucle infinito. Solo
+    // necesitamos cargar las mascotas una vez al montar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

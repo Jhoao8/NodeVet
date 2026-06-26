@@ -1,6 +1,7 @@
 package com.nodevet.app.service;
 
 import com.nodevet.app.dto.reserva.ReservaRequestDTO;
+import com.nodevet.app.dto.reserva.ReservaResponseDTO;
 import com.nodevet.app.model.Mascota;
 import com.nodevet.app.model.Valor;
 import com.nodevet.app.model.agenda.BloqueHorario;
@@ -8,13 +9,17 @@ import com.nodevet.app.model.agenda.EstadoBloque;
 import com.nodevet.app.model.reserva.EstadoReserva;
 import com.nodevet.app.model.reserva.Reserva;
 import com.nodevet.app.model.usuario.Veterinario;
+import com.nodevet.app.model.usuario.Tutor;
+import com.nodevet.app.model.usuario.Usuario;
 import com.nodevet.app.model.pago.Pago;
 import com.nodevet.app.model.pago.EstadoPago;
 import com.nodevet.app.repository.MascotaRepository;
 import com.nodevet.app.repository.ValorRepository;
 import com.nodevet.app.repository.VeterinarioRepository;
+import com.nodevet.app.repository.UsuarioRepository;
+import com.nodevet.app.repository.TutorRepository;
 import com.nodevet.app.repository.agenda.BloqueHorarioRepository;
-import com.nodevet.app.repository.agenda.EstadoBloqueRepository; 
+import com.nodevet.app.repository.agenda.EstadoBloqueRepository;
 import com.nodevet.app.repository.reserva.EstadoReservaRepository;
 import com.nodevet.app.repository.reserva.ReservaRepository;
 import com.nodevet.app.repository.pago.PagoRepository;
@@ -23,9 +28,13 @@ import com.nodevet.app.service.pago.FlowService;
 import com.nodevet.app.util.DtoMapper;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -41,6 +50,10 @@ public class ReservaService {
     private final ValorRepository valorRepository;
     private final EstadoReservaRepository estadoReservaRepository;
     private final EstadoBloqueRepository estadoBloqueRepository;
+
+    // --- INYECCIONES PARA RESOLVER EL ROL DEL USUARIO AUTENTICADO ---
+    private final UsuarioRepository usuarioRepository;
+    private final TutorRepository tutorRepository;
 
     // --- INYECCIONES PARA PAGOS Y FLOW ---
     private final PagoRepository pagoRepository;
@@ -101,9 +114,9 @@ public class ReservaService {
         // 6. Crear el registro en la tabla PAGO "congelando" el monto
         Pago nuevoPago = Pago.builder()
                 .reserva(reservaGuardada)
-                .monto(valor.getMonto()) 
+                .monto(valor.getMonto())
                 .estadoPago(estadoPagoPendiente)
-                .codTransaccion("ESPERANDO_A_FLOW") 
+                .codTransaccion("ESPERANDO_A_FLOW")
                 .build();
 
         pagoRepository.save(nuevoPago);
@@ -123,6 +136,36 @@ public class ReservaService {
         return responseDTO;
     }
 
+    /**
+     * Devuelve las reservas del usuario autenticado según su rol:
+     * - Tutor: las citas de sus mascotas.
+     * - Veterinario: las citas que tiene asignadas.
+     * El mismo endpoint sirve a ambos roles (ver SecurityConfig).
+     */
+    @Transactional(readOnly = true)
+    public List<ReservaResponseDTO> listarMisReservas() {
+        String correo = SecurityContextHolder.getContext().getAuthentication().getName();
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        // Tutor: las citas de sus mascotas
+        Optional<Tutor> tutor = tutorRepository.findByUsuario(usuario);
+        if (tutor.isPresent()) {
+            return reservaRepository.findByMascota_Tutor_IdTutor(tutor.get().getIdTutor())
+                    .stream().map(DtoMapper::toReservaResponseDTO).collect(Collectors.toList());
+        }
+
+        // Veterinario: las citas que tiene asignadas
+        Optional<Veterinario> veterinario = veterinarioRepository.findByUsuario(usuario);
+        if (veterinario.isPresent()) {
+            return reservaRepository.findByVeterinario_Id(veterinario.get().getId())
+                    .stream().map(DtoMapper::toReservaResponseDTO).collect(Collectors.toList());
+        }
+
+        // Otros roles (ej. Admin) no tienen reservas asociadas
+        return List.of();
+    }
+
     @Transactional
     public void procesarConfirmacionPago(String token) {
 
@@ -139,10 +182,10 @@ public class ReservaService {
         BloqueHorario bloque = pago.getReserva().getBloqueHorario();
 
         // 3. Procesar según la respuesta
-        if (statusFlow == 2) { 
+        if (statusFlow == 2) {
             // --- ¡EL CLIENTE PAGÓ! ---
             pago.setEstadoPago(estadoPagoRepository.findById(2).orElseThrow());
-            pago.setCodTransaccion(datosFlow.get("flowOrder").toString()); 
+            pago.setCodTransaccion(datosFlow.get("flowOrder").toString());
 
             // PRIMERO guardamos el pago para que Hibernate vacíe su memoria
             pagoRepository.save(pago);
@@ -154,11 +197,11 @@ public class ReservaService {
             // --- RECHAZADO O ANULADO ---
             pago.setEstadoPago(estadoPagoRepository.findById(3).orElseThrow());
             pagoRepository.save(pago); // Guardamos el pago primero
-            
+
             reservaRepository.actualizarEstadoNativo(idReserva, 4); // Ataque nativo
-            
-            bloque.setEstadoBloque(estadoBloqueRepository.findById(1).orElseThrow()); 
-            bloqueHorarioRepository.save(bloque); 
+
+            bloque.setEstadoBloque(estadoBloqueRepository.findById(1).orElseThrow());
+            bloqueHorarioRepository.save(bloque);
         }
     }
 }

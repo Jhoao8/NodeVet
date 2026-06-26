@@ -1,20 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/client';
 import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import UserMenu from '../../components/UserMenu';
 import PetCard from '../../components/PetCard';
 import type { Mascota } from '../../components/PetCard/PetCard.types';
+import type { Reserva } from '../../interfaces/Reserva';
+import { esProxima, ordenarAsc, formatFecha, formatHora } from '../../utils/reservas';
 import '../../styles/Dashboard.css';
 import '../../styles/DashboardMascotas.css';
-
-interface Cita {
-  id: string;
-  mascota: string;
-  medico: string;
-  fecha: string;
-  hora: string;
-}
 
 interface Control {
   id: string;
@@ -26,9 +20,10 @@ interface Control {
 
 export default function DashboardTutor() {
   const navigate = useNavigate();
+  const location = useLocation();
   const nombreUsuario = useNombreUsuario();
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
-  const [proximasCitas] = useState<Cita[]>([]);
+  const [reservas, setReservas] = useState<Reserva[]>([]);
   const [ultimosControles] = useState<Control[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -59,6 +54,17 @@ export default function DashboardTutor() {
           }
         }
 
+        // Intentar cargar las citas (reservas) del tutor
+        try {
+          const reservasData = await api.get('/v1/reservas');
+          setReservas(reservasData.data ?? []);
+        } catch (err: any) {
+          console.error('Error al cargar citas:', err);
+          if (err.response?.status === 401) {
+            throw err;
+          }
+        }
+
       } catch (error: any) {
         console.error('❌ Error al cargar datos:', error);
         if (error.response?.status === 401) {
@@ -75,6 +81,30 @@ export default function DashboardTutor() {
 
     fetchData();
   }, [navigate]);
+
+  // Si llegamos desde otra página pidiendo bajar a una sección (ej. "Mascotas"
+  // o "Control Médico" del sidebar), hacemos scroll una vez cargados los datos.
+  useEffect(() => {
+    if (loading) return;
+    const target = (location.state as any)?.scrollTo;
+    if (target) {
+      requestAnimationFrame(() => {
+        document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, [loading, location.state]);
+
+  const scrollToSection = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const scrollToTop = () => {
+    document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Próximas citas: solo las futuras, ordenadas de la más cercana a la más lejana
+  const proximasCitas = reservas.filter(esProxima).sort(ordenarAsc);
 
   const handleEditMascota = (mascota: Mascota) => {
     navigate('/agregar-mascota', { state: { mascota, isEditing: true } });
@@ -124,10 +154,9 @@ export default function DashboardTutor() {
           <h3>Menú</h3>
           <nav className="sidebar-nav">
             <button className="nav-item" onClick={() => navigate('/dashboard/tutor/perfil')}>👤 Perfil</button>
-            <button className="nav-item active">🏠 Home</button>
-            <button className="nav-item">🐾 Mascotas</button>
-            <button className="nav-item" onClick={() => navigate('/agendarCita')}>📅 Citas</button>
-            <button className="nav-item">🏥 Control Médico</button>
+            <button className="nav-item active" onClick={scrollToTop}>🏠 Home</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/tutor/citas')}>📅 Citas</button>
+            <button className="nav-item" onClick={() => scrollToSection('controles')}>🏥 Control Médico</button>
           </nav>
         </aside>
 
@@ -150,45 +179,30 @@ export default function DashboardTutor() {
                 {proximasCitas.length === 0 ? (
                   <p className="hint-text">No tienes citas próximas. Agenda una nueva hora médica.</p>
                 ) : (
-                  <div className="citas-cards">
-                    {proximasCitas.slice(0, 2).map((cita) => (
-                      <div key={cita.id} className="cita-card">
-                        <h4>{cita.mascota}</h4>
-                        <p>📅 Fecha: {cita.fecha}</p>
-                        <p>🕐 Hora: {cita.hora}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* Próximo Control */}
-              <section className="dashboard-section">
-                <h3>Próximo Control</h3>
-                {ultimosControles.length > 0 && (
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Mascota</th>
-                        <th>Médico</th>
-                        <th>Tipo</th>
-                        <th>Fecha</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>{ultimosControles[0].mascota}</td>
-                        <td>{ultimosControles[0].medico}</td>
-                        <td>{ultimosControles[0].tipoConsulta}</td>
-                        <td>{ultimosControles[0].fecha}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <>
+                    <div className="citas-cards">
+                      {proximasCitas.slice(0, 3).map((cita) => (
+                        <div
+                          key={cita.idReserva}
+                          className="cita-card"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => navigate('/dashboard/tutor/citas')}
+                        >
+                          <h4>🐾 {cita.nombreMascota}</h4>
+                          <p>📅 {formatFecha(cita.fecHrInicio)} · {formatHora(cita.fecHrInicio)}</p>
+                          <p>{cita.nombreVeterinario}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <button className="btn-link" onClick={() => navigate('/dashboard/tutor/citas')}>
+                      Ver todas mis citas
+                    </button>
+                  </>
                 )}
               </section>
 
               {/* Últimos Controles */}
-              <section className="dashboard-section">
+              <section className="dashboard-section" id="controles" style={{ scrollMarginTop: '90px' }}>
                 <h3>Últimos Controles</h3>
                 <table className="data-table">
                   <thead>
@@ -214,7 +228,7 @@ export default function DashboardTutor() {
               </section>
 
               {/* Mascotas - PetCards */}
-              <section className="dashboard-section mascotas-section">
+              <section className="dashboard-section mascotas-section" id="mascotas" style={{ scrollMarginTop: '90px' }}>
                 <div className="mascotas-header">
                   <h2>Mis Mascotas</h2>
                   <button 
