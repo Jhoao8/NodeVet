@@ -11,7 +11,6 @@ import { colors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
 import DashboardHeader from '@/src/components/DashboardHeader';
 
-// ════ TIPOS según los DTOs del backend ════
 interface EspecialidadDTO {
     id: number;
     nombre: string;
@@ -35,7 +34,6 @@ export default function GestionVetScreen() {
     const [vets, setVets] = useState<VeterinarioDTO[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // ════ LÓGICA DE CARGA DESDE BD ════
     const fetchVeterinarios = async () => {
         try {
             setLoading(true);
@@ -54,7 +52,6 @@ export default function GestionVetScreen() {
         }, [])
     );
 
-    // ════ HELPERS ════
     const formatEspecialidades = (especialidades: EspecialidadDTO[]): string => {
         if (!especialidades || especialidades.length === 0) return 'Sin especialidad';
         return especialidades.map(e => e.nombre).join(', ');
@@ -67,7 +64,6 @@ export default function GestionVetScreen() {
         return (partes[0].charAt(0) + partes[1].charAt(0)).toUpperCase();
     };
 
-    // ════ LÓGICA DE BÚSQUEDA ════
     const filteredVets = vets.filter(vet => {
         const nombre = vet.nombreCompleto?.toLowerCase() || '';
         const especialidades = formatEspecialidades(vet.especialidades).toLowerCase();
@@ -78,7 +74,7 @@ export default function GestionVetScreen() {
     const renderVetItem = ({ item, index }: { item: VeterinarioDTO, index: number }) => (
         <TouchableOpacity
             style={[adminStyles.adminListItem, index === filteredVets.length - 1 && adminStyles.adminListItemNoBorder]}
-            onPress={() => navigation.navigate('DetalleVet', { vet: item })}
+            onPress={() => navigation.getParent()?.navigate('DetalleVet', { vet: item })}
         >
             <View style={adminStyles.adminItemAvatar}>
                 <Text style={{ color: colors.darkDGreen, fontWeight: 'bold' }}>
@@ -148,9 +144,10 @@ export default function GestionVetScreen() {
                 </View>
             </View>
 
+            {/* ════ FAB: usa getParent() para navegar al Stack padre ════ */}
             <TouchableOpacity
                 style={styles.fab}
-                onPress={() => navigation.navigate('CrearVet')}
+                onPress={() => navigation.getParent()?.navigate('CrearVet')}
             >
                 <Ionicons name="add" size={32} color={colors.lightYellow} />
             </TouchableOpacity>
