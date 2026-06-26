@@ -1,10 +1,10 @@
 @echo off
-title Backend NodeVet - Spring Boot
-echo Iniciando el servidor de NodeVet...
+title Backend NodeVet - Docker
+echo Iniciando el servidor de NodeVet en Docker...
 echo.
 
 cd backend
 
-call ./mvnw clean spring-boot:run
+docker compose up --build
 
 pause
