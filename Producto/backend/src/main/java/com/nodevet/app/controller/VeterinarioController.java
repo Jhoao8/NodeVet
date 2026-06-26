@@ -1,5 +1,6 @@
 package com.nodevet.app.controller;
 
+import com.nodevet.app.dto.usuario.VeterinarioDTO;
 import com.nodevet.app.dto.usuario.VeterinarioRegistroDTO;
 import com.nodevet.app.model.usuario.Veterinario;
 import com.nodevet.app.service.usuario.VeterinarioService;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/veterinarios")
 @RequiredArgsConstructor
@@ -19,6 +22,13 @@ import org.springframework.web.bind.annotation.*;
 public class VeterinarioController {
 
     private final VeterinarioService veterinarioService;
+
+    // ════ NUEVO: Listar todos los veterinarios ════
+    @GetMapping
+    @Operation(summary = "Listar veterinarios", description = "Retorna la lista completa de veterinarios registrados, incluyendo sus especialidades.")
+    public ResponseEntity<List<VeterinarioDTO>> listarVeterinarios() {
+        return ResponseEntity.ok(veterinarioService.listarVeterinarios());
+    }
 
     @PostMapping
     @Operation(summary = "Registrar nuevo veterinario", description = "Crea una cuenta para un profesional de la salud, incluyendo su RUT y vinculando sus especialidades médicas. Esta acción es de uso exclusivo para Administradores.")

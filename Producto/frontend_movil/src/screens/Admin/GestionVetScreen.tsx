@@ -1,57 +1,99 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import api from '@/src/api/axiosInstance';
 
 import { globalStyles } from '@/src/style/GlobalStyle';
 import { dashboardStyles } from '@/src/style/DashboardStyle';
 import { adminStyles } from '@/src/style/AdminStyle';
 import { colors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
-
 import DashboardHeader from '@/src/components/DashboardHeader';
 
-// ════ MOCK DE DATOS ════
-const mockVets = [
-    { id: '1', nombre: 'Carlos', apellidos: 'Pérez Silva', especialidad: 'Medicina General', activo: true, correo: 'caperezs@nodevet.com' },
-    { id: '2', nombre: 'Ana', apellidos: 'Gómez Rojas', especialidad: 'Cardiología', activo: true, correo: 'angomezr@nodevet.com' },
-    { id: '3', nombre: 'Luis', apellidos: 'Martínez Soto', especialidad: 'Cirugía', activo: false, correo: 'lumartinezs@nodevet.com' },
-    { id: '4', nombre: 'María', apellidos: 'López Vega', especialidad: 'Dermatología', activo: true, correo: 'malopezv@nodevet.com' },
-];
+// ════ TIPOS según los DTOs del backend ════
+interface EspecialidadDTO {
+    id: number;
+    nombre: string;
+}
+
+interface VeterinarioDTO {
+    idVeterinario: number;
+    idUsuario: number;
+    nombreCompleto: string;
+    correoUsr: string;
+    telefonoUsr: string;
+    runVet: number;
+    dvVet: string;
+    especialidades: EspecialidadDTO[];
+    estadoUsr: number;
+}
 
 export default function GestionVetScreen() {
     const navigation = useNavigation<any>();
     const [searchQuery, setSearchQuery] = useState('');
-    const [vets, setVets] = useState(mockVets);
+    const [vets, setVets] = useState<VeterinarioDTO[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    // ════ LÓGICA DE CARGA DESDE BD ════
+    const fetchVeterinarios = async () => {
+        try {
+            setLoading(true);
+            const response = await api.get('/v1/veterinarios');
+            setVets(response.data);
+        } catch (error) {
+            console.error("Error al cargar veterinarios:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useFocusEffect(
+        useCallback(() => {
+            fetchVeterinarios();
+        }, [])
+    );
+
+    // ════ HELPERS ════
+    const formatEspecialidades = (especialidades: EspecialidadDTO[]): string => {
+        if (!especialidades || especialidades.length === 0) return 'Sin especialidad';
+        return especialidades.map(e => e.nombre).join(', ');
+    };
+
+    const getIniciales = (nombreCompleto: string): string => {
+        if (!nombreCompleto) return '?';
+        const partes = nombreCompleto.trim().split(' ');
+        if (partes.length === 1) return partes[0].charAt(0).toUpperCase();
+        return (partes[0].charAt(0) + partes[1].charAt(0)).toUpperCase();
+    };
 
     // ════ LÓGICA DE BÚSQUEDA ════
     const filteredVets = vets.filter(vet => {
-        const fullName = `${vet.nombre} ${vet.apellidos}`.toLowerCase();
-        const specialty = vet.especialidad.toLowerCase();
+        const nombre = vet.nombreCompleto?.toLowerCase() || '';
+        const especialidades = formatEspecialidades(vet.especialidades).toLowerCase();
         const query = searchQuery.toLowerCase();
-        return fullName.includes(query) || specialty.includes(query);
+        return nombre.includes(query) || especialidades.includes(query);
     });
 
-    // ════ RENDERIZADO USANDO TUS ADMIN STYLES ════
-    const renderVetItem = ({ item, index }: { item: any, index: number }) => (
-        <TouchableOpacity 
+    const renderVetItem = ({ item, index }: { item: VeterinarioDTO, index: number }) => (
+        <TouchableOpacity
             style={[adminStyles.adminListItem, index === filteredVets.length - 1 && adminStyles.adminListItemNoBorder]}
             onPress={() => navigation.navigate('DetalleVet', { vet: item })}
         >
             <View style={adminStyles.adminItemAvatar}>
                 <Text style={{ color: colors.darkDGreen, fontWeight: 'bold' }}>
-                    {item.nombre.charAt(0)}{item.apellidos.charAt(0)}
+                    {getIniciales(item.nombreCompleto)}
                 </Text>
             </View>
-            
+
             <View style={adminStyles.adminItemInfo}>
-                <Text style={adminStyles.adminItemTitle}>{item.nombre} {item.apellidos}</Text>
-                <Text style={adminStyles.adminItemSub}>{item.especialidad}</Text>
+                <Text style={adminStyles.adminItemTitle}>{item.nombreCompleto}</Text>
+                <Text style={adminStyles.adminItemSub}>{formatEspecialidades(item.especialidades)}</Text>
             </View>
 
-            <View style={[adminStyles.badgeContainer, item.activo ? adminStyles.badgeActive : adminStyles.badgeInactive]}>
-                <Text style={item.activo ? adminStyles.badgeTextActive : adminStyles.badgeTextInactive}>
-                    {item.activo ? 'Activo' : 'Inactivo'}
+            <View style={[adminStyles.badgeContainer, item.estadoUsr === 1 ? adminStyles.badgeActive : adminStyles.badgeInactive]}>
+                <Text style={item.estadoUsr === 1 ? adminStyles.badgeTextActive : adminStyles.badgeTextInactive}>
+                    {item.estadoUsr === 1 ? 'Activo' : 'Inactivo'}
                 </Text>
             </View>
         </TouchableOpacity>
@@ -59,12 +101,10 @@ export default function GestionVetScreen() {
 
     return (
         <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
-            {/* Cabecera oficial */}
             <DashboardHeader />
 
             <View style={{ flex: 1, paddingHorizontal: spacing.xl }}>
-                
-                {/* Título de Sección y Buscador */}
+
                 <View style={[globalStyles.sectionHeaderRow, { marginTop: spacing.md }]}>
                     <View style={globalStyles.sectionTitleLeft}>
                         <FontAwesome5 name="user-md" size={18} color={colors.darkGreen} />
@@ -88,25 +128,27 @@ export default function GestionVetScreen() {
                     )}
                 </View>
 
-                {/* Lista encapsulada en la tarjeta de Admin */}
                 <View style={[adminStyles.adminListCard, { flex: 1, marginBottom: 100, marginTop: spacing.md }]}>
-                    <FlatList
-                        data={filteredVets}
-                        keyExtractor={item => item.id}
-                        renderItem={renderVetItem}
-                        showsVerticalScrollIndicator={false}
-                        ListEmptyComponent={
-                            <View style={styles.emptyContainer}>
-                                <Ionicons name="medkit-outline" size={48} color={colors.lightGreen} />
-                                <Text style={styles.emptyText}>No se encontraron resultados.</Text>
-                            </View>
-                        }
-                    />
+                    {loading ? (
+                        <ActivityIndicator size="large" color={colors.darkGreen} style={{ marginTop: 20 }} />
+                    ) : (
+                        <FlatList
+                            data={filteredVets}
+                            keyExtractor={item => item.idUsuario.toString()}
+                            renderItem={renderVetItem}
+                            showsVerticalScrollIndicator={false}
+                            ListEmptyComponent={
+                                <View style={styles.emptyContainer}>
+                                    <Ionicons name="medkit-outline" size={48} color={colors.lightGreen} />
+                                    <Text style={styles.emptyText}>No se encontraron resultados.</Text>
+                                </View>
+                            }
+                        />
+                    )}
                 </View>
             </View>
 
-            {/* Botón Flotante (FAB) adaptado a tu estética */}
-            <TouchableOpacity 
+            <TouchableOpacity
                 style={styles.fab}
                 onPress={() => navigation.navigate('CrearVet')}
             >
@@ -150,7 +192,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: spacing.xl,
         right: spacing.xl,
-        backgroundColor: colors.darkDGreen, // Color principal oscuro
+        backgroundColor: colors.darkDGreen,
         width: 60,
         height: 60,
         borderRadius: 30,

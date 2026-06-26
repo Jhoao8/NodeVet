@@ -83,7 +83,6 @@ export default function AgendarHoraScreen({ navigation }: any) {
             const fetchTutorPets = async () => {
                 try {
                     setLoadingPets(true);
-                    // Mantenemos la corrección de las mascotas
                     const response = await api.get('/v1/mascotas'); 
                     setPets(response.data);
                 } catch (error) {
@@ -103,7 +102,6 @@ export default function AgendarHoraScreen({ navigation }: any) {
                 setLoadingAgenda(true);
                 setBloqueSeleccionado(null); 
                 
-                // CORRECCIÓN APLICADA AQUÍ: Ruta exacta del backend
                 const response = await api.get(`/v1/agendas/disponibilidad?fecha=${selectedDate}`);
                 setProfesionales(response.data);
             } catch (error) {
@@ -131,6 +129,7 @@ export default function AgendarHoraScreen({ navigation }: any) {
                 idValor: 1 
             };
 
+            // ════════ RUTA CORREGIDA: Restaurada a /v1/reservas ════════
             const response = await api.post('/v1/reservas', payload);
             const { urlPago } = response.data;
 
@@ -146,7 +145,7 @@ export default function AgendarHoraScreen({ navigation }: any) {
             }
         } catch (error: any) {
             console.error("Error al generar reserva transaccional:", error);
-            const mensaje = error.response?.data || "El bloque horario fue seleccionado por otro usuario.";
+            const mensaje = error.response?.data || "El bloque horario fue seleccionado por otro usuario o error en validación de pago.";
             Alert.alert("Atención", mensaje);
             setReservaStep(0); 
         } finally {
@@ -160,7 +159,6 @@ export default function AgendarHoraScreen({ navigation }: any) {
 
             <ScrollView contentContainerStyle={globalStyles.scrollContainer} showsVerticalScrollIndicator={false}>
                 
-                {/* ════ TÍTULO ════ */}
                 <View style={dashboardStyles.greetingContainer}>
                     <Text style={[dashboardStyles.greetingText, dashboardStyles.darkText, { textAlign: 'center' }]}>
                         Agendar Hora
@@ -168,7 +166,6 @@ export default function AgendarHoraScreen({ navigation }: any) {
                     <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider]} />
                 </View>
 
-                {/* ════ SECCIÓN: PACIENTE ════ */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionLabel}>Paciente:</Text>
                     <TouchableOpacity 
@@ -192,7 +189,6 @@ export default function AgendarHoraScreen({ navigation }: any) {
                     </TouchableOpacity>
                 </View>
 
-                {/* ════ SECCIÓN: CALENDARIO ════ */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionLabel}>Seleccione día:</Text>
                     <View style={styles.calendarWrapper}>
@@ -203,7 +199,6 @@ export default function AgendarHoraScreen({ navigation }: any) {
                             onDayPress={(day: any) => {
                                 if (day.dateString >= todayString) {
                                     setSelectedDate(day.dateString);
-                                    // LA SOLUCIÓN: Limpiar los estados al cambiar de día
                                     setBloqueSeleccionado(null);
                                     setProfesionalSeleccionado(null);
                                 }
@@ -216,7 +211,6 @@ export default function AgendarHoraScreen({ navigation }: any) {
                     </View>
                 </View>
 
-                {/* ════ SECCIÓN: PROFESIONALES ════ */}
                 <View style={styles.sectionContainer}>
                     <Text style={styles.sectionLabel}>Profesionales disponibles:</Text>
 
@@ -276,7 +270,6 @@ export default function AgendarHoraScreen({ navigation }: any) {
                     )}
                 </View>
 
-                {/* ════ BOTÓN ACCIÓN CONTINUAR ════ */}
                 <View style={globalStyles.bottomSection}>
                     <TouchableOpacity 
                         style={[globalStyles.primaryButton, { width: '100%', marginBottom: spacing.xxl }, (!selectedPet || !bloqueSeleccionado) && globalStyles.primaryButtonDisabled]}
@@ -289,7 +282,6 @@ export default function AgendarHoraScreen({ navigation }: any) {
 
             </ScrollView>
 
-            {/* ════ MODAL SELECTOR DE PACIENTES ════ */}
             <Modal visible={showPetModal} transparent={true} animationType="fade">
                 <TouchableOpacity style={globalStyles.detailModalOverlay} activeOpacity={1} onPress={() => setShowPetModal(false)}>
                     <View style={globalStyles.detailModalContainer}>
@@ -325,7 +317,6 @@ export default function AgendarHoraScreen({ navigation }: any) {
                 </TouchableOpacity>
             </Modal>
 
-            {/* COMPONENTE MODULAR PARA EL FLUJO DE CONFIRMACIÓN */}
             <ReservaModals 
                 step={reservaStep}
                 setStep={setReservaStep}
