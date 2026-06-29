@@ -10,20 +10,20 @@ import { useAuth } from '../context/AuthContext';
 import DetalleMascotaScreen from '../screens/Tutor/Mascotas/DetalleMascotaScreen';
 import EditarMascota from '../screens/Tutor/Mascotas/EditarMascota';
 import HistorialMedicoScreen from '../screens/Tutor/Mascotas/Historial/HistorialMedico';
-
 import VacunaScreen from '../screens/Tutor/Mascotas/Historial/VacunasScreen';
 import ConsultasScreen from '../screens/Tutor/Mascotas/Historial/ConsultaScreen';
 import ExamenScreen from '../screens/Tutor/Mascotas/Historial/ExamenScreen';
 import CirugiaScreen from '../screens/Tutor/Mascotas/Historial/CirugiaScreen';
+import AdminBottomTabNavigator from './AdminBottomTabNavigator';
 
-// ════════ IMPORTACIÓN DEL NUEVO TAB NAVIGATOR DEL ADMIN ════════
-import AdminBottomTabNavigator from './AdminBottomTabNavigator'; 
+// ════ NUEVA IMPORTACIÓN ════
+import CrearVetScreen from '../screens/Admin/CrearVetScreen';
+import DetalleVetScreen from '../screens/Admin/DetalleVet';
 
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
-    // ════════ EXTRAEMOS EL ROL DEL CONTEXTO ════════
-    const { userToken, userRole, isLoading } = useAuth(); 
+    const { userToken, userRole, isLoading } = useAuth();
 
     if (isLoading) {
         return (
@@ -33,50 +33,45 @@ const AppNavigator = () => {
         );
     }
 
-    // ════════ LÓGICA DE ENRUTAMIENTO (RBAC) ════════
     const getInitialRoute = () => {
-        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
-            return 'AdminMain'; // <-- Ahora apunta al Tab Navigator
-        }
-        return 'Main'; // Por defecto, va al BottomTabNavigator de los tutores
+        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') return 'AdminMain';
+        return 'Main';
     };
 
     return (
         <NavigationContainer key={userToken ? 'auth' : 'noauth'}>
             {userToken ? (
-                // Asignamos la ruta inicial dinámicamente
                 <Stack.Navigator initialRouteName={getInitialRoute()} screenOptions={{ headerShown: false }}>
-                    
-                    {/* ════════ Registramos el Tab Navigator del Administrador ════════ */}
+
                     <Stack.Screen name="AdminMain" component={AdminBottomTabNavigator} />
-                    
-                    {/* El BottomTabNavigator de siempre para clientes */}
                     <Stack.Screen name="Main" component={BottomTabNavigator} />
-                    
-                    <Stack.Screen 
-                        name="RegistroMascota" 
-                        component={RegistroMascotaScreen} 
-                        options={{ 
-                            headerShown: true, 
+
+                    {/* ════ PANTALLA DE FLUJO ADMIN ════ */}
+                    <Stack.Screen name="CrearVet" component={CrearVetScreen} />
+                    <Stack.Screen name="DetalleVet" component={DetalleVetScreen} />
+
+                    <Stack.Screen
+                        name="RegistroMascota"
+                        component={RegistroMascotaScreen}
+                        options={{
+                            headerShown: true,
                             title: 'Nueva Mascota',
                             headerStyle: { backgroundColor: colors.darkDGreen },
                             headerTintColor: colors.lightYellow,
                             headerTitleStyle: { fontFamily: 'Fredoka-Bold' }
-                        }} 
+                        }}
                     />
-                    
-                    <Stack.Screen 
-                        name="DetalleMascota" 
-                        component={DetalleMascotaScreen} 
-                        options={{ 
-                            headerShown: true, 
+                    <Stack.Screen
+                        name="DetalleMascota"
+                        component={DetalleMascotaScreen}
+                        options={{
+                            headerShown: true,
                             title: 'Detalle Mascota',
                             headerStyle: { backgroundColor: colors.darkDGreen },
-                            headerTintColor: colors.lightYellow 
-                        }} 
+                            headerTintColor: colors.lightYellow
+                        }}
                     />
-                    
-                    <Stack.Screen 
+                    <Stack.Screen
                         name="EditarMascota"
                         component={EditarMascota}
                         options={{
@@ -86,7 +81,6 @@ const AppNavigator = () => {
                             headerTintColor: colors.lightYellow
                         }}
                     />
-                    
                     <Stack.Screen name="HistorialMedico" component={HistorialMedicoScreen} />
                     <Stack.Screen name="Vacunas" component={VacunaScreen} />
                     <Stack.Screen name="Consultas" component={ConsultasScreen} />
@@ -94,7 +88,6 @@ const AppNavigator = () => {
                     <Stack.Screen name="Cirugias" component={CirugiaScreen} />
 
                 </Stack.Navigator>
-                
             ) : (
                 <AuthStack />
             )}

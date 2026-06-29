@@ -42,7 +42,8 @@ public class DtoMapper {
                 veterinario.getDvVet(),
                 veterinario.getEspecialidades().stream()
                         .map(DtoMapper::toEspecialidadDTO)
-                        .collect(Collectors.toSet())
+                        .collect(Collectors.toSet()),
+                usuario.getEstadoUsr()
         );
     }
 
