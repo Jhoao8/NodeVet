@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class JornadaService {
@@ -39,5 +41,38 @@ public class JornadaService {
 
         // 4. Retornar el DTO limpio
         return DtoMapper.toJornadaDTO(jornadaGuardada);
+    }
+
+    /**
+     * Obtiene todas las reglas de jornada activas (estado 1) para un veterinario específico.
+     * * @param idVet ID de la entidad Veterinario.
+     * @return Lista de JornadaDTO limpia para consumo del frontend móvil.
+     */
+    @Transactional(readOnly = true)
+    public List<JornadaDTO> obtenerJornadasPorVeterinario(Integer idVet) {
+        
+        // 1. Consultar moldes de jornada activos usando el método de JornadaRepository
+        List<Jornada> jornadas = jornadaRepository.findByVeterinarioIdAndEstJornada(idVet, 1);
+        
+        // 2. Transformar la colección de entidades a DTOs inmutables con Streams
+        return jornadas.stream()
+                .map(DtoMapper::toJornadaDTO)
+                .toList();
+    }
+
+    @Transactional
+    public JornadaDTO actualizarJornada(Integer idJornada, JornadaRequestDTO request) {
+
+        // 1. Verificar que la jornada existe
+        Jornada jornada = jornadaRepository.findById(idJornada)
+                .orElseThrow(() -> new RuntimeException("Jornada no encontrada con ID: " + idJornada));
+
+        // 2. Actualizar los campos modificables
+        jornada.setHoraInicio(request.getHoraInicio());
+        jornada.setHoraFin(request.getHoraFin());
+
+        // 3. Guardar y retornar el DTO actualizado
+        Jornada jornadaActualizada = jornadaRepository.save(jornada);
+        return DtoMapper.toJornadaDTO(jornadaActualizada);
     }
 }

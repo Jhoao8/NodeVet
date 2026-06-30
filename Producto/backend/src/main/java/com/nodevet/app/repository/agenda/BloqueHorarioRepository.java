@@ -40,4 +40,6 @@ public interface BloqueHorarioRepository extends JpaRepository<BloqueHorario, In
             @Param("inicio") LocalDateTime inicio,
             @Param("fin") LocalDateTime fin
     );
+
+    void deleteByVeterinarioId(Integer idVet);
 }

@@ -152,4 +152,16 @@ public class UsuarioController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}/activar")
+    @Operation(summary = "Activar usuario", description = "Reactiva la cuenta de un usuario inactivo cambiando su estado a activo. Acción exclusiva para Administradores.")
+    public ResponseEntity<Void> activarUsuario(@PathVariable Integer id) {
+        try {
+            usuarioService.activarUsuario(id);
+            return ResponseEntity.noContent().build();
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

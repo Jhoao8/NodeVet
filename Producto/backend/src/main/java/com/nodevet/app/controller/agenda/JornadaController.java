@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/jornadas")
 @RequiredArgsConstructor
@@ -24,6 +26,28 @@ public class JornadaController {
         try {
             JornadaDTO nuevaJornada = jornadaService.crearJornada(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(nuevaJornada);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/veterinario/{idVet}")
+    @Operation(summary = "Obtener jornadas por veterinario", description = "Lista todos los moldes o reglas de horario activo configurados para un veterinario específico.")
+    public ResponseEntity<?> obtenerJornadasPorVet(@PathVariable Integer idVet) {
+        try {
+            List<JornadaDTO> jornadasDTO = jornadaService.obtenerJornadasPorVeterinario(idVet);
+            return ResponseEntity.ok(jornadasDTO);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{idJornada}")
+    @Operation(summary = "Actualizar jornada laboral", description = "Modifica la hora de inicio y fin de una jornada laboral existente.")
+    public ResponseEntity<?> actualizarJornada(@PathVariable Integer idJornada, @RequestBody JornadaRequestDTO request) {
+        try {
+            JornadaDTO jornadaActualizada = jornadaService.actualizarJornada(idJornada, request);
+            return ResponseEntity.ok(jornadaActualizada);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
