@@ -16,9 +16,13 @@ import ExamenScreen from '../screens/Tutor/Mascotas/Historial/ExamenScreen';
 import CirugiaScreen from '../screens/Tutor/Mascotas/Historial/CirugiaScreen';
 import AdminBottomTabNavigator from './AdminBottomTabNavigator';
 
+// ════ PANTALLAS DE ADMIN ════
+import CrearVetScreen from '../screens/Admin/ConfigVet/CrearVetScreen';
+import DetalleVetScreen from '../screens/Admin/ConfigVet/DetalleVetScreen';
+import CrearJornadaScreen from '../screens/Admin/ConfigVet/CrearJornadaScreen'; 
+import GenerarBloquesScreen from '../screens/Admin/ConfigVet/ModalBloquesScreen';
 // ════ NUEVA IMPORTACIÓN ════
-import CrearVetScreen from '../screens/Admin/CrearVetScreen';
-import DetalleVetScreen from '../screens/Admin/DetalleVet';
+import VerJornadaScreen from '../screens/Admin/ConfigVet/VerJornadaScreen'; 
 
 const Stack = createStackNavigator();
 
@@ -46,10 +50,15 @@ const AppNavigator = () => {
                     <Stack.Screen name="AdminMain" component={AdminBottomTabNavigator} />
                     <Stack.Screen name="Main" component={BottomTabNavigator} />
 
-                    {/* ════ PANTALLA DE FLUJO ADMIN ════ */}
+                    {/* ════ PANTALLAS DE FLUJO ADMIN ════ */}
                     <Stack.Screen name="CrearVet" component={CrearVetScreen} />
                     <Stack.Screen name="DetalleVet" component={DetalleVetScreen} />
+                    <Stack.Screen name="CrearJornada" component={CrearJornadaScreen} />
+                    <Stack.Screen name="ModalBloque" component={GenerarBloquesScreen} />
+                    {/* ════ NUEVA PANTALLA REGISTRADA ════ */}
+                    <Stack.Screen name="VerJornadas" component={VerJornadaScreen} />
 
+                    {/* ════ PANTALLAS DE FLUJO TUTOR ════ */}
                     <Stack.Screen
                         name="RegistroMascota"
                         component={RegistroMascotaScreen}

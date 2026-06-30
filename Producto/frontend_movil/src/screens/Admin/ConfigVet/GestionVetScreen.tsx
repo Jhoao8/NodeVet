@@ -96,16 +96,13 @@ export default function GestionVetScreen() {
     );
 
     return (
-        <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
+        <View style={[globalStyles.container, { backgroundColor: colors.darkDGreen }]}>
             <DashboardHeader />
 
             <View style={{ flex: 1, paddingHorizontal: spacing.xl }}>
 
-                <View style={[globalStyles.sectionHeaderRow, { marginTop: spacing.md }]}>
-                    <View style={globalStyles.sectionTitleLeft}>
-                        <FontAwesome5 name="user-md" size={18} color={colors.darkGreen} />
-                        <Text style={[globalStyles.sectionTitle, dashboardStyles.darkText]}>Gestión de Veterinarios</Text>
-                    </View>
+                <View style={[globalStyles.sectionHeaderRow, { marginTop: spacing.md, justifyContent: 'center' }]}>
+                    <Text style={[globalStyles.sectionTitle, { color: colors.lightYellow, textAlign: 'center' }]}>Gestión de Veterinarios</Text>
                 </View>
 
                 <View style={styles.searchContainer}>
@@ -149,7 +146,7 @@ export default function GestionVetScreen() {
                 style={styles.fab}
                 onPress={() => navigation.getParent()?.navigate('CrearVet')}
             >
-                <Ionicons name="add" size={32} color={colors.lightYellow} />
+                <Ionicons name="add" size={32} color={colors.darkDGreen} />
             </TouchableOpacity>
         </View>
     );
@@ -189,7 +186,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: spacing.xl,
         right: spacing.xl,
-        backgroundColor: colors.darkDGreen,
+        backgroundColor: colors.lightGreen,
         width: 60,
         height: 60,
         borderRadius: 30,

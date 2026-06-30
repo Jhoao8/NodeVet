@@ -20,42 +20,17 @@ export default function DetalleVetScreen() {
 
     // Estado local para reflejar cambios inmediatos en la UI
     const [vetData, setVetData] = useState(vet);
-    const [loadingStatus, setLoadingStatus] = useState(false);
     const [loadingDelete, setLoadingDelete] = useState(false);
 
-    // ════ 1. LÓGICA DE HABILITAR / DESHABILITAR ════
-    const handleToggleEstado = async () => {
-        setLoadingStatus(true);
-        const nuevoEstado = vetData.estadoUsr === 1 ? 0 : 1;
-        
-        try {
-            // AJUSTA ESTA RUTA SEGÚN TU BACKEND (Ej: /v1/veterinarios/1/estado)
-            await api.put(`/v1/veterinarios/${vetData.idUsuario}/estado`, { 
-                estadoUsr: nuevoEstado 
-            });
-            
-            setVetData({ ...vetData, estadoUsr: nuevoEstado });
-            Alert.alert(
-                'Estado actualizado', 
-                `La cuenta ha sido ${nuevoEstado === 1 ? 'habilitada' : 'deshabilitada'} exitosamente.`
-            );
-        } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'No se pudo cambiar el estado de la cuenta.');
-        } finally {
-            setLoadingStatus(false);
-        }
-    };
-
-    // ════ 2. LÓGICA DE ELIMINACIÓN (SOFT DELETE) ════
+    // ════ LÓGICA DE DESACTIVACIÓN (SOFT DELETE) ════
     const confirmDelete = () => {
         Alert.alert(
-            'Eliminar Veterinario',
-            `¿Estás seguro de que deseas eliminar a ${vetData.nombreCompleto}? Esta acción lo ocultará del sistema.`,
+            'Desactivar Veterinario',
+            `¿Estás seguro de que deseas desactivar a ${vetData.nombreCompleto}? Esta acción lo ocultará del sistema.`,
             [
                 { text: 'Cancelar', style: 'cancel' },
                 { 
-                    text: 'Eliminar', 
+                    text: 'Desactivar', 
                     style: 'destructive',
                     onPress: executeDelete 
                 }
@@ -66,16 +41,15 @@ export default function DetalleVetScreen() {
     const executeDelete = async () => {
         setLoadingDelete(true);
         try {
-            // AJUSTA ESTA RUTA SEGÚN TU BACKEND PARA SOFT DELETE
-            await api.delete(`/v1/veterinarios/${vetData.idUsuario}`);
+            await api.delete(`/v1/usuarios/${vetData.idUsuario}`);
             Alert.alert(
-                'Veterinario Eliminado', 
-                'La cuenta ha sido eliminada exitosamente.',
+                'Veterinario Desactivado', 
+                'La cuenta ha sido desactivada exitosamente.',
                 [{ text: 'OK', onPress: () => navigation.goBack() }]
             );
         } catch (error) {
             console.error(error);
-            Alert.alert('Error', 'No se pudo eliminar al veterinario.');
+            Alert.alert('Error', 'No se pudo desactivar al veterinario.');
         } finally {
             setLoadingDelete(false);
         }
@@ -103,11 +77,12 @@ export default function DetalleVetScreen() {
                         </View>
                     </View>
 
+                    {/* Tarjeta de Información Base */}
                     <View style={styles.cardInfo}>
                         <View style={styles.cardHeader}>
                             <View style={styles.avatar}>
                                 <Text style={styles.avatarText}>
-                                    {vetData.nombreCompleto.charAt(0).toUpperCase()}
+                                    {vetData.nombreCompleto ? vetData.nombreCompleto.charAt(0).toUpperCase() : '?'}
                                 </Text>
                             </View>
                             <View style={styles.headerTextContainer}>
@@ -155,27 +130,38 @@ export default function DetalleVetScreen() {
                         </View>
                     </View>
 
+                    {/* ════ SECCIÓN GESTIÓN HORARIA ════ */}
                     <Text style={styles.sectionLabel}>Gestión Horaria</Text>
                     
                     <TouchableOpacity 
                         style={styles.actionButtonPrimary}
-                        onPress={() => navigation.navigate('CrearJornada', { vetId: vetData.idUsuario })}
+                        onPress={() => navigation.navigate('CrearJornada', { vet: vetData })}
                     >
-                        <Ionicons name="calendar" size={22} color={colors.darkDGreen} style={{ marginRight: 8 }} />
-                        <Text style={styles.actionButtonTextPrimary}>Crear / Ver Jornadas</Text>
+                        <Ionicons name="calendar-outline" size={22} color={colors.darkDGreen} style={{ marginRight: 8 }} />
+                        <Text style={styles.actionButtonTextPrimary}>Configurar Jornada Base</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity
+                    {/* ════ BOTÓN ACTUALIZADO PARA VER JORNADAS ════ */}
+                    <TouchableOpacity 
                         style={styles.actionButtonPrimary}
-                        onPress={() => navigation.navigate('CrearJornada', { vetId: vetData.idUsuario, tipo: 'BLOQUE_HORARIO' })}
+                        onPress={() => navigation.navigate('VerJornadas', { vet: vetData })}
                     >
-                        <Ionicons name="time" size={22} color={colors.darkDGreen} style={{ marginRight: 8 }} />
-                        <Text style={styles.actionButtonTextPrimary}>Generar Bloque Horario</Text>
+                        <Ionicons name="eye-outline" size={22} color={colors.darkDGreen} style={{ marginRight: 8 }} />
+                        <Text style={styles.actionButtonTextPrimary}>Ver Jornadas</Text>
                     </TouchableOpacity>
 
+                    <TouchableOpacity 
+                        style={styles.actionButtonPrimary}
+                        onPress={() => navigation.navigate('ModalBloque', { vet: vetData })}
+                    >
+                        <Ionicons name="flash-outline" size={22} color={colors.darkDGreen} style={{ marginRight: 8 }} />
+                        <Text style={styles.actionButtonTextPrimary}>Generar Bloques Horarios</Text>
+                    </TouchableOpacity>
+
+                    {/* ADMINISTRACIÓN DE LA CUENTA */}
                     <Text style={styles.sectionLabel}>Administración de Cuenta</Text>
 
-                    {/* Botón Eliminar (Soft Delete) */}
+                    {/* Botón Desactivar (Soft Delete) */}
                     <TouchableOpacity 
                         style={[styles.actionButtonSecondary, styles.btnError]}
                         onPress={confirmDelete}
@@ -185,8 +171,8 @@ export default function DetalleVetScreen() {
                             <ActivityIndicator color={colors.white} />
                         ) : (
                             <>
-                                <Ionicons name="trash" size={22} color={colors.white} style={{ marginRight: 8 }} />
-                                <Text style={styles.actionButtonTextSecondary}>Eliminar Veterinario</Text>
+                                <Ionicons name="power-outline" size={22} color={colors.white} style={{ marginRight: 8 }} />
+                                <Text style={styles.actionButtonTextSecondary}>Desactivar Veterinario</Text>
                             </>
                         )}
                     </TouchableOpacity>
@@ -218,7 +204,7 @@ const styles = StyleSheet.create({
         padding: spacing.lg,
         borderWidth: 1,
         borderColor: colors.lightGreen,
-        marginTop: spacing.sm,
+        marginTop: spacing.md, 
     },
     cardHeader: {
         flexDirection: 'row',
@@ -257,10 +243,10 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     badgeActive: {
-        backgroundColor: colors.lightGreen,
+        backgroundColor: 'rgba(56, 102, 65, 0.15)',
     },
     badgeInactive: {
-        backgroundColor: colors.lightBrown,
+        backgroundColor: 'rgba(211, 47, 47, 0.15)',
     },
     badgeText: {
         fontFamily: 'Fredoka-Bold',
@@ -305,7 +291,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: colors.lightYellow,
         marginTop: spacing.lg,
-        marginBottom: spacing.xs,
+        marginBottom: spacing.sm, 
     },
     actionButtonPrimary: {
         flexDirection: 'row',
@@ -330,13 +316,13 @@ const styles = StyleSheet.create({
         marginTop: spacing.sm,
     },
     btnWarning: {
-        backgroundColor: '#D97706', // Naranja apagado para "Deshabilitar"
+        backgroundColor: '#E67E22', 
     },
     btnSuccess: {
-        backgroundColor: colors.darkGreen, // Verde para "Habilitar"
+        backgroundColor: colors.darkGreen, 
     },
     btnError: {
-        backgroundColor: colors.error, // Rojo para "Eliminar"
+        backgroundColor: colors.error, 
     },
     actionButtonTextSecondary: {
         fontFamily: 'Fredoka-Bold',
