@@ -6,6 +6,7 @@ import com.nodevet.app.model.CodigoVerificacion;
 import com.nodevet.app.model.usuario.Tutor;
 import com.nodevet.app.model.usuario.Usuario;
 import com.nodevet.app.repository.*;
+import com.nodevet.app.repository.agenda.BloqueHorarioRepository;
 import com.nodevet.app.service.EmailService;
 
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class UsuarioService implements UserDetailsService {
     private final CodigoVerificacionRepository codigoRepo;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+    private final BloqueHorarioRepository bloqueHorarioRepository;
 
     @Transactional
     public Usuario registrarUsuario(UsuarioRegistroDTO dto) {
@@ -126,7 +128,22 @@ public class UsuarioService implements UserDetailsService {
     public void desactivarUsuario(Integer id) {
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + id));
+
+        // Si el usuario es veterinario, eliminar sus bloques horarios antes de desactivar
+        veterinarioRepository.findByUsuario(usuario).ifPresent(vet -> {
+            bloqueHorarioRepository.deleteByVeterinarioId(vet.getId());
+        });
+
         usuarioRepository.softDelete(id);
+    }
+
+    @Transactional
+    public void activarUsuario(Integer id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado con ID: " + id));
+        
+        usuario.setEstadoUsr(1);
+        usuarioRepository.save(usuario);
     }
 
     // --- METODOS PARA RECUPERAR CONTRASEÑA CON CÓDIGO (OTP) ---

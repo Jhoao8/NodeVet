@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Importamos las pantallas del Admin con los nombres exactos de tus archivos
 import AdminHomeScreen from '../screens/Admin/AdminHomeScreen';
-import GestionVetScreen from '../screens/Admin/GestionVetScreen';
+import GestionVetScreen from '../screens/Admin/ConfigVet/GestionVetScreen';
 import GestionUsrScreen from '../screens/Admin/GestionUsrScreen';
 import PerfilAdminScreen from '../screens/Admin/PerfilAdminScreen';
 
