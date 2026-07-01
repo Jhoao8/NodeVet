@@ -70,6 +70,7 @@ export default function AgendarHoraScreen({ navigation }: any) {
     // Estado del paso del flujo (0 = oculto, 1 = resumen, 2 = aviso flow)
     const [reservaStep, setReservaStep] = useState<number>(0);
     const [isProcessingPago, setIsProcessingPago] = useState(false);
+    const [showPagoObligatorioAviso, setShowPagoObligatorioAviso] = useState(false);
 
     const formatearHora = (fechaIso: string) => {
         if (!fechaIso) return '';
@@ -92,6 +93,25 @@ export default function AgendarHoraScreen({ navigation }: any) {
                 }
             };
             fetchTutorPets();
+        }, [userToken])
+    );
+
+    useFocusEffect(
+        useCallback(() => {
+            if (!userToken) return;
+
+            const verificarPagoObligatorio = async () => {
+                try {
+                    const response = await api.get('/v1/pagos/config/obligatorio/lectura');
+                    const pagoObligatorioActivo = Boolean(response.data?.pagoObligatorio);
+                    setShowPagoObligatorioAviso(pagoObligatorioActivo);
+                } catch (error) {
+                    console.error('Error al consultar configuración de pago obligatorio:', error);
+                    setShowPagoObligatorioAviso(false);
+                }
+            };
+
+            verificarPagoObligatorio();
         }, [userToken])
     );
 
@@ -131,7 +151,7 @@ export default function AgendarHoraScreen({ navigation }: any) {
 
             // ════════ RUTA CORREGIDA: Restaurada a /v1/reservas ════════
             const response = await api.post('/v1/reservas', payload);
-            const { urlPago } = response.data;
+            const { urlPago, pagoObligatorio } = response.data;
 
             if (urlPago) {
                 const supported = await Linking.canOpenURL(urlPago);
@@ -142,6 +162,15 @@ export default function AgendarHoraScreen({ navigation }: any) {
                 } else {
                     Alert.alert("Error de enlace", "No se pudo abrir la pasarela en el dispositivo.");
                 }
+            } else {
+                setReservaStep(0);
+                Alert.alert(
+                    'Reserva confirmada',
+                    pagoObligatorio === false
+                        ? 'Tu reserva fue creada sin pago obligatorio.'
+                        : 'Tu reserva fue creada correctamente.'
+                );
+                navigation.navigate('Home');
             }
         } catch (error: any) {
             console.error("Error al generar reserva transaccional:", error);
@@ -327,6 +356,29 @@ export default function AgendarHoraScreen({ navigation }: any) {
                 isProcessingPago={isProcessingPago}
                 onConfirmPayment={handleEjecutarReservaYFlow}
             />
+
+            <Modal visible={showPagoObligatorioAviso} transparent={true} animationType="fade">
+                <View style={globalStyles.detailModalOverlay}>
+                    <View style={globalStyles.detailModalContainer}>
+                        <View style={globalStyles.detailModalHeader}>
+                            <Text style={globalStyles.detailModalDate}>Aviso de pago</Text>
+                            <TouchableOpacity onPress={() => setShowPagoObligatorioAviso(false)}>
+                                <Ionicons name="close" size={24} color={colors.lightYellow} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={globalStyles.detailModalBody}>
+                            <Text style={styles.avisoPagoTexto}>
+                                Se solicitará un pago al finalizar para completar la reserva de su cita.
+                            </Text>
+
+                            <TouchableOpacity style={styles.avisoPagoButton} onPress={() => setShowPagoObligatorioAviso(false)}>
+                                <Text style={styles.avisoPagoButtonText}>Entendido</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -346,5 +398,23 @@ const styles = StyleSheet.create({
     horaButtonSelected: { backgroundColor: colors.lightGreen, borderColor: colors.darkDGreen },
     horaButtonText: { fontFamily: typography.family.main.medium, fontSize: typography.size.sm, color: colors.darkGreen },
     horaButtonTextSelected: { fontFamily: typography.family.main.bold, color: colors.darkDGreen },
-    petAvatar: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: colors.lightGreen }
+    petAvatar: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: colors.lightGreen },
+    avisoPagoTexto: {
+        fontFamily: typography.family.main.medium,
+        fontSize: typography.size.md,
+        color: colors.darkDGreen,
+        textAlign: 'center',
+        marginBottom: spacing.lg,
+    },
+    avisoPagoButton: {
+        backgroundColor: colors.darkGreen,
+        borderRadius: 8,
+        alignItems: 'center',
+        paddingVertical: spacing.md,
+    },
+    avisoPagoButtonText: {
+        fontFamily: typography.family.main.bold,
+        fontSize: typography.size.md,
+        color: colors.lightYellow,
+    }
 });

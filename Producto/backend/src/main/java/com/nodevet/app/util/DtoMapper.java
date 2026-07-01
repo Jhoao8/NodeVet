@@ -93,7 +93,8 @@ public class DtoMapper {
                 reserva.getValor().getIdValor(),
                 reserva.getEstadoReserva().getIdEstReserva(),
                 reserva.getFecCreacion(),
-                null
+                null,
+                true
         );
     }
 }

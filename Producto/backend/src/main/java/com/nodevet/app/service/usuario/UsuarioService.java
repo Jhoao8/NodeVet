@@ -70,6 +70,14 @@ public class UsuarioService implements UserDetailsService {
     // --- MÉTODOS CRUD PARA GESTIÓN DE USUARIOS (POR ADMIN Y PERFIL) ---
 
     @Transactional(readOnly = true)
+    public List<Usuario> listarUsuarios(boolean incluirInactivos) {
+        if (incluirInactivos) {
+            return usuarioRepository.findAll();
+        }
+        return usuarioRepository.findAllByEstadoUsr(1);
+    }
+
+    @Transactional(readOnly = true)
     public List<Usuario> listarUsuariosActivos() {
         return usuarioRepository.findAllByEstadoUsr(1);
     }
@@ -121,6 +129,27 @@ public class UsuarioService implements UserDetailsService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado con correo: " + correoUsuario));
 
         usuario.setFotoUsr(nuevaFotoUrl);
+        usuarioRepository.save(usuario);
+    }
+
+    @Transactional
+    public void cambiarPasswordAutenticado(String correoUsuario, String passwordActual, String nuevaPassword) {
+        Usuario usuario = usuarioRepository.findByCorreoUsr(correoUsuario)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado con correo: " + correoUsuario));
+
+        if (passwordActual == null || passwordActual.isBlank() || nuevaPassword == null || nuevaPassword.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Debes ingresar la contraseña actual y la nueva contraseña.");
+        }
+
+        if (!passwordEncoder.matches(passwordActual, usuario.getPassUsr())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La contraseña actual no coincide.");
+        }
+
+        if (nuevaPassword.length() < 6) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La nueva contraseña debe tener al menos 6 caracteres.");
+        }
+
+        usuario.setPassUsr(passwordEncoder.encode(nuevaPassword));
         usuarioRepository.save(usuario);
     }
 

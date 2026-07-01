@@ -10,6 +10,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class AdminService {
@@ -17,6 +19,11 @@ public class AdminService {
     private final UsuarioRepository usuarioRepository;
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
+
+    @Transactional(readOnly = true)
+    public List<Admin> listarAdmins() {
+        return adminRepository.findAll();
+    }
 
     @Transactional
     public Admin crearAdmin(AdminRegistroDTO dto) {

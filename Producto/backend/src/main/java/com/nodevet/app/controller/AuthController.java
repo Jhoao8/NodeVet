@@ -14,8 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -35,13 +37,13 @@ public class AuthController {
     @Operation(summary = "Iniciar sesión", description = "Valida las credenciales del usuario y devuelve un token JWT. El tiempo de expiración del token varía si el origen es la App Móvil (30 días) o la Web (8 horas).")
     public ResponseEntity<?> login(@RequestBody LoginRequestDTO dto) {
         try {
-            // 1. Autenticación estándar
+            // 1. Cargamos primero el usuario para detectar cuentas inactivas.
+            UserDetails userDetails = usuarioService.loadUserByUsername(dto.getCorreoUsr());
+
+            // 2. Autenticación estándar
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(dto.getCorreoUsr(), dto.getPassUsr())
             );
-
-            // 2. Cargar detalles del usuario (AQUÍ VIENE EL ROL)
-            UserDetails userDetails = usuarioService.loadUserByUsername(dto.getCorreoUsr());
 
             // ════════ AGREGA ESTO: EXTRAER EL ROL ════════
             // Tomamos el primer rol de la lista (ej: "ROLE_ADMIN") y le quitamos el "ROLE_"
@@ -58,6 +60,22 @@ public class AuthController {
             // 5. Retornar el token Y el rol al teléfono
             return ResponseEntity.ok(new LoginResponseDTO(jwt, rolLimpio));
 
+        } catch (UsernameNotFoundException e) {
+            String message = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if (message.contains("inactivo")) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "CUENTA_INHABILITADA");
+                error.put("mensaje", "Tu cuenta se encuentra inhabilitada.");
+                return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+            }
+
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Credenciales inválidas");
+            return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+        } catch (BadCredentialsException e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Credenciales inválidas");
+            return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
             Map<String, Object> error = new HashMap<>();
             error.put("error", "Credenciales inválidas");

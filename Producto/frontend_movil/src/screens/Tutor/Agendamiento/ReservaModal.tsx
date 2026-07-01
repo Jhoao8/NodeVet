@@ -115,7 +115,7 @@ export default function ReservaModals({
                             </>
                         )}
 
-                        {/* ════════ PASO 2: REDIRECCIÓN FLOW ════════ */}
+                        {/* ════════ PASO 2: CONFIRMACIÓN / PAGO ════════ */}
                         {step === 2 && (
                             <>
                                 <View style={styles.iconCenter}>
@@ -123,7 +123,7 @@ export default function ReservaModals({
                                 </View>
                                 
                                 <Text style={styles.paymentExplanation}>
-                                    Serás redirigido de forma segura a la pasarela de pago Flow para abonar la reserva de consulta de tu mascota.
+                                    Al confirmar, si el pago obligatorio está activo serás redirigido de forma segura a la pasarela de pago Flow.
                                 </Text>
 
                                 <View style={styles.buttonContainer}>
@@ -135,7 +135,7 @@ export default function ReservaModals({
                                         {isProcessingPago ? (
                                             <ActivityIndicator color={colors.lightYellow} />
                                         ) : (
-                                            <Text style={styles.confirmButtonText}>Pagar</Text>
+                                            <Text style={styles.confirmButtonText}>Confirmar reserva</Text>
                                         )}
                                     </TouchableOpacity>
                                     

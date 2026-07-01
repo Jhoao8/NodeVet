@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/admins")
 @RequiredArgsConstructor
@@ -19,6 +21,15 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final AdminService adminService;
+
+    @GetMapping
+    @Operation(summary = "Listar administradores", description = "Retorna la lista de cuentas administrativas registradas, incluyendo su nivel de acceso.")
+    public ResponseEntity<?> listarAdmins() {
+        List<?> admins = adminService.listarAdmins().stream()
+                .map(DtoMapper::toAdminDTO)
+                .toList();
+        return ResponseEntity.ok(admins);
+    }
 
     @PostMapping
     @Operation(summary = "Registrar nuevo administrador", description = "Crea un usuario y le asigna el rol de Administrador. Esta acción está reservada para el superusuario o administradores existentes.")
