@@ -131,7 +131,7 @@ export default function AgendarHoraScreen({ navigation }: any) {
 
             // ════════ RUTA CORREGIDA: Restaurada a /v1/reservas ════════
             const response = await api.post('/v1/reservas', payload);
-            const { urlPago } = response.data;
+            const { urlPago, pagoObligatorio } = response.data;
 
             if (urlPago) {
                 const supported = await Linking.canOpenURL(urlPago);
@@ -142,6 +142,15 @@ export default function AgendarHoraScreen({ navigation }: any) {
                 } else {
                     Alert.alert("Error de enlace", "No se pudo abrir la pasarela en el dispositivo.");
                 }
+            } else {
+                setReservaStep(0);
+                Alert.alert(
+                    'Reserva confirmada',
+                    pagoObligatorio === false
+                        ? 'Tu reserva fue creada sin pago obligatorio.'
+                        : 'Tu reserva fue creada correctamente.'
+                );
+                navigation.navigate('Home');
             }
         } catch (error: any) {
             console.error("Error al generar reserva transaccional:", error);

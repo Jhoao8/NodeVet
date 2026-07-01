@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; 
-import AsyncStorage from '@react-native-async-storage/async-storage'; // <-- Añadido para guardar el rol
 import { Ionicons } from '@expo/vector-icons'; 
+import axios from 'axios';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
 import { globalStyles } from '../../style/GlobalStyle';
 import api from '../../api/axiosInstance';
 import { useAuth } from '../../context/AuthContext';
@@ -52,9 +51,61 @@ const LoginScreen = () => {
                 await signIn(token); 
             }
 
-        } catch (error: any) {
-            console.error("Error en login:", error);
-            showAlert('Error', 'Credenciales incorrectas o problema de servidor.');
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                const errorMessage = String(error.message || '').toLowerCase();
+
+                if (!error.response) {
+                    if (error.code === 'ECONNABORTED') {
+                        showAlert('Tiempo de espera agotado', 'El servidor tardó demasiado en responder. Intente nuevamente.');
+                        return;
+                    }
+
+                    if (errorMessage.includes('request failed') || errorMessage.includes('network error')) {
+                        showAlert('Sin conexión', 'No se pudo conectar con el servidor. Verifique su red e inténtelo otra vez.');
+                        return;
+                    }
+
+                    showAlert('Error de conexión', 'No fue posible completar la solicitud. Intente nuevamente.');
+                    return;
+                }
+
+                const status = error.response.status;
+                const backendError = String(error.response?.data?.error || '').toUpperCase();
+                const backendMensaje = String(error.response?.data?.mensaje || '').toLowerCase();
+
+                const cuentaInhabilitada =
+                    backendError === 'CUENTA_INHABILITADA' ||
+                    backendMensaje.includes('inhabilitada') ||
+                    backendMensaje.includes('inactiva') ||
+                    backendMensaje.includes('inactivo');
+
+                if (cuentaInhabilitada) {
+                    showAlert(
+                        'Cuenta inhabilitada',
+                        'Si necesita habilitarla dirijase al centro veterinario en cuestion.'
+                    );
+                    return;
+                }
+
+                if (status === 401) {
+                    showAlert('Acceso denegado', 'Credenciales incorrectas.');
+                    return;
+                }
+
+                if (status >= 500) {
+                    console.error('Error en login (servidor):', error);
+                    showAlert('Servidor no disponible', 'Ocurrió un problema interno del servidor. Intente más tarde.');
+                    return;
+                }
+
+                console.warn('Login rechazado:', status, backendError || backendMensaje || 'sin detalle');
+                showAlert('Error', backendMensaje || 'No se pudo iniciar sesión.');
+                return;
+            }
+
+            console.error('Error inesperado en login:', error);
+            showAlert('Error', 'No se pudo iniciar sesión. Intente nuevamente.');
         } finally {
             setLoading(false);
         }

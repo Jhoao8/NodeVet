@@ -70,6 +70,14 @@ public class UsuarioService implements UserDetailsService {
     // --- MÉTODOS CRUD PARA GESTIÓN DE USUARIOS (POR ADMIN Y PERFIL) ---
 
     @Transactional(readOnly = true)
+    public List<Usuario> listarUsuarios(boolean incluirInactivos) {
+        if (incluirInactivos) {
+            return usuarioRepository.findAll();
+        }
+        return usuarioRepository.findAllByEstadoUsr(1);
+    }
+
+    @Transactional(readOnly = true)
     public List<Usuario> listarUsuariosActivos() {
         return usuarioRepository.findAllByEstadoUsr(1);
     }

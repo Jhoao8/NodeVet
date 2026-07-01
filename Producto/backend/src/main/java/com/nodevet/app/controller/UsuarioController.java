@@ -3,8 +3,10 @@ package com.nodevet.app.controller;
 import com.nodevet.app.dto.usuario.UsuarioDTO;
 import com.nodevet.app.dto.usuario.UsuarioRegistroDTO;
 import com.nodevet.app.dto.usuario.UsuarioUpdateDTO;
+import com.nodevet.app.dto.reserva.ResumenTutorReservasDTO;
 import com.nodevet.app.dto.FotoUpdateDTO;
 import com.nodevet.app.model.usuario.Usuario;
+import com.nodevet.app.service.ReservaService;
 import com.nodevet.app.service.usuario.UsuarioService;
 import com.nodevet.app.util.DtoMapper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+    private final ReservaService reservaService;
 
     // ════════ PÚBLICO ════════
 
@@ -107,13 +110,31 @@ public class UsuarioController {
         }
     }
 
+    @DeleteMapping("/perfil")
+    @Operation(summary = "Desactivar mi cuenta", description = "Inhabilita la cuenta del usuario autenticado aplicando soft delete, sin eliminar sus datos históricos.")
+    public ResponseEntity<Void> desactivarMiCuenta() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String correo = authentication.getName();
+
+            Usuario usuario = usuarioService.obtenerUsuarioPorCorreo(correo)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+            usuarioService.desactivarUsuario(usuario.getIdUsuario());
+            return ResponseEntity.noContent().build();
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+
     // ════════ ADMINISTRACIÓN (Solo ADMIN) ════════
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     @Operation(summary = "Listar todos los usuarios activos", description = "Devuelve una lista con todos los usuarios registrados en el sistema. Acción exclusiva para Administradores.")
-    public ResponseEntity<List<UsuarioDTO>> listarUsuarios() {
-        List<Usuario> usuarios = usuarioService.listarUsuariosActivos();
+    public ResponseEntity<List<UsuarioDTO>> listarUsuarios(
+            @RequestParam(name = "incluirInactivos", required = false, defaultValue = "false") boolean incluirInactivos) {
+        List<Usuario> usuarios = usuarioService.listarUsuarios(incluirInactivos);
         List<UsuarioDTO> dtos = usuarios.stream()
                 .map(DtoMapper::toUsuarioDTO)
                 .collect(Collectors.toList());
@@ -128,6 +149,20 @@ public class UsuarioController {
                 .map(usuario -> ResponseEntity.ok(DtoMapper.toUsuarioDTO(usuario)))
                 .orElse(ResponseEntity.notFound().build());
     }
+
+            @PreAuthorize("hasRole('ADMIN')")
+            @GetMapping("/{id}/resumen-reservas")
+            @Operation(summary = "Resumen de reservas por tutor", description = "Devuelve métricas de reservas realizadas, asistidas y ausentadas para el tutor asociado al usuario indicado.")
+            public ResponseEntity<ResumenTutorReservasDTO> obtenerResumenReservasTutor(@PathVariable Integer id) {
+            return usuarioService.obtenerUsuarioPorId(id)
+                .map(usuario -> ResponseEntity.ok(
+                    reservaService.obtenerResumenTutor(
+                        usuario.getIdUsuario(),
+                        usuario.getNombreUsr() + " " + usuario.getApellidoUsr()
+                    )
+                ))
+                .orElse(ResponseEntity.notFound().build());
+            }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")

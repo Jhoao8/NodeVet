@@ -1,6 +1,8 @@
 package com.nodevet.app.service;
 
 import com.nodevet.app.dto.reserva.ReservaRequestDTO;
+import com.nodevet.app.dto.reserva.ProximaCitaHomeDTO;
+import com.nodevet.app.dto.reserva.ResumenTutorReservasDTO;
 import com.nodevet.app.model.Mascota;
 import com.nodevet.app.model.Valor;
 import com.nodevet.app.model.agenda.BloqueHorario;
@@ -19,11 +21,14 @@ import com.nodevet.app.repository.reserva.EstadoReservaRepository;
 import com.nodevet.app.repository.reserva.ReservaRepository;
 import com.nodevet.app.repository.pago.PagoRepository;
 import com.nodevet.app.repository.pago.EstadoPagoRepository;
+import com.nodevet.app.service.pago.PagoConfigService;
 import com.nodevet.app.service.pago.FlowService;
 import com.nodevet.app.util.DtoMapper;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
+import java.util.List;
+import java.time.format.DateTimeFormatter;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -46,6 +51,38 @@ public class ReservaService {
     private final PagoRepository pagoRepository;
     private final EstadoPagoRepository estadoPagoRepository;
     private final FlowService flowService;
+        private final PagoConfigService pagoConfigService;
+
+        @Transactional(readOnly = true)
+        public ResumenTutorReservasDTO obtenerResumenTutor(Integer idUsuario, String nombreCompleto) {
+                long total = reservaRepository.countByMascota_Tutor_Usuario_IdUsuario(idUsuario);
+                long asistidas = reservaRepository.countAsistidasByTutorUsuarioId(idUsuario);
+                long ausentadas = reservaRepository.countAusentadasByTutorUsuarioId(idUsuario);
+
+                return new ResumenTutorReservasDTO(
+                                idUsuario,
+                                nombreCompleto,
+                                total,
+                                asistidas,
+                                ausentadas
+                );
+        }
+
+        @Transactional(readOnly = true)
+        public List<ProximaCitaHomeDTO> obtenerProximasCitasTutor(String correoTutor) {
+                DateTimeFormatter fechaFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                DateTimeFormatter horaFmt = DateTimeFormatter.ofPattern("HH:mm");
+
+                return reservaRepository.findProximasCitasByTutorCorreo(correoTutor)
+                                .stream()
+                                .limit(2)
+                                .map(reserva -> new ProximaCitaHomeDTO(
+                                                reserva.getIdReserva(),
+                                                reserva.getBloqueHorario().getFecHrInicio().format(fechaFmt),
+                                                reserva.getBloqueHorario().getFecHrInicio().format(horaFmt),
+                                                reserva.getMascota().getNomMascota()))
+                                .toList();
+        }
 
     @Transactional
     public com.nodevet.app.dto.reserva.ReservaDTO crearReserva(ReservaRequestDTO request) {
@@ -92,6 +129,22 @@ public class ReservaService {
         // 4. Guardar la reserva
         Reserva reservaGuardada = reservaRepository.save(nuevaReserva);
 
+        boolean pagoObligatorio = pagoConfigService.isPagoObligatorio();
+        com.nodevet.app.dto.reserva.ReservaDTO responseDTO = DtoMapper.toReservaDTO(reservaGuardada);
+
+        if (!pagoObligatorio) {
+            EstadoReserva confirmadaSinPago = estadoReservaRepository.findById(2)
+                    .orElseThrow(() -> new RuntimeException("Estado de reserva CONFIRMADA no configurado"));
+
+            reservaGuardada.setEstadoReserva(confirmadaSinPago);
+            reservaRepository.save(reservaGuardada);
+
+            responseDTO.setIdEstReserva(confirmadaSinPago.getIdEstReserva());
+            responseDTO.setUrlPago(null);
+            responseDTO.setPagoObligatorio(false);
+            return responseDTO;
+        }
+
         // --- INICIO DE LÓGICA DE PAGOS ---
 
         // 5. Buscar el estado "Pendiente" para el pago
@@ -116,9 +169,9 @@ public class ReservaService {
 
         // --- FIN DE LÓGICA DE PAGOS ---
 
-        // 8. Convertimos a DTO y le adjuntamos la URL de Flow
-        com.nodevet.app.dto.reserva.ReservaDTO responseDTO = DtoMapper.toReservaDTO(reservaGuardada);
+                // 8. Convertimos a DTO y le adjuntamos la URL de Flow
         responseDTO.setUrlPago(urlDePago);
+                responseDTO.setPagoObligatorio(true);
 
         return responseDTO;
     }

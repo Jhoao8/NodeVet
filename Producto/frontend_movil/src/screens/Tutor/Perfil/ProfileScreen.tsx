@@ -28,6 +28,7 @@ export default function ProfileScreen({ navigation }: any) {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false); 
+    const [isDeletingAccount, setIsDeletingAccount] = useState(false);
     
     const { showAlert, AlertComponent } = useCustomAlert();
 
@@ -157,6 +158,34 @@ export default function ProfileScreen({ navigation }: any) {
         );
     };
 
+    const ejecutarEliminacionCuenta = async () => {
+        setIsDeletingAccount(true);
+        try {
+            await api.delete('/v1/usuarios/perfil');
+            await signOut();
+        } catch (error) {
+            console.error('Error al desactivar cuenta:', error);
+            showAlert('Error', 'No se pudo desactivar tu cuenta. Intenta nuevamente.');
+        } finally {
+            setIsDeletingAccount(false);
+        }
+    };
+
+    const handleDeleteAccount = () => {
+        showAlert(
+            'Eliminar cuenta',
+            '¿Estás seguro de que deseas desactivar tu cuenta? Esta acción cerrará tu sesión.',
+            [
+                { text: 'Cancelar', onPress: () => {}, style: 'cancel' },
+                {
+                    text: 'Sí, eliminar',
+                    onPress: ejecutarEliminacionCuenta,
+                    style: 'destructive',
+                },
+            ],
+        );
+    };
+
     return (
         <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
             <DashboardHeader />
@@ -237,8 +266,14 @@ export default function ProfileScreen({ navigation }: any) {
                     <TouchableOpacity style={styles.menuButton}>
                         <Text style={styles.menuButtonText}>Configurar recordatorios</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.menuButton}>
-                        <Text style={styles.menuButtonText}>Eliminar cuenta</Text>
+                    <TouchableOpacity
+                        style={styles.menuButton}
+                        onPress={handleDeleteAccount}
+                        disabled={isDeletingAccount}
+                    >
+                        <Text style={styles.menuButtonText}>
+                            {isDeletingAccount ? 'Eliminando cuenta...' : 'Eliminar cuenta'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
