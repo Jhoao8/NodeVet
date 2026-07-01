@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
@@ -111,17 +111,20 @@ const HomeScreen = () => {
                         <Text style={[globalStyles.cardEmptyText, dashboardStyles.darkSubText]}>Sin citas registradas</Text>
                     ) : (
                         <>
-                            <View style={{ flexDirection: 'row', marginBottom: 8, borderBottomWidth: 1, borderBottomColor: colors.lightGreen, paddingBottom: 6 }}>
-                                <Text style={{ flex: 1, fontWeight: '700', color: colors.darkGreen }}>Fecha</Text>
-                                <Text style={{ flex: 1, fontWeight: '700', color: colors.darkGreen, paddingLeft: 14 }}>Hora</Text>
-                                <Text style={{ flex: 1.2, fontWeight: '700', color: colors.darkGreen, paddingLeft: 10 }}>Mascota</Text>
+                            <View style={styles.tablaHeaderRow}>
+                                <Text style={styles.tablaHeaderFecha}>Fecha</Text>
+                                <Text style={styles.tablaHeaderHora}>Hora</Text>
+                                <Text style={styles.tablaHeaderMascota}>Mascota</Text>
                             </View>
 
                             {proximasCitas.map((cita) => (
-                                <View key={cita.idReserva} style={{ flexDirection: 'row', marginBottom: 6 }}>
-                                    <Text style={{ flex: 1, color: colors.darkGreen }}>{cita.fecha}</Text>
-                                    <Text style={{ flex: 1, color: colors.darkGreen, paddingLeft: 14 }}>{cita.hora}</Text>
-                                    <Text style={{ flex: 1.2, color: colors.darkGreen, paddingLeft: 10 }} numberOfLines={1}>{cita.mascota}</Text>
+                                <View
+                                    key={cita.idReserva}
+                                    style={styles.tablaDataRow}
+                                >
+                                    <Text style={styles.tablaDataFecha}>{cita.fecha}</Text>
+                                    <Text style={styles.tablaDataHora}>{cita.hora}</Text>
+                                    <Text style={styles.tablaDataMascota} numberOfLines={1}>{cita.mascota}</Text>
                                 </View>
                             ))}
                         </>
@@ -186,3 +189,48 @@ const HomeScreen = () => {
 };
 
 export default HomeScreen;
+
+const styles = StyleSheet.create({
+    tablaHeaderRow: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        borderBottomColor: colors.lightGreen,
+        paddingBottom: 6,
+        marginBottom: 8,
+    },
+    tablaHeaderFecha: {
+        flex: 1,
+        fontWeight: '700',
+        color: colors.darkGreen,
+    },
+    tablaHeaderHora: {
+        flex: 1,
+        fontWeight: '700',
+        color: colors.darkGreen,
+        paddingLeft: 14,
+    },
+    tablaHeaderMascota: {
+        flex: 1.2,
+        fontWeight: '700',
+        color: colors.darkGreen,
+        paddingLeft: 10,
+    },
+    tablaDataRow: {
+        flexDirection: 'row',
+        marginBottom: 6,
+    },
+    tablaDataFecha: {
+        flex: 1,
+        color: colors.darkGreen,
+    },
+    tablaDataHora: {
+        flex: 1,
+        color: colors.darkGreen,
+        paddingLeft: 14,
+    },
+    tablaDataMascota: {
+        flex: 1.2,
+        color: colors.darkGreen,
+        paddingLeft: 10,
+    },
+});

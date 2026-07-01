@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 import java.util.List;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.http.HttpStatus;
@@ -76,12 +77,65 @@ public class ReservaService {
                 return reservaRepository.findProximasCitasByTutorCorreo(correoTutor)
                                 .stream()
                                 .limit(2)
-                                .map(reserva -> new ProximaCitaHomeDTO(
-                                                reserva.getIdReserva(),
-                                                reserva.getBloqueHorario().getFecHrInicio().format(fechaFmt),
-                                                reserva.getBloqueHorario().getFecHrInicio().format(horaFmt),
-                                                reserva.getMascota().getNomMascota()))
+                                                                .map(reserva -> {
+                                                                                LocalDateTime inicio = reserva.getBloqueHorario().getFecHrInicio();
+                                                                                return new ProximaCitaHomeDTO(
+                                                                                                                reserva.getIdReserva(),
+                                                                                                                inicio.format(fechaFmt),
+                                                                                                                inicio.format(horaFmt),
+                                                                                                                reserva.getMascota().getNomMascota(),
+                                                                                                                inicio.toString(),
+                                                                                                                esCancelablePorTutor(reserva));
+                                                                })
                                 .toList();
+        }
+
+        @Transactional
+        public void cancelarReservaTutor(Integer idReserva, String correoTutor) {
+                Reserva reserva = reservaRepository.findByIdAndTutorCorreo(idReserva, correoTutor)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no encontrada para el tutor autenticado."));
+
+                if (!esEstadoCancelable(reserva)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Solo se pueden cancelar reservas en estado pendiente o confirmada.");
+                }
+
+                if (pagoRepository.findByReserva_IdReserva(idReserva).isPresent()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se puede cancelar esta cita porque fue creada con pago obligatorio.");
+                }
+
+                LocalDateTime inicioCita = reserva.getBloqueHorario().getFecHrInicio();
+                LocalDateTime limiteCancelacion = inicioCita.minusHours(24);
+                if (LocalDateTime.now().isAfter(limiteCancelacion)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se puede cancelar la cita con menos de 24 horas de anticipación.");
+                }
+
+                EstadoReserva estadoCancelada = estadoReservaRepository.findById(4)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Estado CANCELADA no configurado."));
+                reserva.setEstadoReserva(estadoCancelada);
+                reservaRepository.save(reserva);
+
+                BloqueHorario bloque = reserva.getBloqueHorario();
+                bloque.setEstadoBloque(estadoBloqueRepository.findById(1)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Estado DISPONIBLE de bloque no configurado.")));
+                bloqueHorarioRepository.save(bloque);
+        }
+
+        private boolean esCancelablePorTutor(Reserva reserva) {
+                boolean estadoCancelable = esEstadoCancelable(reserva);
+                boolean sinPagoObligatorio = pagoRepository.findByReserva_IdReserva(reserva.getIdReserva()).isEmpty();
+                LocalDateTime inicioCita = reserva.getBloqueHorario().getFecHrInicio();
+                boolean dentroVentanaPermitida = !LocalDateTime.now().isAfter(inicioCita.minusHours(24));
+
+                return estadoCancelable && sinPagoObligatorio && dentroVentanaPermitida;
+        }
+
+        private boolean esEstadoCancelable(Reserva reserva) {
+                String estado = reserva.getEstadoReserva().getNomEstReserva();
+                if (estado == null) {
+                        return false;
+                }
+                String estadoNormalizado = estado.toUpperCase();
+                return "PENDIENTE".equals(estadoNormalizado) || "CONFIRMADA".equals(estadoNormalizado);
         }
 
     @Transactional

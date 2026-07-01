@@ -155,6 +155,38 @@ export default function AdminHomeScreen() {
                     <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider, { width: 40 }]} />
                 </View>
 
+                <View style={globalStyles.sectionHeaderRow}>
+                    <View style={globalStyles.sectionTitleLeft}>
+                        <Ionicons name="card-outline" size={20} color={colors.darkGreen} />
+                        <Text style={[globalStyles.sectionTitle, dashboardStyles.darkText]}>Pago obligatorio</Text>
+                    </View>
+                </View>
+
+                <View style={[adminStyles.alertItem, { borderLeftColor: pagoObligatorio ? colors.darkGreen : '#E67E22', marginBottom: 18 }]}>
+                    <Ionicons name="card-outline" size={20} color={pagoObligatorio ? colors.darkGreen : '#E67E22'} />
+                    <View style={adminStyles.alertTextContainer}>
+                        <Text style={adminStyles.alertMessage}>
+                            Pago obligatorio: {pagoObligatorio ? 'ACTIVADO' : 'DESACTIVADO'}
+                        </Text>
+                        <Text style={adminStyles.alertTime}>
+                            {savingPagoConfig ? 'Guardando configuración...' : 'Control administrativo'}
+                        </Text>
+                    </View>
+                    <TouchableOpacity
+                        style={[dashboardStyles.flatFilledButtonSm, { opacity: savingPagoConfig ? 0.7 : 1 }]}
+                        onPress={togglePagoObligatorio}
+                        disabled={savingPagoConfig}
+                    >
+                        {savingPagoConfig ? (
+                            <ActivityIndicator size="small" color={colors.darkDGreen} />
+                        ) : (
+                            <Text style={dashboardStyles.filledButtonTextSm}>
+                                {pagoObligatorio ? 'Desactivar' : 'Activar'}
+                            </Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
+
                 {/* ════ SECCIÓN 1: RESUMEN DEL DÍA (GRID) ════ */}
                 <View style={adminStyles.metricsGrid}>
                     <View style={adminStyles.metricCard}>
@@ -317,31 +349,6 @@ export default function AdminHomeScreen() {
                             </View>
                         </View>
                     ))}
-
-                    <View style={[adminStyles.alertItem, { borderLeftColor: pagoObligatorio ? colors.darkGreen : '#E67E22', marginTop: 6 }]}>
-                        <Ionicons name="card-outline" size={20} color={pagoObligatorio ? colors.darkGreen : '#E67E22'} />
-                        <View style={adminStyles.alertTextContainer}>
-                            <Text style={adminStyles.alertMessage}>
-                                Pago obligatorio: {pagoObligatorio ? 'ACTIVADO' : 'DESACTIVADO'}
-                            </Text>
-                            <Text style={adminStyles.alertTime}>
-                                {savingPagoConfig ? 'Guardando configuración...' : 'Control administrativo'}
-                            </Text>
-                        </View>
-                        <TouchableOpacity
-                            style={[dashboardStyles.flatFilledButtonSm, { opacity: savingPagoConfig ? 0.7 : 1 }]}
-                            onPress={togglePagoObligatorio}
-                            disabled={savingPagoConfig}
-                        >
-                            {savingPagoConfig ? (
-                                <ActivityIndicator size="small" color={colors.darkDGreen} />
-                            ) : (
-                                <Text style={dashboardStyles.filledButtonTextSm}>
-                                    {pagoObligatorio ? 'Desactivar' : 'Activar'}
-                                </Text>
-                            )}
-                        </TouchableOpacity>
-                    </View>
                 </View>
 
             </ScrollView>

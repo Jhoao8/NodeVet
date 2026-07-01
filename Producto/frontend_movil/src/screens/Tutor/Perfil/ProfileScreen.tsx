@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator, Image, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -29,8 +29,41 @@ export default function ProfileScreen({ navigation }: any) {
     const [loading, setLoading] = useState(true);
     const [isUploadingPhoto, setIsUploadingPhoto] = useState(false); 
     const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [passwordActual, setPasswordActual] = useState('');
+    const [nuevaPassword, setNuevaPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showCurrentPass, setShowCurrentPass] = useState(false);
+    const [showNewPass, setShowNewPass] = useState(false);
+    const [showConfirmPass, setShowConfirmPass] = useState(false);
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
     
     const { showAlert, AlertComponent } = useCustomAlert();
+
+    const validacionesNuevaPassword = [
+        {
+            id: 'min',
+            mensaje: 'Mínimo 6 caracteres',
+            cumple: nuevaPassword.length >= 6,
+        },
+        {
+            id: 'upper',
+            mensaje: 'Al menos 1 mayúscula',
+            cumple: /[A-Z]/.test(nuevaPassword),
+        },
+        {
+            id: 'lower',
+            mensaje: 'Al menos 1 minúscula',
+            cumple: /[a-z]/.test(nuevaPassword),
+        },
+        {
+            id: 'special',
+            mensaje: 'Al menos 1 carácter especial (!@#$%...)',
+            cumple: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(nuevaPassword),
+        },
+    ];
+
+    const validacionesPendientesPassword = validacionesNuevaPassword.filter((v) => !v.cumple);
 
     const fetchUserProfile = async () => {
         if (!userToken) {
@@ -186,6 +219,55 @@ export default function ProfileScreen({ navigation }: any) {
         );
     };
 
+    const abrirModalCambioPassword = () => {
+        setPasswordActual('');
+        setNuevaPassword('');
+        setConfirmPassword('');
+        setShowCurrentPass(false);
+        setShowNewPass(false);
+        setShowConfirmPass(false);
+        setShowPasswordModal(true);
+    };
+
+    const cerrarModalCambioPassword = () => {
+        if (!isChangingPassword) {
+            setShowPasswordModal(false);
+        }
+    };
+
+    const cambiarPassword = async () => {
+        if (!passwordActual || !nuevaPassword || !confirmPassword) {
+            showAlert('Campos incompletos', 'Debes ingresar contraseña actual, nueva y confirmación.');
+            return;
+        }
+
+        if (validacionesPendientesPassword.length > 0) {
+            showAlert('Contraseña inválida', 'La nueva contraseña no cumple todas las reglas requeridas.');
+            return;
+        }
+
+        if (nuevaPassword !== confirmPassword) {
+            showAlert('No coincide', 'La nueva contraseña y su confirmación no coinciden.');
+            return;
+        }
+
+        setIsChangingPassword(true);
+        try {
+            await api.put('/v1/usuarios/perfil/password', {
+                passwordActual,
+                nuevaPassword,
+            });
+
+            setShowPasswordModal(false);
+            showAlert('Éxito', 'Tu contraseña se cambió correctamente.');
+        } catch (error: any) {
+            const mensaje = error?.response?.data || 'No se pudo cambiar la contraseña.';
+            showAlert('Error', typeof mensaje === 'string' ? mensaje : 'No se pudo cambiar la contraseña.');
+        } finally {
+            setIsChangingPassword(false);
+        }
+    };
+
     return (
         <View style={[globalStyles.container, dashboardStyles.lightBackground]}>
             <DashboardHeader />
@@ -260,14 +342,11 @@ export default function ProfileScreen({ navigation }: any) {
                 <View style={[dashboardStyles.greetingDivider, dashboardStyles.darkDivider, { marginVertical: spacing.lg }]} />
 
                 <View style={styles.menuContainer}>
-                    <TouchableOpacity style={styles.menuButton}>
+                    <TouchableOpacity style={styles.menuButton} onPress={abrirModalCambioPassword}>
                         <Text style={styles.menuButtonText}>Cambiar contraseña</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.menuButton}>
-                        <Text style={styles.menuButtonText}>Configurar recordatorios</Text>
-                    </TouchableOpacity>
                     <TouchableOpacity
-                        style={styles.menuButton}
+                        style={styles.deleteAccountButton}
                         onPress={handleDeleteAccount}
                         disabled={isDeletingAccount}
                     >
@@ -282,6 +361,103 @@ export default function ProfileScreen({ navigation }: any) {
                 </TouchableOpacity>
 
             </ScrollView>
+
+            <Modal
+                visible={showPasswordModal}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={cerrarModalCambioPassword}
+            >
+                <View style={globalStyles.detailModalOverlay}>
+                    <View style={globalStyles.detailModalContainer}>
+                        <View style={globalStyles.detailModalHeader}>
+                            <Text style={globalStyles.detailModalDate}>Cambiar contraseña</Text>
+                            <TouchableOpacity onPress={cerrarModalCambioPassword} disabled={isChangingPassword}>
+                                <Ionicons name="close" size={24} color={colors.lightYellow} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={globalStyles.detailModalBody}>
+                        <View style={styles.inputWrapper}>
+                            <Text style={styles.modalLabel}>Contraseña actual</Text>
+                            <View style={styles.passwordInputContainer}>
+                                <TextInput
+                                    style={styles.passwordInput}
+                                    placeholder="Ingresa tu contraseña actual"
+                                    placeholderTextColor={colors.darkGreen}
+                                    secureTextEntry={!showCurrentPass}
+                                    value={passwordActual}
+                                    onChangeText={setPasswordActual}
+                                    editable={!isChangingPassword}
+                                />
+                                <TouchableOpacity onPress={() => setShowCurrentPass(!showCurrentPass)}>
+                                    <Ionicons name={showCurrentPass ? 'eye-off' : 'eye'} size={20} color={colors.darkGreen} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <View style={styles.inputWrapper}>
+                            <Text style={styles.modalLabel}>Nueva contraseña</Text>
+                            <View style={styles.passwordInputContainer}>
+                                <TextInput
+                                    style={styles.passwordInput}
+                                    placeholder="Mínimo 6 caracteres"
+                                    placeholderTextColor={colors.darkGreen}
+                                    secureTextEntry={!showNewPass}
+                                    value={nuevaPassword}
+                                    onChangeText={setNuevaPassword}
+                                    editable={!isChangingPassword}
+                                />
+                                <TouchableOpacity onPress={() => setShowNewPass(!showNewPass)}>
+                                    <Ionicons name={showNewPass ? 'eye-off' : 'eye'} size={20} color={colors.darkGreen} />
+                                </TouchableOpacity>
+                            </View>
+                            {nuevaPassword.length > 0 && validacionesPendientesPassword.map((validacion) => (
+                                <View key={validacion.id} style={styles.passwordValidationRow}>
+                                    <Ionicons name="alert-circle-outline" size={14} color={colors.red || '#e74c3c'} />
+                                    <Text style={styles.passwordValidationText}>{validacion.mensaje}</Text>
+                                </View>
+                            ))}
+                        </View>
+
+                        <View style={styles.inputWrapper}>
+                            <Text style={styles.modalLabel}>Confirmar contraseña</Text>
+                            <View
+                                style={[
+                                    styles.passwordInputContainer,
+                                    confirmPassword.length > 0 && confirmPassword !== nuevaPassword && styles.passwordInputError,
+                                ]}
+                            >
+                                <TextInput
+                                    style={styles.passwordInput}
+                                    placeholder="Repite la nueva contraseña"
+                                    placeholderTextColor={colors.darkGreen}
+                                    secureTextEntry={!showConfirmPass}
+                                    value={confirmPassword}
+                                    onChangeText={setConfirmPassword}
+                                    editable={!isChangingPassword}
+                                />
+                                <TouchableOpacity onPress={() => setShowConfirmPass(!showConfirmPass)}>
+                                    <Ionicons name={showConfirmPass ? 'eye-off' : 'eye'} size={20} color={colors.darkGreen} />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+
+                        <TouchableOpacity
+                            style={[styles.modalSaveButton, isChangingPassword && { opacity: 0.7 }]}
+                            onPress={cambiarPassword}
+                            disabled={isChangingPassword}
+                        >
+                            {isChangingPassword ? (
+                                <ActivityIndicator color={colors.lightYellow} />
+                            ) : (
+                                <Text style={styles.modalSaveButtonText}>Guardar cambios</Text>
+                            )}
+                        </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
             <AlertComponent />
         </View>
     );
@@ -317,15 +493,83 @@ const styles = StyleSheet.create({
 
     menuContainer: { gap: spacing.md },
     menuButton: {
-        borderWidth: 1.5, borderColor: colors.darkDGreen, paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg, alignItems: 'center',
+        backgroundColor: colors.darkGreen,
+        borderWidth: 1.5,
+        borderColor: colors.darkGreen,
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
+        alignItems: 'center',
+        borderRadius: 8,
     },
-    menuButtonText: { fontFamily: typography.family.main.medium, fontSize: typography.size.md, color: colors.darkDGreen },
+    menuButtonText: { fontFamily: typography.family.main.medium, fontSize: typography.size.md, color: colors.lightYellow },
+    deleteAccountButton: {
+        backgroundColor: '#d84646',
+        borderWidth: 1.5,
+        borderColor: '#d84646',
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
+        alignItems: 'center',
+        borderRadius: 8,
+    },
 
     logoutButton: {
-        borderWidth: 1.5, borderColor: colors.darkDGreen, paddingVertical: spacing.md,
-        paddingHorizontal: spacing.lg, borderRadius: 8, alignSelf: 'flex-start',
-        marginTop: spacing.lg, marginBottom: spacing.xl,
+        backgroundColor: colors.red || '#e74c3c',
+        borderWidth: 1.5,
+        borderColor: colors.red || '#e74c3c',
+        paddingVertical: spacing.md,
+        paddingHorizontal: spacing.lg,
+        borderRadius: 8,
+        alignSelf: 'center',
+        marginTop: spacing.xl, marginBottom: spacing.xl,
     },
-    logoutButtonText: { fontFamily: typography.family.main.bold, fontSize: typography.size.sm, color: colors.darkDGreen },
+    logoutButtonText: { fontFamily: typography.family.main.bold, fontSize: typography.size.sm, color: colors.lightYellow },
+    inputWrapper: {
+        marginBottom: spacing.md,
+    },
+    modalLabel: {
+        fontFamily: typography.family.main.semiBold,
+        fontSize: typography.size.sm,
+        color: colors.darkGreen,
+        marginBottom: spacing.xs,
+    },
+    passwordInputContainer: {
+        borderWidth: 1.5,
+        borderColor: colors.lightGreen,
+        borderRadius: 8,
+        paddingHorizontal: spacing.sm,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: colors.white,
+    },
+    passwordInput: {
+        flex: 1,
+        color: colors.darkDGreen,
+        paddingVertical: spacing.sm,
+    },
+    passwordInputError: {
+        borderColor: colors.red || '#e74c3c',
+    },
+    modalSaveButton: {
+        backgroundColor: colors.darkGreen,
+        borderRadius: 8,
+        alignItems: 'center',
+        paddingVertical: spacing.md,
+        marginTop: spacing.xs,
+    },
+    modalSaveButtonText: {
+        fontFamily: typography.family.main.bold,
+        color: colors.lightYellow,
+        fontSize: typography.size.md,
+    },
+    passwordValidationRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: spacing.xs,
+        gap: spacing.xs,
+    },
+    passwordValidationText: {
+        fontFamily: typography.family.main.regular,
+        fontSize: typography.size.xs,
+        color: colors.red || '#e74c3c',
+    },
 });

@@ -12,4 +12,6 @@ public class ProximaCitaHomeDTO {
     private String fecha;
     private String hora;
     private String mascota;
+    private String fechaHoraInicio;
+    private Boolean cancelable;
 }

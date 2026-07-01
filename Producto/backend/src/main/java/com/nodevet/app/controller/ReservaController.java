@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -41,5 +42,18 @@ public class ReservaController {
     public ResponseEntity<List<ProximaCitaHomeDTO>> obtenerProximasCitasTutor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return ResponseEntity.ok(reservaService.obtenerProximasCitasTutor(authentication.getName()));
+    }
+
+    @PreAuthorize("hasRole('TUTOR')")
+    @DeleteMapping("/{idReserva}/cancelar")
+    @Operation(summary = "Cancelar reserva del tutor", description = "Permite cancelar una reserva propia solo si no tiene pago obligatorio y faltan al menos 24 horas para la cita. También libera el bloque horario.")
+    public ResponseEntity<?> cancelarReservaTutor(@PathVariable Integer idReserva) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            reservaService.cancelarReservaTutor(idReserva, authentication.getName());
+            return ResponseEntity.noContent().build();
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        }
     }
 }

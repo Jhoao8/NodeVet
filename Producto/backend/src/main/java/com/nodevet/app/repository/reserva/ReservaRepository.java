@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import com.nodevet.app.model.reserva.Reserva;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
 
@@ -26,6 +27,16 @@ public interface ReservaRepository extends JpaRepository<Reserva, Integer> {
             "AND UPPER(r.estadoReserva.nomEstReserva) IN ('PENDIENTE', 'CONFIRMADA') " +
             "ORDER BY b.fecHrInicio ASC")
     List<Reserva> findProximasCitasByTutorCorreo(@Param("correo") String correo);
+
+        @Query("SELECT r FROM Reserva r " +
+            "JOIN FETCH r.bloqueHorario b " +
+            "JOIN FETCH r.estadoReserva e " +
+            "JOIN r.mascota m " +
+            "JOIN m.tutor t " +
+            "JOIN t.usuario u " +
+            "WHERE r.idReserva = :idReserva " +
+            "AND u.correoUsr = :correo")
+        Optional<Reserva> findByIdAndTutorCorreo(@Param("idReserva") Integer idReserva, @Param("correo") String correo);
     
     @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE reserva SET id_est_res = :idEstado WHERE id_reserva = :idReserva", nativeQuery = true)

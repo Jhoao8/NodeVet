@@ -27,6 +27,13 @@ public class PagoController {
         return ResponseEntity.ok(Map.of("pagoObligatorio", pagoConfigService.isPagoObligatorio()));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','TUTOR','VET')")
+    @GetMapping("/config/obligatorio/lectura")
+    @Operation(summary = "Leer estado pago obligatorio (usuarios autenticados)", description = "Permite a usuarios autenticados consultar si el pago obligatorio está activo para mostrar avisos en interfaz.")
+    public ResponseEntity<Map<String, Boolean>> obtenerPagoObligatorioLectura() {
+        return ResponseEntity.ok(Map.of("pagoObligatorio", pagoConfigService.isPagoObligatorio()));
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/config/obligatorio")
     @Operation(summary = "Cambiar estado pago obligatorio", description = "Permite activar o desactivar la obligatoriedad de pago para crear reservas.")

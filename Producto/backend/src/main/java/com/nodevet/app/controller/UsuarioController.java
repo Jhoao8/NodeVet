@@ -1,6 +1,7 @@
 package com.nodevet.app.controller;
 
 import com.nodevet.app.dto.usuario.UsuarioDTO;
+import com.nodevet.app.dto.usuario.CambioPasswordRequestDTO;
 import com.nodevet.app.dto.usuario.UsuarioRegistroDTO;
 import com.nodevet.app.dto.usuario.UsuarioUpdateDTO;
 import com.nodevet.app.dto.reserva.ResumenTutorReservasDTO;
@@ -104,6 +105,23 @@ public class UsuarioController {
             
             Map<String, String> response = new HashMap<>();
             response.put("mensaje", "Foto de perfil actualizada correctamente");
+            return ResponseEntity.ok(response);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        }
+    }
+
+    @PutMapping("/perfil/password")
+    @Operation(summary = "Cambiar mi contraseña", description = "Permite al usuario autenticado cambiar su contraseña validando primero su contraseña actual.")
+    public ResponseEntity<?> cambiarMiPassword(@RequestBody CambioPasswordRequestDTO dto) {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String correo = authentication.getName();
+
+            usuarioService.cambiarPasswordAutenticado(correo, dto.getPasswordActual(), dto.getNuevaPassword());
+
+            Map<String, String> response = new HashMap<>();
+            response.put("mensaje", "Contraseña actualizada correctamente");
             return ResponseEntity.ok(response);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
