@@ -6,6 +6,7 @@ import com.nodevet.app.dto.consulta.ConsultaResponseDTO;
 import com.nodevet.app.model.consulta.ArchivoAdjunto;
 import com.nodevet.app.model.consulta.Consulta;
 import com.nodevet.app.model.consulta.TipoArchivo;
+import com.nodevet.app.model.reserva.EstadoReserva;
 import com.nodevet.app.model.reserva.Reserva;
 import com.nodevet.app.model.Valor;
 import com.nodevet.app.model.servicio.*;
@@ -15,6 +16,7 @@ import com.nodevet.app.repository.consulta.ExamServRepository;
 import com.nodevet.app.repository.consulta.ServicioRepository;
 import com.nodevet.app.repository.consulta.TipoArchivoRepository;
 import com.nodevet.app.repository.consulta.VacServRepository;
+import com.nodevet.app.repository.reserva.EstadoReservaRepository;
 import com.nodevet.app.repository.reserva.ReservaRepository;
 
 import java.time.format.DateTimeFormatter;
@@ -44,6 +46,7 @@ private final ExamServRepository examServRepository;
 
 private final ArchivoAdjuntoRepository archivoAdjuntoRepository;
 private final TipoArchivoRepository tipoArchivoRepository;
+private final EstadoReservaRepository estadoReservaRepository;
 
 @Transactional
 public Consulta crearConsulta(ConsultaRequestDTO dto) {
@@ -56,12 +59,23 @@ public Consulta crearConsulta(ConsultaRequestDTO dto) {
         Reserva reserva = reservaRepository.findById(dto.getIdReserva())
                 .orElseThrow(() -> new IllegalArgumentException("La reserva no existe."));
 
-        if (reserva.getEstadoReserva() == null || reserva.getEstadoReserva().getIdEstReserva() != 2) { 
-        throw new IllegalStateException("Error: No se puede crear una atención clínica para una reserva que no está pagada o confirmada.");
+        Integer estadoReserva = reserva.getEstadoReserva() != null ? reserva.getEstadoReserva().getIdEstReserva() : null;
+        if (estadoReserva == null || (estadoReserva != 1 && estadoReserva != 2)) {
+        throw new IllegalStateException("Error: No se puede crear una atención clínica para una reserva que no está disponible para atención.");
         }
 
-        Valor valor = valorRepository.findById(dto.getIdValor())
-                .orElseThrow(() -> new IllegalArgumentException("El valor asociado no existe."));
+        Valor valor;
+        if (dto.getIdValor() != null) {
+                valor = valorRepository.findById(dto.getIdValor())
+                        .orElseThrow(() -> new IllegalArgumentException("El valor asociado no existe."));
+        } else {
+                valor = reserva.getValor();
+                if (valor == null) {
+                        throw new IllegalArgumentException("La reserva no tiene un valor asociado para crear la ficha clínica.");
+                }
+        }
+
+        boolean asistio = dto.getAsistio() == null || dto.getAsistio();
 
         // 2. Crear y guardar la Consulta principal
         Consulta nuevaConsulta = Consulta.builder()
@@ -113,6 +127,12 @@ public Consulta crearConsulta(ConsultaRequestDTO dto) {
                 examServRepository.save(examServ);
         }
         }
+
+        String nombreEstadoFinal = asistio ? "COMPLETADA" : "AUSENTE";
+        EstadoReserva estadoFinal = estadoReservaRepository.findByNomEstReservaIgnoreCase(nombreEstadoFinal)
+                .orElseThrow(() -> new IllegalStateException("No existe el estado " + nombreEstadoFinal + " para la reserva."));
+        reserva.setEstadoReserva(estadoFinal);
+        reservaRepository.save(reserva);
 
         return consultaGuardada;
 }
@@ -166,7 +186,7 @@ public ConsultaResponseDTO obtenerConsultaPorReserva(Integer idReserva) {
 
 @Transactional(readOnly = true)
 public List<ConsultaResponseDTO> obtenerHistorialPorMascota(Integer idMascota) {
-List<Consulta> consultas = consultaRepository.findByReserva_Mascota_IdMascota(idMascota);
+List<Consulta> consultas = consultaRepository.findHistorialExitosoByMascotaId(idMascota);
 
 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
@@ -201,5 +221,41 @@ return consultas.stream().map(consulta -> {
                 .archivosUrls(urls)
                 .build();
 }).collect(Collectors.toList());
+}
+
+@Transactional(readOnly = true)
+public List<ConsultaResponseDTO> obtenerHistorialPorVeterinario(String correoVet) {
+return consultaRepository.findHistorialExitosoByVeterinarioCorreo(correoVet)
+        .stream()
+        .map(consulta -> {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+                String fechaAtencion = consulta.getReserva().getBloqueHorario() != null && consulta.getReserva().getBloqueHorario().getFecHrInicio() != null
+                        ? consulta.getReserva().getBloqueHorario().getFecHrInicio().format(formatter)
+                        : "Sin fecha";
+
+                String nombreProfesional = "No asignado";
+                if (consulta.getReserva().getVeterinario() != null && consulta.getReserva().getVeterinario().getUsuario() != null) {
+                        nombreProfesional = "Dr(a). " + consulta.getReserva().getVeterinario().getUsuario().getNombreUsr() + " " +
+                                consulta.getReserva().getVeterinario().getUsuario().getApellidoUsr();
+                }
+
+                List<String> urls = archivoAdjuntoRepository.findByConsulta_IdConsulta(consulta.getIdConsulta())
+                        .stream()
+                        .map(ArchivoAdjunto::getArchivoUrl)
+                        .collect(Collectors.toList());
+
+                return ConsultaResponseDTO.builder()
+                        .idConsulta(consulta.getIdConsulta())
+                        .idReserva(consulta.getReserva().getIdReserva())
+                        .fecha(fechaAtencion)
+                        .profesional(nombreProfesional)
+                        .diagnostico(consulta.getDiagnostico())
+                        .notas(consulta.getNotas())
+                        .indicacionReceta(consulta.getIndicacionReceta())
+                        .archivosUrls(urls)
+                        .build();
+        })
+        .collect(Collectors.toList());
 }
 }

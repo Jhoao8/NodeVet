@@ -15,6 +15,9 @@ public class ConsultaRequestDTO {
     @Schema(example = "1", description = "ID de la reserva confirmada a la que pertenece esta consulta")
     private Integer idReserva;
 
+    @Schema(example = "true", description = "Indica si el tutor/paciente asistió a la atención")
+    private Boolean asistio;
+
     @Schema(example = "1", description = "ID del valor o costo asociado a la atención")
     private Integer idValor;
 

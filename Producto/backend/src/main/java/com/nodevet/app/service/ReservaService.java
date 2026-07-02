@@ -1,7 +1,9 @@
 package com.nodevet.app.service;
 
 import com.nodevet.app.dto.reserva.ReservaRequestDTO;
-import com.nodevet.app.dto.reserva.ReservaResponseDTO;
+import com.nodevet.app.dto.reserva.ProximaCitaHomeDTO;
+import com.nodevet.app.dto.reserva.ReservaVetDiaDTO;
+import com.nodevet.app.dto.reserva.ResumenTutorReservasDTO;
 import com.nodevet.app.model.Mascota;
 import com.nodevet.app.model.Valor;
 import com.nodevet.app.model.agenda.BloqueHorario;
@@ -24,14 +26,18 @@ import com.nodevet.app.repository.reserva.EstadoReservaRepository;
 import com.nodevet.app.repository.reserva.ReservaRepository;
 import com.nodevet.app.repository.pago.PagoRepository;
 import com.nodevet.app.repository.pago.EstadoPagoRepository;
+import com.nodevet.app.service.pago.PagoConfigService;
 import com.nodevet.app.service.pago.FlowService;
 import com.nodevet.app.util.DtoMapper;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -59,6 +65,108 @@ public class ReservaService {
     private final PagoRepository pagoRepository;
     private final EstadoPagoRepository estadoPagoRepository;
     private final FlowService flowService;
+        private final PagoConfigService pagoConfigService;
+
+        @Transactional(readOnly = true)
+        public ResumenTutorReservasDTO obtenerResumenTutor(Integer idUsuario, String nombreCompleto) {
+                long total = reservaRepository.countByMascota_Tutor_Usuario_IdUsuario(idUsuario);
+                long asistidas = reservaRepository.countAsistidasByTutorUsuarioId(idUsuario);
+                long ausentadas = reservaRepository.countAusentadasByTutorUsuarioId(idUsuario);
+
+                return new ResumenTutorReservasDTO(
+                                idUsuario,
+                                nombreCompleto,
+                                total,
+                                asistidas,
+                                ausentadas
+                );
+        }
+
+        @Transactional(readOnly = true)
+        public List<ProximaCitaHomeDTO> obtenerProximasCitasTutor(String correoTutor) {
+                DateTimeFormatter fechaFmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                DateTimeFormatter horaFmt = DateTimeFormatter.ofPattern("HH:mm");
+
+                return reservaRepository.findProximasCitasByTutorCorreo(correoTutor)
+                                .stream()
+                                .limit(2)
+                                                                .map(reserva -> {
+                                                                                LocalDateTime inicio = reserva.getBloqueHorario().getFecHrInicio();
+                                                                                return new ProximaCitaHomeDTO(
+                                                                                                                reserva.getIdReserva(),
+                                                                                                                inicio.format(fechaFmt),
+                                                                                                                inicio.format(horaFmt),
+                                                                                                                reserva.getMascota().getNomMascota(),
+                                                                                                                inicio.toString(),
+                                                                                                                esCancelablePorTutor(reserva));
+                                                                })
+                                .toList();
+        }
+
+        @Transactional(readOnly = true)
+        public List<ReservaVetDiaDTO> obtenerAgendaDiariaVeterinario(String correoVet, String fecha) {
+                LocalDate fechaSeleccionada = LocalDate.parse(fecha);
+                LocalDateTime inicioDia = fechaSeleccionada.atStartOfDay();
+                LocalDateTime finDia = fechaSeleccionada.atTime(LocalTime.MAX);
+                DateTimeFormatter horaFmt = DateTimeFormatter.ofPattern("HH:mm");
+
+                return reservaRepository.findAgendaDiariaByVeterinarioCorreo(correoVet, inicioDia, finDia)
+                                .stream()
+                                .map(reserva -> new ReservaVetDiaDTO(
+                                                reserva.getIdReserva(),
+                                                reserva.getBloqueHorario().getFecHrInicio().format(horaFmt),
+                                                reserva.getMascota().getTutor().getUsuario().getNombreUsr() + " " + reserva.getMascota().getTutor().getUsuario().getApellidoUsr(),
+                                                reserva.getMascota().getNomMascota()))
+                                .toList();
+        }
+
+        @Transactional
+        public void cancelarReservaTutor(Integer idReserva, String correoTutor) {
+                Reserva reserva = reservaRepository.findByIdAndTutorCorreo(idReserva, correoTutor)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Reserva no encontrada para el tutor autenticado."));
+
+                if (!esEstadoCancelable(reserva)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Solo se pueden cancelar reservas en estado pendiente o confirmada.");
+                }
+
+                if (pagoRepository.findByReserva_IdReserva(idReserva).isPresent()) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se puede cancelar esta cita porque fue creada con pago obligatorio.");
+                }
+
+                LocalDateTime inicioCita = reserva.getBloqueHorario().getFecHrInicio();
+                LocalDateTime limiteCancelacion = inicioCita.minusHours(24);
+                if (LocalDateTime.now().isAfter(limiteCancelacion)) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "No se puede cancelar la cita con menos de 24 horas de anticipación.");
+                }
+
+                EstadoReserva estadoCancelada = estadoReservaRepository.findById(4)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Estado CANCELADA no configurado."));
+                reserva.setEstadoReserva(estadoCancelada);
+                reservaRepository.save(reserva);
+
+                BloqueHorario bloque = reserva.getBloqueHorario();
+                bloque.setEstadoBloque(estadoBloqueRepository.findById(1)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Estado DISPONIBLE de bloque no configurado.")));
+                bloqueHorarioRepository.save(bloque);
+        }
+
+        private boolean esCancelablePorTutor(Reserva reserva) {
+                boolean estadoCancelable = esEstadoCancelable(reserva);
+                boolean sinPagoObligatorio = pagoRepository.findByReserva_IdReserva(reserva.getIdReserva()).isEmpty();
+                LocalDateTime inicioCita = reserva.getBloqueHorario().getFecHrInicio();
+                boolean dentroVentanaPermitida = !LocalDateTime.now().isAfter(inicioCita.minusHours(24));
+
+                return estadoCancelable && sinPagoObligatorio && dentroVentanaPermitida;
+        }
+
+        private boolean esEstadoCancelable(Reserva reserva) {
+                String estado = reserva.getEstadoReserva().getNomEstReserva();
+                if (estado == null) {
+                        return false;
+                }
+                String estadoNormalizado = estado.toUpperCase();
+                return "PENDIENTE".equals(estadoNormalizado) || "CONFIRMADA".equals(estadoNormalizado);
+        }
 
     @Transactional
     public com.nodevet.app.dto.reserva.ReservaDTO crearReserva(ReservaRequestDTO request) {
@@ -105,6 +213,22 @@ public class ReservaService {
         // 4. Guardar la reserva
         Reserva reservaGuardada = reservaRepository.save(nuevaReserva);
 
+        boolean pagoObligatorio = pagoConfigService.isPagoObligatorio();
+        com.nodevet.app.dto.reserva.ReservaDTO responseDTO = DtoMapper.toReservaDTO(reservaGuardada);
+
+        if (!pagoObligatorio) {
+            EstadoReserva confirmadaSinPago = estadoReservaRepository.findById(2)
+                    .orElseThrow(() -> new RuntimeException("Estado de reserva CONFIRMADA no configurado"));
+
+            reservaGuardada.setEstadoReserva(confirmadaSinPago);
+            reservaRepository.save(reservaGuardada);
+
+            responseDTO.setIdEstReserva(confirmadaSinPago.getIdEstReserva());
+            responseDTO.setUrlPago(null);
+            responseDTO.setPagoObligatorio(false);
+            return responseDTO;
+        }
+
         // --- INICIO DE LÓGICA DE PAGOS ---
 
         // 5. Buscar el estado "Pendiente" para el pago
@@ -129,9 +253,9 @@ public class ReservaService {
 
         // --- FIN DE LÓGICA DE PAGOS ---
 
-        // 8. Convertimos a DTO y le adjuntamos la URL de Flow
-        com.nodevet.app.dto.reserva.ReservaDTO responseDTO = DtoMapper.toReservaDTO(reservaGuardada);
+                // 8. Convertimos a DTO y le adjuntamos la URL de Flow
         responseDTO.setUrlPago(urlDePago);
+                responseDTO.setPagoObligatorio(true);
 
         return responseDTO;
     }
@@ -204,4 +328,5 @@ public class ReservaService {
             bloqueHorarioRepository.save(bloque);
         }
     }
+
 }

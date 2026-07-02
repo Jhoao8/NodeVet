@@ -65,6 +65,7 @@ export default function VerJornadasScreen() {
     const [feedbackModal, setFeedbackModal] = useState({ visible: false, title: '', message: '', isSuccess: false });
     const [jornadaSeleccionada, setJornadaSeleccionada] = useState<JornadaDTO | null>(null);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showFormModal, setShowFormModal] = useState(false);
     const [editHoraInicio, setEditHoraInicio] = useState('');
     const [editHoraFin, setEditHoraFin] = useState('');
@@ -109,8 +110,18 @@ export default function VerJornadasScreen() {
         setShowFormModal(true);
     };
 
+    const handleSolicitarEliminarJornada = () => {
+        setShowEditModal(false);
+        setShowDeleteModal(true);
+    };
+
     const handleCancelarEdicion = () => {
         setShowEditModal(false);
+        setJornadaSeleccionada(null);
+    };
+
+    const handleCancelarEliminacion = () => {
+        setShowDeleteModal(false);
         setJornadaSeleccionada(null);
     };
 
@@ -176,6 +187,35 @@ export default function VerJornadasScreen() {
                 ? error.response.data
                 : error.response?.data?.message;
             showFeedback('Error al Actualizar', backendError || 'No se pudo guardar el nuevo horario.', false);
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const ejecutarEliminacionJornada = async () => {
+        if (!jornadaSeleccionada) return;
+
+        try {
+            setSubmitting(true);
+            await api.delete(`/v1/jornadas/${jornadaSeleccionada.idJornada}`);
+
+            setJornadas(prev => prev.filter(j => j.idJornada !== jornadaSeleccionada.idJornada));
+            const diaEliminado = DIAS_SEMANA_MAP[jornadaSeleccionada.diaSemana];
+
+            setShowDeleteModal(false);
+            setJornadaSeleccionada(null);
+
+            showFeedback(
+                'Jornada eliminada',
+                `La jornada de ${diaEliminado} y sus bloques asociados fueron eliminados correctamente.`,
+                true
+            );
+        } catch (error: any) {
+            console.error('Error al eliminar jornada:', error);
+            const backendError = typeof error.response?.data === 'string'
+                ? error.response.data
+                : error.response?.data?.message || error.response?.data?.mensaje;
+            showFeedback('Error al eliminar', backendError || 'No se pudo eliminar la jornada seleccionada.', false);
         } finally {
             setSubmitting(false);
         }
@@ -249,7 +289,7 @@ export default function VerJornadasScreen() {
                         ListEmptyComponent={
                             <View style={styles.emptyContainerState}>
                                 <Ionicons name="calendar-outline" size={60} color={colors.lightGreen} style={{ opacity: 0.4 }} />
-                                <Text style={styles.emptyMainText}>Sin reglas asignadas</Text>
+                                <Text style={styles.emptyMainText}>Sin jornadas registradas</Text>
                                 <Text style={styles.emptySubText}>
                                     Este profesional no registra un molde horario base en el sistema. Puedes configurarle uno en la pantalla anterior.
                                 </Text>
@@ -282,7 +322,7 @@ export default function VerJornadasScreen() {
                 <View style={globalStyles.modalOverlay}>
                     <View style={[globalStyles.modalContent, { width: '85%' }]}>
                         <Ionicons name="pencil-outline" size={44} color={colors.darkGreen} style={{ marginBottom: spacing.xs }} />
-                        <Text style={globalStyles.modalTitle}>¿Desea editar esta jornada?</Text>
+                        <Text style={globalStyles.modalTitle}>¿Qué deseas hacer con esta jornada?</Text>
                         
                         {jornadaSeleccionada && (
                             <View style={styles.editModalSummary}>
@@ -300,11 +340,58 @@ export default function VerJornadasScreen() {
                             style={[globalStyles.modalButton, { backgroundColor: colors.darkGreen, marginBottom: spacing.sm }]} 
                             onPress={handleEditarJornada}
                         >
-                            <Text style={[globalStyles.primaryButtonText, { color: colors.white }]}>Si</Text>
+                            <Text style={[globalStyles.primaryButtonText, { color: colors.white }]}>Editar</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[globalStyles.modalButton, { backgroundColor: colors.error, marginBottom: spacing.sm }]}
+                            onPress={handleSolicitarEliminarJornada}
+                        >
+                            <Text style={[globalStyles.primaryButtonText, { color: colors.white }]}>Eliminar</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity style={globalStyles.modalButton} onPress={handleCancelarEdicion}>
-                            <Text style={globalStyles.primaryButtonText}>No</Text>
+                            <Text style={globalStyles.primaryButtonText}>Cancelar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            <Modal visible={showDeleteModal} animationType="fade" transparent={true} onRequestClose={handleCancelarEliminacion}>
+                <View style={globalStyles.modalOverlay}>
+                    <View style={[globalStyles.modalContent, { width: '85%' }]}>
+                        <Ionicons name="trash-outline" size={44} color={colors.error} style={{ marginBottom: spacing.xs }} />
+                        <Text style={globalStyles.modalTitle}>Eliminar jornada</Text>
+
+                        {jornadaSeleccionada && (
+                            <View style={styles.editModalSummary}>
+                                <Text style={styles.editModalLabel}>Día</Text>
+                                <Text style={styles.editModalValue}>{DIAS_SEMANA_MAP[jornadaSeleccionada.diaSemana]}</Text>
+
+                                <Text style={styles.editModalLabel}>Horario</Text>
+                                <Text style={styles.editModalValue}>
+                                    {limpiarFormatoHora(jornadaSeleccionada.horaInicio)} a {limpiarFormatoHora(jornadaSeleccionada.horaFin)} hrs
+                                </Text>
+                            </View>
+                        )}
+
+                        <Text style={[globalStyles.modalMessage, { marginTop: -spacing.sm }]}>
+                            Esta acción eliminará la jornada y también los bloques horarios asociados.
+                        </Text>
+
+                        <TouchableOpacity
+                            style={[globalStyles.modalButton, { backgroundColor: colors.error, marginBottom: spacing.sm, opacity: submitting ? 0.6 : 1 }]}
+                            onPress={ejecutarEliminacionJornada}
+                            disabled={submitting}
+                        >
+                            {submitting
+                                ? <ActivityIndicator color={colors.white} />
+                                : <Text style={[globalStyles.primaryButtonText, { color: colors.white }]}>Confirmar eliminación</Text>
+                            }
+                        </TouchableOpacity>
+
+                        <TouchableOpacity style={globalStyles.modalButton} onPress={handleCancelarEliminacion} disabled={submitting}>
+                            <Text style={globalStyles.primaryButtonText}>Cancelar</Text>
                         </TouchableOpacity>
                     </View>
                 </View>

@@ -83,10 +83,8 @@ public class SecurityConfig {
 
                 // Mascotas: solo para Tutores
                 .requestMatchers("/api/v1/mascotas/**").hasRole("TUTOR")
-
-                // Reservas: el Tutor crea (POST); Tutor y Veterinario consultan (GET)
-                .requestMatchers(HttpMethod.POST, "/api/v1/reservas/**").hasRole("TUTOR")
-                .requestMatchers(HttpMethod.GET, "/api/v1/reservas/**").hasAnyRole("TUTOR", "VET")
+                .requestMatchers(HttpMethod.GET, "/api/v1/reservas/veterinario/agenda").hasAnyRole("VET", "ADMIN")
+                .requestMatchers("/api/v1/reservas/**").hasRole("TUTOR")
                 // === RUTAS DE PAGOS ===
                 .requestMatchers("/api/v1/pagos/iniciar").hasRole("TUTOR")
 

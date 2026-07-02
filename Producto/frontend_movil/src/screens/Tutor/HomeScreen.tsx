@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
@@ -12,11 +12,20 @@ import api from '../../api/axiosInstance'; // 👇 Importamos la API para traer 
 import DashboardHeader from '../../components/DashboardHeader';
 import PetSummaryList from '../../components/PetSummaryList/PetSummaryList';
 
+interface ProximaCitaHome {
+    idReserva: number;
+    fecha: string;
+    hora: string;
+    mascota: string;
+}
+
 const HomeScreen = () => {
     const navigation = useNavigation<any>();
     const { userToken } = useAuth(); // Usamos el token para verificar la sesión
     const [primerNombre, setPrimerNombre] = useState('Usuario');
     const [loadingName, setLoadingName] = useState(true);
+    const [proximasCitas, setProximasCitas] = useState<ProximaCitaHome[]>([]);
+    const [loadingCitas, setLoadingCitas] = useState(true);
 
     //Función para extraer solo el nombre del usuario
     const obtenerNombreUsuario = async () => {
@@ -40,10 +49,29 @@ const HomeScreen = () => {
         }
     };
 
+    const obtenerProximasCitas = async () => {
+        if (!userToken) {
+            setLoadingCitas(false);
+            return;
+        }
+
+        try {
+            const response = await api.get('/v1/reservas/proximas');
+            const citas = Array.isArray(response.data) ? response.data : [];
+            setProximasCitas(citas.slice(0, 2));
+        } catch (error) {
+            console.error('Error al obtener próximas citas:', error);
+            setProximasCitas([]);
+        } finally {
+            setLoadingCitas(false);
+        }
+    };
+
     // Se ejecuta cada vez que el usuario vuelve a ver la pantalla de Home
     useFocusEffect(
         useCallback(() => {
             obtenerNombreUsuario();
+            obtenerProximasCitas();
         }, [userToken])
     );
 
@@ -77,15 +105,38 @@ const HomeScreen = () => {
                 </View>
                 
                 <View style={dashboardStyles.flatCard}>
-                    <Text style={[globalStyles.cardEmptyText, dashboardStyles.darkSubText]}>Sin citas registradas</Text>
+                    {loadingCitas ? (
+                        <ActivityIndicator size="small" color={colors.darkGreen} />
+                    ) : proximasCitas.length === 0 ? (
+                        <Text style={[globalStyles.cardEmptyText, dashboardStyles.darkSubText]}>Sin citas registradas</Text>
+                    ) : (
+                        <>
+                            <View style={styles.tablaHeaderRow}>
+                                <Text style={styles.tablaHeaderFecha}>Fecha</Text>
+                                <Text style={styles.tablaHeaderHora}>Hora</Text>
+                                <Text style={styles.tablaHeaderMascota}>Mascota</Text>
+                            </View>
+
+                            {proximasCitas.map((cita) => (
+                                <View
+                                    key={cita.idReserva}
+                                    style={styles.tablaDataRow}
+                                >
+                                    <Text style={styles.tablaDataFecha}>{cita.fecha}</Text>
+                                    <Text style={styles.tablaDataHora}>{cita.hora}</Text>
+                                    <Text style={styles.tablaDataMascota} numberOfLines={1}>{cita.mascota}</Text>
+                                </View>
+                            ))}
+                        </>
+                    )}
                 </View>
                 
                 <View style={globalStyles.actionButtonsRow}>
-                    <TouchableOpacity style={dashboardStyles.flatFilledButtonSm}>
+                    <TouchableOpacity
+                        style={dashboardStyles.flatFilledButtonSm}
+                        onPress={() => navigation.navigate('Agenda')}
+                    >
                         <Text style={dashboardStyles.filledButtonTextSm}>Agendar</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={dashboardStyles.flatFilledButtonSm}>
-                        <Text style={dashboardStyles.filledButtonTextSm}>Ver Citas</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -138,3 +189,48 @@ const HomeScreen = () => {
 };
 
 export default HomeScreen;
+
+const styles = StyleSheet.create({
+    tablaHeaderRow: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        borderBottomColor: colors.lightGreen,
+        paddingBottom: 6,
+        marginBottom: 8,
+    },
+    tablaHeaderFecha: {
+        flex: 1,
+        fontWeight: '700',
+        color: colors.darkGreen,
+    },
+    tablaHeaderHora: {
+        flex: 1,
+        fontWeight: '700',
+        color: colors.darkGreen,
+        paddingLeft: 14,
+    },
+    tablaHeaderMascota: {
+        flex: 1.2,
+        fontWeight: '700',
+        color: colors.darkGreen,
+        paddingLeft: 10,
+    },
+    tablaDataRow: {
+        flexDirection: 'row',
+        marginBottom: 6,
+    },
+    tablaDataFecha: {
+        flex: 1,
+        color: colors.darkGreen,
+    },
+    tablaDataHora: {
+        flex: 1,
+        color: colors.darkGreen,
+        paddingLeft: 14,
+    },
+    tablaDataMascota: {
+        flex: 1.2,
+        color: colors.darkGreen,
+        paddingLeft: 10,
+    },
+});

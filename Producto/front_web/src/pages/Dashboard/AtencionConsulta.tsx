@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../api/client';
 import ArchivoAdjuntoUploader from '../../components/forms/ArchivoAdjuntoUploader';
 import type { ArchivoEntry } from '../../components/forms/ArchivoAdjuntoUploader';
 import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import UserMenu from '../../components/UserMenu';
+import type { Reserva } from '../../interfaces/Reserva';
+import { ordenarAsc, formatFecha, formatHora } from '../../utils/reservas';
 import '../../styles/Dashboard.css';
 
 const ID_VALOR_PLACEHOLDER = 1;
+const ID_ESTADO_CONFIRMADA = 2;
 
 function parseIds(s: string): number[] {
   return s
@@ -42,7 +45,10 @@ export default function AtencionConsulta() {
   const nombreUsuario = useNombreUsuario();
 
   const [idReserva, setIdReserva] = useState<string>(params.get('reserva') || '');
-  const [idValor, setIdValor] = useState<string>(String(ID_VALOR_PLACEHOLDER));
+
+  // Reservas confirmadas asignadas al veterinario, para elegir cuál atender
+  const [reservas, setReservas] = useState<Reserva[]>([]);
+  const [cargandoReservas, setCargandoReservas] = useState(true);
 
   const [notas, setNotas] = useState('');
   const [diagnostico, setDiagnostico] = useState('');
@@ -56,6 +62,26 @@ export default function AtencionConsulta() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+
+  useEffect(() => {
+    let cancelado = false;
+    api
+      .get<Reserva[]>('/v1/reservas')
+      .then((resp) => {
+        if (cancelado) return;
+        const confirmadas = (Array.isArray(resp.data) ? resp.data : [])
+          .filter((r) => r.idEstadoReserva === ID_ESTADO_CONFIRMADA)
+          .sort(ordenarAsc);
+        setReservas(confirmadas);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelado) setCargandoReservas(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -82,7 +108,7 @@ export default function AtencionConsulta() {
     try {
       const resp = await api.post('/v1/consultas', {
         idReserva: idReservaNum,
-        idValor: Number(idValor) || ID_VALOR_PLACEHOLDER,
+        idValor: ID_VALOR_PLACEHOLDER,
         notas: notas.trim() || null,
         diagnostico: diagnostico.trim() || null,
         indicacionReceta: indicacionReceta.trim() || null,
@@ -109,6 +135,9 @@ export default function AtencionConsulta() {
       const detalleArchivos =
         archivosValidos.length > 0 ? ` Archivos adjuntados: ${adjuntados}/${archivosValidos.length}.` : '';
       setOk(`Consulta cerrada exitosamente (ID ${idConsulta}).${detalleArchivos}`);
+      // La reserva ya tiene ficha clínica: la quitamos del selector
+      setReservas((prev) => prev.filter((r) => r.idReserva !== idReservaNum));
+      setIdReserva('');
       setNotas('');
       setDiagnostico('');
       setIndicacionReceta('');
@@ -157,15 +186,28 @@ export default function AtencionConsulta() {
             <div className="form-section">
               <h3 className="form-section-title"><span className="step-badge">1</span>Reserva</h3>
               <div className="form-grid">
-                <div className="form-field">
-                  <label htmlFor="idReserva">ID de la reserva</label>
-                  <input id="idReserva" type="number" min={1} placeholder="Ej. 5" value={idReserva} onChange={(e) => setIdReserva(e.target.value)} />
-                  <span className="field-hint">ID de la reserva que estás atendiendo (debe estar pagada).</span>
-                </div>
-                <div className="form-field">
-                  <label htmlFor="idValor">ID del valor</label>
-                  <input id="idValor" type="number" min={1} value={idValor} onChange={(e) => setIdValor(e.target.value)} />
-                  <span className="field-hint">Costo asociado (por defecto 1).</span>
+                <div className="form-field span-2">
+                  <label htmlFor="idReserva">Reserva que estás atendiendo</label>
+                  <select
+                    id="idReserva"
+                    value={idReserva}
+                    onChange={(e) => setIdReserva(e.target.value)}
+                    disabled={cargandoReservas}
+                  >
+                    <option value="">
+                      {cargandoReservas ? 'Cargando reservas...' : 'Seleccionar reserva...'}
+                    </option>
+                    {reservas.map((r) => (
+                      <option key={r.idReserva} value={r.idReserva}>
+                        {formatFecha(r.fecHrInicio)} {formatHora(r.fecHrInicio)} · {r.nombreMascota} ({r.nombreTutor})
+                      </option>
+                    ))}
+                  </select>
+                  <span className="field-hint">
+                    {!cargandoReservas && reservas.length === 0
+                      ? 'No tienes reservas confirmadas asignadas.'
+                      : 'Solo se listan tus reservas pagadas/confirmadas.'}
+                  </span>
                 </div>
               </div>
             </div>
