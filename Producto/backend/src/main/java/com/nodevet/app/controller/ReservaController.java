@@ -2,6 +2,7 @@ package com.nodevet.app.controller;
 
 import com.nodevet.app.dto.reserva.ReservaDTO;
 import com.nodevet.app.dto.reserva.ProximaCitaHomeDTO;
+import com.nodevet.app.dto.reserva.ReservaVetDiaDTO;
 import com.nodevet.app.dto.reserva.ReservaRequestDTO;
 import com.nodevet.app.service.ReservaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,6 +43,14 @@ public class ReservaController {
     public ResponseEntity<List<ProximaCitaHomeDTO>> obtenerProximasCitasTutor() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return ResponseEntity.ok(reservaService.obtenerProximasCitasTutor(authentication.getName()));
+    }
+
+    @PreAuthorize("hasAnyRole('VET','ADMIN')")
+    @GetMapping("/veterinario/agenda")
+    @Operation(summary = "Obtener agenda diaria del veterinario", description = "Retorna las reservas del veterinario autenticado para la fecha solicitada (YYYY-MM-DD).")
+    public ResponseEntity<List<ReservaVetDiaDTO>> obtenerAgendaDiariaVeterinario(@RequestParam String fecha) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return ResponseEntity.ok(reservaService.obtenerAgendaDiariaVeterinario(authentication.getName(), fecha));
     }
 
     @PreAuthorize("hasRole('TUTOR')")

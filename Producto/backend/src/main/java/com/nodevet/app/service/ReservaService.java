@@ -2,6 +2,7 @@ package com.nodevet.app.service;
 
 import com.nodevet.app.dto.reserva.ReservaRequestDTO;
 import com.nodevet.app.dto.reserva.ProximaCitaHomeDTO;
+import com.nodevet.app.dto.reserva.ReservaVetDiaDTO;
 import com.nodevet.app.dto.reserva.ResumenTutorReservasDTO;
 import com.nodevet.app.model.Mascota;
 import com.nodevet.app.model.Valor;
@@ -29,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 import java.util.Map;
 import java.util.List;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.http.HttpStatus;
@@ -87,6 +90,23 @@ public class ReservaService {
                                                                                                                 inicio.toString(),
                                                                                                                 esCancelablePorTutor(reserva));
                                                                 })
+                                .toList();
+        }
+
+        @Transactional(readOnly = true)
+        public List<ReservaVetDiaDTO> obtenerAgendaDiariaVeterinario(String correoVet, String fecha) {
+                LocalDate fechaSeleccionada = LocalDate.parse(fecha);
+                LocalDateTime inicioDia = fechaSeleccionada.atStartOfDay();
+                LocalDateTime finDia = fechaSeleccionada.atTime(LocalTime.MAX);
+                DateTimeFormatter horaFmt = DateTimeFormatter.ofPattern("HH:mm");
+
+                return reservaRepository.findAgendaDiariaByVeterinarioCorreo(correoVet, inicioDia, finDia)
+                                .stream()
+                                .map(reserva -> new ReservaVetDiaDTO(
+                                                reserva.getIdReserva(),
+                                                reserva.getBloqueHorario().getFecHrInicio().format(horaFmt),
+                                                reserva.getMascota().getTutor().getUsuario().getNombreUsr() + " " + reserva.getMascota().getTutor().getUsuario().getApellidoUsr(),
+                                                reserva.getMascota().getNomMascota()))
                                 .toList();
         }
 
@@ -268,4 +288,5 @@ public class ReservaService {
             bloqueHorarioRepository.save(bloque); 
         }
     }
+
 }

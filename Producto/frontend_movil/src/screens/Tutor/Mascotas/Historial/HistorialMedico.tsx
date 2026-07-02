@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import api from '@/src/api/axiosInstance';
 import { globalStyles } from '@/src/style/GlobalStyle';
 import { dashboardStyles } from '@/src/style/DashboardStyle'; 
 import { colors } from '@/src/theme/colors';
@@ -14,6 +15,7 @@ interface RegistroMedico {
     tipo: 'consulta' | 'vacuna' | 'examen' | 'cirugia'; 
     detalle: string; 
     fecha: string;
+    hora?: string;
     profesional?: string;
     motivo?: string;
     diagnostico?: string;
@@ -34,6 +36,14 @@ interface HistorialData {
     ultimaCirugia: RegistroMedico | null;
 }
 
+interface ConsultaResumenDTO {
+    idConsulta: number;
+    fecha?: string;
+    profesional?: string;
+    diagnostico?: string;
+    indicacionReceta?: string;
+}
+
 export default function HistorialMedicoScreen({ route, navigation }: any) {
     const idMascota = route.params?.idMascota || 1;
     const nombreMascota = route.params?.nombreMascota || 'Mascota sin nombre';
@@ -47,18 +57,52 @@ export default function HistorialMedicoScreen({ route, navigation }: any) {
         const fetchHistorial = async () => {
             try {
                 setLoading(true);
-                setTimeout(() => {
-                    setHistorial({
-                        ultimaConsulta: { id: 101, tipo: 'consulta', detalle: 'Clínica Vet Central', fecha: '10/05/2026', profesional: 'Dr. Roberto Sánchez', motivo: 'Letargo y vómitos nocturnos.', diagnostico: 'Gastritis aguda leve. Reposo y dieta.' },
-                        ultimaVacuna: { id: 205, tipo: 'vacuna', detalle: 'Antirrábica', fecha: '15/01/2026', laboratorio: 'Zoetis', lote: 'A-10293', serie: '001-92', qr: 'Generado' },
-                        ultimoExamen: { id: 302, tipo: 'examen', detalle: 'Perfil Bioquímico', fecha: '20/11/2025', fechaResultados: '21/11/2025', resultados: '(Imágenes por definir)', observaciones: 'Parámetros normales.' },
-                        // AHORA SÍ TIENE DATOS LA CIRUGÍA 👇
-                        ultimaCirugia: { id: 401, tipo: 'cirugia', detalle: 'Pabellón Central', fecha: '05/04/2026', fechaAlta: '06/04/2026', profesional: 'Dra. Ana Gómez', motivo: 'Ovariohisterectomía (Esterilización)', observaciones: 'Procedimiento sin complicaciones. Reposo y uso de collar isabelino.' }
-                    });
-                    setLoading(false);
-                }, 800);
+                const response = await api.get(`/v1/consultas/mascota/${idMascota}`);
+                const consultas: ConsultaResumenDTO[] = Array.isArray(response.data) ? response.data : [];
+
+                const parseFecha = (fecha?: string) => {
+                    if (!fecha) return 0;
+                    const [fechaParte, horaParte = '00:00'] = fecha.split(' ');
+                    const [dia, mes, anio] = fechaParte.split('/').map(Number);
+                    const [hora, minuto] = horaParte.split(':').map(Number);
+                    return new Date(anio, (mes || 1) - 1, dia || 1, hora || 0, minuto || 0).getTime();
+                };
+
+                const ultimaConsulta = [...consultas]
+                    .sort((a, b) => parseFecha(b.fecha) - parseFecha(a.fecha))[0];
+
+                setHistorial({
+                    ultimaConsulta: ultimaConsulta
+                        ? {
+                            id: ultimaConsulta.idConsulta,
+                            tipo: 'consulta',
+                            detalle: ultimaConsulta.profesional || 'Profesional no informado',
+                            fecha: (() => {
+                                const valor = ultimaConsulta.fecha || 'Sin fecha';
+                                return valor.includes(' ') ? valor.split(' ')[0] : valor;
+                            })(),
+                            hora: (() => {
+                                const valor = ultimaConsulta.fecha || '';
+                                return valor.includes(' ') ? valor.split(' ')[1] : '';
+                            })(),
+                            profesional: ultimaConsulta.profesional || 'Profesional no informado',
+                            motivo: ultimaConsulta.diagnostico || 'Sin diagnóstico registrado',
+                            diagnostico: ultimaConsulta.indicacionReceta || 'Sin indicación registrada',
+                        }
+                        : null,
+                    ultimaVacuna: null,
+                    ultimoExamen: null,
+                    ultimaCirugia: null,
+                });
             } catch (error) {
                 console.error("Error al cargar el historial:", error);
+                setHistorial({
+                    ultimaConsulta: null,
+                    ultimaVacuna: null,
+                    ultimoExamen: null,
+                    ultimaCirugia: null,
+                });
+            } finally {
                 setLoading(false);
             }
         };
@@ -67,7 +111,7 @@ export default function HistorialMedicoScreen({ route, navigation }: any) {
     }, [idMascota]);
 
     // ════════ COMPONENTE REUTILIZABLE ════════
-    const SectionBlock = ({ title, data, rutaDestino }: { title: string, data: RegistroMedico | null, rutaDestino?: string }) => (
+    const SectionBlock = ({ title, data, rutaDestino, disabled }: { title: string, data: RegistroMedico | null, rutaDestino?: string, disabled?: boolean }) => (
         <View style={{ marginBottom: spacing.sm }}>
             <Text style={[globalStyles.listSectionTitle, { marginBottom: spacing.xs }]}>{title}</Text>
             
@@ -85,16 +129,17 @@ export default function HistorialMedicoScreen({ route, navigation }: any) {
                         </TouchableOpacity>
                     </>
                 ) : (
-                    <Text style={[globalStyles.emptyListText, { flex: 1, marginTop: 0 }]}>Sin registro reciente</Text>
+                    <Text style={[globalStyles.emptyListText, { flex: 1, marginTop: 0 }]}>Sin datos</Text>
                 )}
             </View>
 
             <View style={[globalStyles.actionButtonsRow, { marginTop: spacing.xs }]}>
                 <TouchableOpacity 
-                    style={styles.solidButtonSm} 
+                    style={[styles.solidButtonSm, disabled && styles.solidButtonSmDisabled]} 
                     activeOpacity={0.8}
+                    disabled={disabled}
                     onPress={() => {
-                        if (rutaDestino) {
+                        if (!disabled && rutaDestino) {
                             navigation.navigate(rutaDestino, { idMascota, nombreMascota });
                         }
                     }}
@@ -135,9 +180,9 @@ export default function HistorialMedicoScreen({ route, navigation }: any) {
                 ) : (
                     <View style={{ paddingHorizontal: spacing.xs }}>
                         <SectionBlock title="Última consulta:" data={historial?.ultimaConsulta || null} rutaDestino="Consultas" />
-                        <SectionBlock title="Última Vacuna:" data={historial?.ultimaVacuna || null} rutaDestino="Vacunas" />
-                        <SectionBlock title="Último exámen:" data={historial?.ultimoExamen || null} rutaDestino="Examenes" />
-                        <SectionBlock title="Última cirugía:" data={historial?.ultimaCirugia || null} rutaDestino="Cirugias" />
+                        <SectionBlock title="Última Vacuna:" data={historial?.ultimaVacuna || null} rutaDestino="Vacunas" disabled={true} />
+                        <SectionBlock title="Último exámen:" data={historial?.ultimoExamen || null} rutaDestino="Examenes" disabled={true} />
+                        <SectionBlock title="Última cirugía:" data={historial?.ultimaCirugia || null} rutaDestino="Cirugias" disabled={true} />
                     </View>
                 )}
             </ScrollView>
@@ -147,7 +192,9 @@ export default function HistorialMedicoScreen({ route, navigation }: any) {
                 <View style={globalStyles.detailModalOverlay}>
                     <View style={globalStyles.detailModalContainer}>
                         <View style={globalStyles.detailModalHeader}>
-                            <Text style={globalStyles.detailModalDate}>{selectedItem?.fecha}</Text>
+                            <Text style={globalStyles.detailModalDate}>
+                                {selectedItem?.fecha}{selectedItem?.hora ? `    ${selectedItem.hora}` : ''}
+                            </Text>
                             <TouchableOpacity onPress={() => setSelectedItem(null)}>
                                 <Ionicons name="close" size={26} color={colors.lightYellow} />
                             </TouchableOpacity>
@@ -158,10 +205,9 @@ export default function HistorialMedicoScreen({ route, navigation }: any) {
                             
                             {selectedItem?.tipo === 'consulta' && (
                                 <>
-                                    <View style={globalStyles.detailRow}><Text style={globalStyles.detailLabel}>Lugar:</Text><Text style={globalStyles.detailValue}>{selectedItem.detalle}</Text></View>
                                     <View style={globalStyles.detailRow}><Text style={globalStyles.detailLabel}>Profesional:</Text><Text style={globalStyles.detailValue}>{selectedItem.profesional}</Text></View>
-                                    <View style={globalStyles.detailTextBlock}><Text style={globalStyles.detailLabel}>Motivo:</Text><Text style={globalStyles.detailParagraph}>{selectedItem.motivo}</Text></View>
-                                    <View style={globalStyles.detailTextBlock}><Text style={globalStyles.detailLabel}>Diagnóstico:</Text><Text style={globalStyles.detailParagraph}>{selectedItem.diagnostico}</Text></View>
+                                    <View style={globalStyles.detailTextBlock}><Text style={globalStyles.detailLabel}>Diagnóstico:</Text><Text style={globalStyles.detailParagraph}>{selectedItem.motivo}</Text></View>
+                                    <View style={globalStyles.detailTextBlock}><Text style={globalStyles.detailLabel}>Indicaciones:</Text><Text style={globalStyles.detailParagraph}>{selectedItem.diagnostico}</Text></View>
                                 </>
                             )}
 
@@ -217,5 +263,8 @@ const styles = StyleSheet.create({
         fontFamily: typography.family.main.semiBold,
         fontSize: typography.size.sm,
         color: colors.lightYellow,
+    },
+    solidButtonSmDisabled: {
+        opacity: 0.45,
     }
 });

@@ -10,6 +10,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -78,6 +81,15 @@ public class ConsultaController {
     @Operation(summary = "Obtener historial por mascota", description = "Devuelve el listado completo de fichas clínicas asociadas a una mascota.")
     public ResponseEntity<List<ConsultaResponseDTO>> obtenerHistorialMascota(@PathVariable Integer idMascota) {
         List<ConsultaResponseDTO> historial = consultaService.obtenerHistorialPorMascota(idMascota);
+        return new ResponseEntity<>(historial, HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasAnyRole('VET','ADMIN')")
+    @GetMapping("/veterinario/historial")
+    @Operation(summary = "Obtener historial exitoso del veterinario", description = "Devuelve únicamente las consultas atendidas exitosamente por el veterinario autenticado, excluyendo ausencias.")
+    public ResponseEntity<List<ConsultaResponseDTO>> obtenerHistorialVeterinario() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        List<ConsultaResponseDTO> historial = consultaService.obtenerHistorialPorVeterinario(authentication.getName());
         return new ResponseEntity<>(historial, HttpStatus.OK);
     }
 }

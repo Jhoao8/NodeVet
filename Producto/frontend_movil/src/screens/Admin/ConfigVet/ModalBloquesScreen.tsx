@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import axios from 'axios';
 import api from '@/src/api/axiosInstance';
 
 import { globalStyles } from '@/src/style/GlobalStyle';
@@ -124,7 +125,8 @@ export default function GenerarBloquesScreen() {
                     anio: parseInt(anioSistema, 10),
                     mes: mesSeleccionado,
                     duracionMinutos: parseInt(duracionMinutos, 10)
-                }
+                },
+                timeout: 60000
             });
 
             showFeedback(
@@ -134,6 +136,30 @@ export default function GenerarBloquesScreen() {
             );
         } catch (error: any) {
             console.error("Error al generar bloques horarios:", error);
+
+            if (axios.isAxiosError(error)) {
+                const timeoutError = error.code === 'ECONNABORTED';
+                const networkError = !error.response;
+
+                if (timeoutError) {
+                    showFeedback(
+                        'Tiempo de espera agotado',
+                        'La generación de bloques tardó más de lo esperado. Intenta nuevamente con una duración de bloque mayor o reintenta en unos segundos.',
+                        false
+                    );
+                    return;
+                }
+
+                if (networkError) {
+                    showFeedback(
+                        'Error de conexión',
+                        'No se pudo completar la conexión con el servidor al generar bloques. Verifica que el backend esté activo y la red del dispositivo.',
+                        false
+                    );
+                    return;
+                }
+            }
+
             const backendError = typeof error.response?.data === 'string' ? error.response.data : error.response?.data?.message;
             showFeedback(
                 'Fallo en Generación',

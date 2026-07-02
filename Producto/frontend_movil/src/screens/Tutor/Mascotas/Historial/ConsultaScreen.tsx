@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, FlatList, Modal, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import api from '@/src/api/axiosInstance';
 import { globalStyles } from '@/src/style/GlobalStyle';
 import { colors } from '@/src/theme/colors';
 import { spacing } from '@/src/theme/spacing';
 import DashboardHeader from '@/src/components/DashboardHeader';
 
-interface Consulta { id: number; lugar: string; fecha: string; profesional: string; motivo: string; diagnostico: string; }
+interface Consulta {
+    id: number;
+    fecha: string;
+    fechaSolo: string;
+    hora?: string;
+    profesional: string;
+    diagnostico: string;
+    indicaciones: string;
+    notas?: string;
+}
 
 export default function ConsultasScreen({ route, navigation }: any) {
     const { idMascota, nombreMascota } = route.params || { idMascota: 1, nombreMascota: 'Mascota' };
@@ -17,21 +27,42 @@ export default function ConsultasScreen({ route, navigation }: any) {
 
     useEffect(() => {
         const fetchConsultas = async () => {
-            setLoading(true);
-            setTimeout(() => {
-                setConsultas([
-                    { id: 1, lugar: 'Clínica Vet Central', fecha: '10/05/2026', profesional: 'Dr. Roberto Sánchez', motivo: 'El paciente presenta letargo, pérdida de apetito desde hace 2 días y vómitos esporádicos durante la noche.', diagnostico: 'Gastritis aguda leve. Se recetan antieméticos y dieta blanda por 3 días. Reposo absoluto.' },
-                ]);
+            try {
+                setLoading(true);
+                const response = await api.get(`/v1/consultas/mascota/${idMascota}`);
+                const historial = Array.isArray(response.data) ? response.data : [];
+
+                const consultasMapeadas = historial.map((consulta: any) => {
+                    const fechaCompleta = String(consulta.fecha || 'Sin fecha');
+                    const [fechaSolo, hora = ''] = fechaCompleta.split(' ');
+
+                    return {
+                        id: consulta.idConsulta,
+                        fecha: fechaCompleta,
+                        fechaSolo: fechaSolo || 'Sin fecha',
+                        hora,
+                        profesional: consulta.profesional || 'Profesional no informado',
+                        diagnostico: consulta.diagnostico || 'Sin diagnóstico registrado',
+                        indicaciones: consulta.indicacionReceta || 'Sin indicaciones registradas',
+                        notas: consulta.notas || '',
+                    };
+                });
+
+                setConsultas(consultasMapeadas);
+            } catch (error) {
+                console.error('Error al cargar consultas:', error);
+                setConsultas([]);
+            } finally {
                 setLoading(false);
-            }, 500);
+            }
         };
         fetchConsultas();
     }, [idMascota]);
 
     const renderItem = ({ item }: { item: Consulta }) => (
         <View style={globalStyles.tableRowItem}>
-            <Text style={globalStyles.tableRowTextLeft} numberOfLines={1}>{item.lugar}</Text>
-            <Text style={globalStyles.tableRowTextCenter}>{item.fecha}</Text>
+            <Text style={globalStyles.tableRowTextLeft} numberOfLines={1}>{item.profesional}</Text>
+            <Text style={globalStyles.tableRowTextCenter}>{item.fechaSolo}</Text>
             <TouchableOpacity style={globalStyles.tableEyeIcon} activeOpacity={0.7} onPress={() => setSelectedItem(item)}>
                 <Ionicons name="eye-outline" size={22} color={colors.darkDGreen} />
             </TouchableOpacity>
@@ -82,24 +113,32 @@ export default function ConsultasScreen({ route, navigation }: any) {
                 <View style={globalStyles.detailModalOverlay}>
                     <View style={globalStyles.detailModalContainer}>
                         <View style={globalStyles.detailModalHeader}>
-                            <Text style={globalStyles.detailModalDate}>{selectedItem?.fecha}</Text>
+                            <Text style={globalStyles.detailModalDate}>
+                                {selectedItem?.fechaSolo}{selectedItem?.hora ? `    ${selectedItem.hora}` : ''}
+                            </Text>
                             <TouchableOpacity onPress={() => setSelectedItem(null)}>
                                 <Ionicons name="close" size={26} color={colors.lightYellow} />
                             </TouchableOpacity>
                         </View>
                         <ScrollView contentContainerStyle={globalStyles.detailModalBody}>
-                            <View style={globalStyles.detailRow}><Text style={globalStyles.detailLabel}>Lugar de la consulta:</Text><Text style={globalStyles.detailValue}>{selectedItem?.lugar}</Text></View>
-                            <View style={globalStyles.detailRow}><Text style={globalStyles.detailLabel}>Nombre del profesional encargado:</Text><Text style={globalStyles.detailValue}>{selectedItem?.profesional}</Text></View>
-                            
-                            <View style={globalStyles.detailTextBlock}>
-                                <Text style={globalStyles.detailLabel}>Motivo de la consulta:</Text>
-                                <Text style={globalStyles.detailParagraph}>{selectedItem?.motivo}</Text>
-                            </View>
+                            <View style={globalStyles.detailRow}><Text style={globalStyles.detailLabel}>Profesional:</Text><Text style={globalStyles.detailValue}>{selectedItem?.profesional}</Text></View>
                             
                             <View style={globalStyles.detailTextBlock}>
                                 <Text style={globalStyles.detailLabel}>Diagnóstico:</Text>
                                 <Text style={globalStyles.detailParagraph}>{selectedItem?.diagnostico}</Text>
                             </View>
+                            
+                            <View style={globalStyles.detailTextBlock}>
+                                <Text style={globalStyles.detailLabel}>Indicaciones:</Text>
+                                <Text style={globalStyles.detailParagraph}>{selectedItem?.indicaciones}</Text>
+                            </View>
+
+                            {selectedItem?.notas ? (
+                                <View style={globalStyles.detailTextBlock}>
+                                    <Text style={globalStyles.detailLabel}>Notas:</Text>
+                                    <Text style={globalStyles.detailParagraph}>{selectedItem.notas}</Text>
+                                </View>
+                            ) : null}
                         </ScrollView>
                     </View>
                 </View>

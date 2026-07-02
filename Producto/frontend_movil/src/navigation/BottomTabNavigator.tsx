@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Importación de pantallas
 import MascotasScreen from '../screens/Tutor/Mascotas/MascotasScreen';
 import HomeScreen from '../screens/Tutor/HomeScreen';
+import OrdenMedicaScreen from '../screens/Tutor/OrdenMedicaScreen';
 import ProfileStack from './ProfileStack';
 import AgendarHoraScreen from '../screens/Tutor/Agendamiento/AgendarHoraScreen';
 
@@ -48,7 +49,7 @@ export default function BottomTabNavigator() {
       {/* Posición 2: Ordenes */}
       <Tab.Screen
         name="Ordenes"
-        component={HomeScreen} // Placeholder
+        component={OrdenMedicaScreen}
         options={{
           tabBarIcon: ({ color }) => (
             <Ionicons name="document-text-outline" color={color} size={28} />

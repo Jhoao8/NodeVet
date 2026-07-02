@@ -21,8 +21,12 @@ import CrearVetScreen from '../screens/Admin/ConfigVet/CrearVetScreen';
 import DetalleVetScreen from '../screens/Admin/ConfigVet/DetalleVetScreen';
 import CrearJornadaScreen from '../screens/Admin/ConfigVet/CrearJornadaScreen'; 
 import GenerarBloquesScreen from '../screens/Admin/ConfigVet/ModalBloquesScreen';
-// ════ NUEVA IMPORTACIÓN ════
-import VerJornadaScreen from '../screens/Admin/ConfigVet/VerJornadaScreen'; 
+import VerJornadasScreen from '../screens/Admin/ConfigVet/VerJornadaScreen'; 
+
+// ════ PANTALLAS DE VETERINARIO ════
+import VetBottomTabNavigator from './VetBottomTabNavigator';
+import DetalleCitaVetScreen from '../screens/Veterinario/DetalleCitaVetScreen';
+import RegistrarConsultaScreen from '../screens/Veterinario/RegistrarConsultaScreen';
 
 const Stack = createStackNavigator();
 
@@ -38,7 +42,10 @@ const AppNavigator = () => {
     }
 
     const getInitialRoute = () => {
-        if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') return 'AdminMain';
+        const normalizedRole = String(userRole || '').toUpperCase();
+
+        if (normalizedRole === 'ADMIN' || normalizedRole === 'SUPER_ADMIN') return 'AdminMain';
+        if (normalizedRole === 'VET' || normalizedRole === 'ROLE_VET' || normalizedRole === 'VETERINARIO') return 'VetMain';
         return 'Main';
     };
 
@@ -47,7 +54,9 @@ const AppNavigator = () => {
             {userToken ? (
                 <Stack.Navigator initialRouteName={getInitialRoute()} screenOptions={{ headerShown: false }}>
 
+                    {/* ════ RUTAS PRINCIPALES (TABS) ════ */}
                     <Stack.Screen name="AdminMain" component={AdminBottomTabNavigator} />
+                    <Stack.Screen name="VetMain" component={VetBottomTabNavigator} />
                     <Stack.Screen name="Main" component={BottomTabNavigator} />
 
                     {/* ════ PANTALLAS DE FLUJO ADMIN ════ */}
@@ -55,8 +64,11 @@ const AppNavigator = () => {
                     <Stack.Screen name="DetalleVet" component={DetalleVetScreen} />
                     <Stack.Screen name="CrearJornada" component={CrearJornadaScreen} />
                     <Stack.Screen name="ModalBloque" component={GenerarBloquesScreen} />
-                    {/* ════ NUEVA PANTALLA REGISTRADA ════ */}
-                    <Stack.Screen name="VerJornadas" component={VerJornadaScreen} />
+                    <Stack.Screen name="VerJornadas" component={VerJornadasScreen} />
+
+                    {/* ════ PANTALLAS DE FLUJO VETERINARIO ════ */}
+                    <Stack.Screen name="DetalleCitaVet" component={DetalleCitaVetScreen} />
+                    <Stack.Screen name="RegistrarConsulta" component={RegistrarConsultaScreen} />
 
                     {/* ════ PANTALLAS DE FLUJO TUTOR ════ */}
                     <Stack.Screen

@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { colors } from '@/src/theme/colors';
 import { Ionicons } from '@expo/vector-icons';
 import { globalStyles } from '@/src/style/GlobalStyle';
-import EditarMascota from './EditarMascota';
+import api from '@/src/api/axiosInstance';
 
 const DetailItem = ({ icon, label, value }: any) => (
     <View style={styles.item}>
@@ -15,6 +15,36 @@ const DetailItem = ({ icon, label, value }: any) => (
 
 export default function DetalleMascotaScreen({ route, navigation }: any) {
     const { mascota } = route.params;
+    const [ultimaConsulta, setUltimaConsulta] = useState('Sin registro');
+    const [loadingConsulta, setLoadingConsulta] = useState(true);
+
+    useEffect(() => {
+        const cargarUltimaConsulta = async () => {
+            try {
+                setLoadingConsulta(true);
+                const response = await api.get(`/v1/consultas/mascota/${mascota.idMascota}`);
+                const consultas = Array.isArray(response.data) ? response.data : [];
+
+                const parseFecha = (fecha?: string) => {
+                    if (!fecha) return 0;
+                    const [fechaParte, horaParte = '00:00'] = String(fecha).split(' ');
+                    const [dia, mes, anio] = fechaParte.split('/').map(Number);
+                    const [hora, minuto] = horaParte.split(':').map(Number);
+                    return new Date(anio, (mes || 1) - 1, dia || 1, hora || 0, minuto || 0).getTime();
+                };
+
+                const ultima = [...consultas].sort((a, b) => parseFecha(b.fecha) - parseFecha(a.fecha))[0];
+                setUltimaConsulta(ultima?.fecha ? String(ultima.fecha).split(' ')[0] : 'Sin registro');
+            } catch (error) {
+                console.error('Error cargando última consulta de mascota:', error);
+                setUltimaConsulta('Sin registro');
+            } finally {
+                setLoadingConsulta(false);
+            }
+        };
+
+        cargarUltimaConsulta();
+    }, [mascota.idMascota]);
 
     return (
         <ScrollView style={styles.container}>
@@ -60,8 +90,7 @@ export default function DetalleMascotaScreen({ route, navigation }: any) {
                     <DetailItem 
                         icon="medical" // Cambié el icono por uno médico, puedes usar "clipboard" si prefieres
                         label="Ult. Consulta" 
-                        // Verificamos si existe el dato, si no, mostramos "Sin registro"
-                        value={mascota.ultimaConsulta ? mascota.ultimaConsulta : 'Sin registro'} 
+                        value={loadingConsulta ? 'Cargando...' : ultimaConsulta} 
                     />
                 </View>
 

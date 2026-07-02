@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/jornadas")
@@ -50,6 +51,19 @@ public class JornadaController {
             return ResponseEntity.ok(jornadaActualizada);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{idJornada}")
+    @Operation(summary = "Eliminar jornada laboral", description = "Elimina de forma permanente una jornada y todos los bloques horarios asociados a su patrón (veterinario, día y rango horario).")
+    public ResponseEntity<?> eliminarJornada(@PathVariable Integer idJornada) {
+        try {
+            String resultado = jornadaService.eliminarJornadaConBloques(idJornada);
+            return ResponseEntity.ok(Map.of("mensaje", resultado));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno al eliminar jornada.");
         }
     }
 }

@@ -5,7 +5,9 @@ import com.nodevet.app.dto.agenda.JornadaRequestDTO;
 import com.nodevet.app.model.agenda.Jornada;
 import com.nodevet.app.model.usuario.Veterinario;
 import com.nodevet.app.repository.VeterinarioRepository;
+import com.nodevet.app.repository.agenda.BloqueHorarioRepository;
 import com.nodevet.app.repository.agenda.JornadaRepository;
+import com.nodevet.app.repository.reserva.ReservaRepository;
 import com.nodevet.app.util.DtoMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,8 @@ public class JornadaService {
 
     private final JornadaRepository jornadaRepository;
     private final VeterinarioRepository veterinarioRepository;
+    private final BloqueHorarioRepository bloqueHorarioRepository;
+        private final ReservaRepository reservaRepository;
 
     @Transactional
     public JornadaDTO crearJornada(JornadaRequestDTO request) {
@@ -74,5 +78,35 @@ public class JornadaService {
         // 3. Guardar y retornar el DTO actualizado
         Jornada jornadaActualizada = jornadaRepository.save(jornada);
         return DtoMapper.toJornadaDTO(jornadaActualizada);
+    }
+
+    @Transactional
+    public String eliminarJornadaConBloques(Integer idJornada) {
+        Jornada jornada = jornadaRepository.findById(idJornada)
+                .orElseThrow(() -> new RuntimeException("Jornada no encontrada con ID: " + idJornada));
+
+        Integer idVet = jornada.getVeterinario().getId();
+
+        long reservasAsociadas = reservaRepository.countReservasByPatronJornada(
+                idVet,
+                jornada.getDiaSemana(),
+                jornada.getHoraInicio(),
+                jornada.getHoraFin()
+        );
+
+        if (reservasAsociadas > 0) {
+            throw new RuntimeException("No se puede eliminar esta jornada porque tiene reservas asociadas. Revisa o cancela esas reservas primero.");
+        }
+
+        int bloquesEliminados = bloqueHorarioRepository.deleteByVetAndPatronJornada(
+                idVet,
+                jornada.getDiaSemana(),
+                jornada.getHoraInicio(),
+                jornada.getHoraFin()
+        );
+
+        jornadaRepository.delete(jornada);
+
+        return "Jornada eliminada correctamente. Bloques eliminados: " + bloquesEliminados;
     }
 }
