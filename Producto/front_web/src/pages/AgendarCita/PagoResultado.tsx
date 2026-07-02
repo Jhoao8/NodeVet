@@ -36,7 +36,6 @@ export default function PagoResultado() {
     if (raw === 'pendiente' || raw === 'pending') return 'pendiente';
     return 'exito';
   }, [params]);
-
   const c = CONTENIDO[estado];
 
   return (

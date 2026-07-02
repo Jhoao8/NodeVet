@@ -1,11 +1,13 @@
 package com.nodevet.app.repository.agenda;
 
 import com.nodevet.app.model.agenda.BloqueHorario;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 public interface BloqueHorarioRepository extends JpaRepository<BloqueHorario, Integer> {
@@ -40,6 +42,19 @@ public interface BloqueHorarioRepository extends JpaRepository<BloqueHorario, In
             @Param("inicio") LocalDateTime inicio,
             @Param("fin") LocalDateTime fin
     );
+
+        @Modifying
+        @Query(value = "DELETE FROM bloque_horario " +
+            "WHERE id_vet = :idVet " +
+            "AND (WEEKDAY(fec_hr_inicio) + 1) = :diaSemana " +
+            "AND TIME(fec_hr_inicio) >= :horaInicio " +
+            "AND TIME(fec_hr_fin) <= :horaFin", nativeQuery = true)
+        int deleteByVetAndPatronJornada(
+            @Param("idVet") Integer idVet,
+            @Param("diaSemana") Integer diaSemana,
+            @Param("horaInicio") LocalTime horaInicio,
+            @Param("horaFin") LocalTime horaFin
+        );
 
     void deleteByVeterinarioId(Integer idVet);
 }
