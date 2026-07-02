@@ -237,6 +237,46 @@
   border-top: 1px solid var(--color-gray-200);
 }
 
+/* ─────────── Menú de cuenta (espejo de la app móvil) ─────────── */
+.perfil-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.perfil-menu-btn {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: transparent;
+  border: 1.5px solid var(--color-dark-d-green);
+  color: var(--color-dark-d-green);
+  font-size: 15px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.perfil-menu-btn:hover {
+  background-color: rgba(158, 181, 125, 0.15);
+}
+
+.perfil-logout-btn {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: transparent;
+  border: 1.5px solid var(--color-dark-d-green);
+  border-radius: 8px;
+  color: var(--color-dark-d-green);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.perfil-logout-btn:hover {
+  background-color: var(--color-dark-d-green);
+  color: var(--color-light-yellow);
+}
+
 /* ─────────── Responsive ─────────── */
 @media (max-width: 720px) {
   .perfil-hero {

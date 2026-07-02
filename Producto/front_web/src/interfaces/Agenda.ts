@@ -14,12 +14,3 @@ export interface VetDisponibilidad {
   especialidad: string;
   bloquesDisponibles: BloqueHorarioDTO[];
 }
-
-export interface CitaSeleccionada {
-  idVet: number;
-  idBloque: number;
-  nombreVet: string;
-  especialidad: string;
-  fecha: string;
-  hora: string;
-}

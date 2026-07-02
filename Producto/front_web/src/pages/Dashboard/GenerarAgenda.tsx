@@ -1,18 +1,25 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/client';
-import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import AdminSidebar from '../../components/AdminSidebar';
 import UserMenu from '../../components/UserMenu';
+import { useNombreUsuario } from '../../hooks/useNombreUsuario';
+import { formatEspecialidades } from '../../interfaces/Veterinario';
+import type { VeterinarioDTO } from '../../interfaces/Veterinario';
 import '../../styles/Dashboard.css';
 
-const DIAS = [
-  { n: 1, label: 'Lunes' },
-  { n: 2, label: 'Martes' },
-  { n: 3, label: 'Miércoles' },
-  { n: 4, label: 'Jueves' },
-  { n: 5, label: 'Viernes' },
-  { n: 6, label: 'Sábado' },
-  { n: 7, label: 'Domingo' },
+// Espejo web de las pantallas móviles CrearJornadaScreen (regla de jornada) y
+// ModalBloquesScreen (generación de bloques): selector real de profesionales,
+// chips de días, año fijo del sistema y modales de resumen antes de guardar.
+
+const DIAS_SEMANA = [
+  { id: 1, nombre: 'Lunes' },
+  { id: 2, nombre: 'Martes' },
+  { id: 3, nombre: 'Miércoles' },
+  { id: 4, nombre: 'Jueves' },
+  { id: 5, nombre: 'Viernes' },
+  { id: 6, nombre: 'Sábado' },
+  { id: 7, nombre: 'Domingo' },
 ];
 
 const MESES = [
@@ -20,32 +27,68 @@ const MESES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ];
 
-const hoy = new Date();
-
 function mensajeError(err: any, fallback: string): string {
   const data = err?.response?.data;
-  if (typeof data === 'string') return data;
+  if (typeof data === 'string' && data) return data;
   return data?.mensaje || data?.error || data?.message || fallback;
 }
 
 export default function GenerarAgenda() {
   const navigate = useNavigate();
+  const location = useLocation();
   const nombreUsuario = useNombreUsuario();
 
-  const [idVet, setIdVet] = useState<string>(() => localStorage.getItem('ultimoVetIdVet') || '');
+  const vetPreseleccionado = (location.state as any)?.vet as VeterinarioDTO | undefined;
 
-  const [diasSel, setDiasSel] = useState<number[]>([1, 2, 3, 4, 5]);
-  const [horaInicio, setHoraInicio] = useState('09:00');
-  const [horaFin, setHoraFin] = useState('18:00');
+  // Año fijo del sistema, igual que el móvil
+  const anioSistema = new Date().getFullYear();
 
-  const [anio, setAnio] = useState<number>(hoy.getFullYear());
-  const [mes, setMes] = useState<number>(hoy.getMonth() + 1);
-  const [duracion, setDuracion] = useState<number>(30);
+  const [vets, setVets] = useState<VeterinarioDTO[]>([]);
+  const [loadingVets, setLoadingVets] = useState(true);
+  const [idVetSel, setIdVetSel] = useState<string>(
+    vetPreseleccionado ? String(vetPreseleccionado.idVeterinario) : '',
+  );
 
+  // Jornada
+  const [diasSel, setDiasSel] = useState<number[]>([]);
+  const [horaInicio, setHoraInicio] = useState('');
+  const [horaFin, setHoraFin] = useState('');
   const [guardandoJornada, setGuardandoJornada] = useState(false);
+  const [showResumenJornada, setShowResumenJornada] = useState(false);
+
+  // Bloques
+  const [mes, setMes] = useState<number>(new Date().getMonth() + 1);
+  const [duracion, setDuracion] = useState('30');
   const [generando, setGenerando] = useState(false);
+  const [showResumenBloques, setShowResumenBloques] = useState(false);
+
   const [error, setError] = useState('');
   const [ok, setOk] = useState('');
+
+  useEffect(() => {
+    let cancelado = false;
+    api
+      .get<VeterinarioDTO[]>('/v1/veterinarios')
+      .then((resp) => {
+        if (cancelado) return;
+        // Solo profesionales activos, igual que el móvil
+        const activos = resp.data.filter((v) => v.estadoUsr === 1);
+        setVets(activos);
+      })
+      .catch(() => {
+        if (!cancelado) setError('No se pudieron cargar los veterinarios.');
+      })
+      .finally(() => {
+        if (!cancelado) setLoadingVets(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
+  const vetSeleccionado =
+    vets.find((v) => v.idVeterinario === Number(idVetSel)) ??
+    (vetPreseleccionado?.idVeterinario === Number(idVetSel) ? vetPreseleccionado : undefined);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -53,80 +96,107 @@ export default function GenerarAgenda() {
     navigate('/login');
   };
 
-  const toggleDia = (n: number) => {
-    setDiasSel((prev) => (prev.includes(n) ? prev.filter((d) => d !== n) : [...prev, n]));
+  const toggleDia = (id: number) => {
+    setDiasSel((prev) =>
+      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id].sort((a, b) => a - b),
+    );
   };
 
-  const idVetNum = Number(idVet);
-  const idVetValido = idVet.trim() !== '' && Number.isInteger(idVetNum) && idVetNum > 0;
+  const getDiasSeleccionadosTexto = (): string =>
+    diasSel.map((id) => DIAS_SEMANA.find((d) => d.id === id)?.nombre).join(', ');
 
-  const handleGuardarJornada = async () => {
+  // ─── Jornada base ───
+  const validarJornada = () => {
     setError('');
     setOk('');
-    if (!idVetValido) {
-      setError('Ingresa un ID de veterinario válido.');
+    if (!vetSeleccionado) {
+      setError('Por favor, selecciona un veterinario.');
       return;
     }
     if (diasSel.length === 0) {
-      setError('Selecciona al menos un día laboral.');
+      setError('Por favor, selecciona al menos un día de la semana.');
+      return;
+    }
+    if (!horaInicio || !horaFin) {
+      setError('Las horas de inicio y término son obligatorias.');
       return;
     }
     if (horaInicio >= horaFin) {
-      setError('La hora de inicio debe ser anterior a la hora de fin.');
+      setError('La hora de apertura debe ser anterior a la hora de cierre.');
       return;
     }
+    setShowResumenJornada(true);
+  };
 
+  const registrarJornada = async () => {
+    setShowResumenJornada(false);
     setGuardandoJornada(true);
     try {
-      const resultados = await Promise.allSettled(
+      await Promise.all(
         diasSel.map((dia) =>
           api.post('/v1/jornadas', {
-            idVet: idVetNum,
+            idVet: vetSeleccionado!.idVeterinario,
             diaSemana: dia,
             horaInicio,
             horaFin,
           }),
         ),
       );
-      const fallidas = resultados.filter((r) => r.status === 'rejected');
-      if (fallidas.length > 0) {
-        const primera = fallidas[0] as PromiseRejectedResult;
-        setError(mensajeError(primera.reason, `No se pudieron guardar ${fallidas.length} jornada(s).`));
-      } else {
-        setOk(`Jornada guardada para ${diasSel.length} día(s). Ahora puedes generar los bloques.`);
-      }
+      setOk(
+        'Jornada creada con éxito. Para editar alguna jornada, ve al detalle del veterinario en "Veterinarios".',
+      );
+      setDiasSel([]);
+    } catch (err) {
+      setError(
+        mensajeError(err, 'El rango horario entra en conflicto o el formato no es soportado.'),
+      );
     } finally {
       setGuardandoJornada(false);
     }
   };
 
-  const handleGenerarBloques = async () => {
+  // ─── Bloques ───
+  const validarBloques = () => {
     setError('');
     setOk('');
-    if (!idVetValido) {
-      setError('Ingresa un ID de veterinario válido.');
+    if (!vetSeleccionado) {
+      setError('Por favor, asigna un veterinario para el procesamiento.');
       return;
     }
-    if (!duracion || duracion <= 0) {
-      setError('La duración debe ser mayor a 0 minutos.');
+    const minutos = parseInt(duracion, 10);
+    if (!duracion || isNaN(minutos) || minutos <= 0) {
+      setError('Por favor, ingresa una duración válida en minutos (mayor a 0).');
       return;
     }
+    setShowResumenBloques(true);
+  };
 
+  const generarBloques = async () => {
+    setShowResumenBloques(false);
     setGenerando(true);
     try {
-      const resp = await api.post('/v1/agendas', null, {
-        params: { idVet: idVetNum, anio, mes, duracionMinutos: duracion },
+      await api.post('/v1/agendas', null, {
+        params: {
+          idVet: vetSeleccionado!.idVeterinario,
+          anio: anioSistema,
+          mes,
+          duracionMinutos: parseInt(duracion, 10),
+        },
       });
-      const cantidad = Array.isArray(resp.data) ? resp.data.length : 0;
-      setOk(`Se generaron ${cantidad} bloque(s) para ${MESES[mes - 1]} ${anio}.`);
+      setOk(
+        `¡Agenda generada! Se han procesado y guardado correctamente los bloques médicos para ${vetSeleccionado!.nombreCompleto}.`,
+      );
     } catch (err) {
-      setError(mensajeError(err, 'No se pudieron generar los bloques.'));
+      setError(
+        mensajeError(
+          err,
+          'El veterinario no posee jornadas base configuradas para mapear este mes.',
+        ),
+      );
     } finally {
       setGenerando(false);
     }
   };
-
-  const okStyle = { background: '#e6f4ea', color: '#1e4620', border: '1px solid #b7e1c4' } as const;
 
   return (
     <div className="dashboard-container">
@@ -139,113 +209,215 @@ export default function GenerarAgenda() {
       </header>
 
       <div className="dashboard-content">
-        {/* Sidebar (izquierda) */}
-        <aside className="sidebar">
-          <h3>Menú</h3>
-          <nav className="sidebar-nav">
-            <button className="nav-item" onClick={() => navigate('/dashboard/admin')}>👥 Usuarios</button>
-            <button className="nav-item active">🗓️ Generar Agenda</button>
-            <button className="nav-item" onClick={() => navigate('/dashboard/admin/precio')}>💲 Valor de citas</button>
-          </nav>
-        </aside>
+        <AdminSidebar active="agenda" />
 
         <main className="main-content">
           <section className="dashboard-section">
             <h2>Generar Agenda</h2>
             <p style={{ color: '#555', marginTop: '-6px', marginBottom: '20px' }}>
-              Configura la jornada del veterinario y genera sus bloques de horario para un mes.
+              Define la regla de jornada del veterinario y genera sus bloques médicos para un mes.
             </p>
 
             {error && <div className="error-message">{error}</div>}
-            {ok && <div className="error-message" style={okStyle}>{ok}</div>}
+            {ok && <div className="success-message">{ok}</div>}
 
             {/* Paso 1: Veterinario */}
             <div className="form-section">
               <h3 className="form-section-title">
                 <span className="step-badge">1</span>
-                Veterinario
+                Veterinario Asignado
               </h3>
               <div className="form-grid">
                 <div className="form-field span-2">
-                  <label htmlFor="idVet">ID del veterinario</label>
-                  <input
-                    id="idVet"
-                    type="number"
-                    min={1}
-                    placeholder="Ej. 1"
-                    value={idVet}
-                    onChange={(e) => setIdVet(e.target.value)}
-                  />
-                  <span className="field-hint">
-                    Es el ID del veterinario (no del usuario). Se muestra al crear un médico.
-                  </span>
+                  <label htmlFor="vet">Profesional</label>
+                  <select
+                    id="vet"
+                    value={idVetSel}
+                    onChange={(e) => setIdVetSel(e.target.value)}
+                    disabled={loadingVets}
+                  >
+                    <option value="">
+                      {loadingVets ? 'Cargando profesionales...' : 'Seleccionar profesional...'}
+                    </option>
+                    {vets.map((v) => (
+                      <option key={v.idVeterinario} value={v.idVeterinario}>
+                        {v.nombreCompleto} — {formatEspecialidades(v.especialidades)}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
 
-            {/* Paso 2: Jornada */}
+            {/* Paso 2: Regla de jornada (espejo de CrearJornadaScreen) */}
             <div className="form-section">
               <h3 className="form-section-title">
                 <span className="step-badge">2</span>
-                Jornada laboral
+                Definir Regla de Jornada
               </h3>
-              <div className="checkbox-group" style={{ marginBottom: '14px' }}>
-                {DIAS.map((d) => (
-                  <label key={d.n}>
-                    <input type="checkbox" checked={diasSel.includes(d.n)} onChange={() => toggleDia(d.n)} />
-                    {d.label}
-                  </label>
-                ))}
+              <p className="field-hint" style={{ display: 'block', marginBottom: '10px' }}>
+                Selecciona los días sobre los cuales se aplicará este patrón de horario.
+              </p>
+
+              <div className="dias-chips">
+                {DIAS_SEMANA.map((dia) => {
+                  const selected = diasSel.includes(dia.id);
+                  return (
+                    <button
+                      type="button"
+                      key={dia.id}
+                      className={`dia-chip ${selected ? 'selected' : ''}`}
+                      onClick={() => toggleDia(dia.id)}
+                    >
+                      {dia.nombre}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="form-grid">
+
+              <div className="form-grid" style={{ marginTop: '14px' }}>
                 <div className="form-field">
-                  <label htmlFor="horaInicio">Hora de inicio</label>
-                  <input id="horaInicio" type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} />
+                  <label htmlFor="horaInicio">Hora Apertura</label>
+                  <input
+                    id="horaInicio"
+                    type="time"
+                    value={horaInicio}
+                    onChange={(e) => setHoraInicio(e.target.value)}
+                  />
                 </div>
                 <div className="form-field">
-                  <label htmlFor="horaFin">Hora de fin</label>
-                  <input id="horaFin" type="time" value={horaFin} onChange={(e) => setHoraFin(e.target.value)} />
+                  <label htmlFor="horaFin">Hora Cierre</label>
+                  <input
+                    id="horaFin"
+                    type="time"
+                    value={horaFin}
+                    onChange={(e) => setHoraFin(e.target.value)}
+                  />
                 </div>
               </div>
-              <button type="button" className="btn-submit" style={{ marginTop: '12px' }} onClick={handleGuardarJornada} disabled={guardandoJornada}>
-                {guardandoJornada ? 'Guardando...' : 'Guardar jornada'}
+
+              <button
+                type="button"
+                className="btn-submit"
+                style={{ marginTop: '12px' }}
+                onClick={validarJornada}
+                disabled={guardandoJornada}
+              >
+                {guardandoJornada ? 'Guardando en Servidor...' : '🗓️ Registrar Regla de Horario'}
               </button>
-              <span className="field-hint" style={{ display: 'block', marginTop: '6px' }}>
-                Guarda la jornada una sola vez por veterinario (repetir crea duplicados).
-              </span>
             </div>
 
-            {/* Paso 3: Generar bloques */}
+            {/* Paso 3: Bloques (espejo de ModalBloquesScreen) */}
             <div className="form-section">
               <h3 className="form-section-title">
                 <span className="step-badge">3</span>
-                Generar bloques
+                Generación de Bloques Médicos
               </h3>
+              <p className="field-hint" style={{ display: 'block', marginBottom: '10px' }}>
+                Convierte las jornadas base en bloques de atención reservables para un mes.
+              </p>
               <div className="form-grid">
                 <div className="form-field">
-                  <label htmlFor="anio">Año</label>
-                  <input id="anio" type="number" value={anio} onChange={(e) => setAnio(Number(e.target.value))} />
-                </div>
-                <div className="form-field">
-                  <label htmlFor="mes">Mes</label>
+                  <label htmlFor="mes">Mes Planificación</label>
                   <select id="mes" value={mes} onChange={(e) => setMes(Number(e.target.value))}>
                     {MESES.map((m, i) => (
                       <option key={i} value={i + 1}>{m}</option>
                     ))}
                   </select>
                 </div>
+                <div className="form-field">
+                  <label htmlFor="anio">Año Vigente</label>
+                  <input id="anio" type="number" value={anioSistema} readOnly disabled />
+                </div>
                 <div className="form-field span-2">
-                  <label htmlFor="duracion">Duración por bloque (minutos)</label>
-                  <input id="duracion" type="number" min={5} step={5} value={duracion} onChange={(e) => setDuracion(Number(e.target.value))} />
+                  <label htmlFor="duracion">Duración de cada Bloque (Minutos)</label>
+                  <input
+                    id="duracion"
+                    type="number"
+                    min={5}
+                    step={5}
+                    value={duracion}
+                    onChange={(e) => setDuracion(e.target.value.replace(/\D/g, ''))}
+                  />
                 </div>
               </div>
-              <button type="button" className="btn-submit" style={{ marginTop: '12px' }} onClick={handleGenerarBloques} disabled={generando}>
-                {generando ? 'Generando...' : 'Generar bloques'}
+              <button
+                type="button"
+                className="btn-submit"
+                style={{ marginTop: '12px' }}
+                onClick={validarBloques}
+                disabled={generando}
+              >
+                {generando ? 'Procesando...' : '⚡ Generar'}
               </button>
             </div>
           </section>
         </main>
       </div>
+
+      {/* ─── Modal: Resumen de Jornada ─── */}
+      {showResumenJornada && (
+        <div className="modal-overlay" onClick={() => setShowResumenJornada(false)}>
+          <div className="modal-content jornada-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Resumen de Jornada</h2>
+              <p>Confirma los detalles antes de crear las reglas horarias en el sistema.</p>
+            </div>
+            <div className="modal-body">
+              <div className="resumen-admin-box">
+                <span className="resumen-admin-label">Veterinario</span>
+                <span className="resumen-admin-valor">{vetSeleccionado?.nombreCompleto}</span>
+
+                <span className="resumen-admin-label">Días Asignados</span>
+                <span className="resumen-admin-valor">{getDiasSeleccionadosTexto()}</span>
+
+                <span className="resumen-admin-label">Jornada Laboral</span>
+                <span className="resumen-admin-valor">{horaInicio} hrs a {horaFin} hrs</span>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-cancel" onClick={() => setShowResumenJornada(false)}>
+                Modificar Datos
+              </button>
+              <button type="button" className="btn-submit" onClick={registrarJornada}>
+                Confirmar y Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modal: Confirmación de Agenda (bloques) ─── */}
+      {showResumenBloques && (
+        <div className="modal-overlay" onClick={() => setShowResumenBloques(false)}>
+          <div className="modal-content jornada-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Confirmación de Agenda</h2>
+              <p>Verifica la configuración antes de generar los bloques en el sistema.</p>
+            </div>
+            <div className="modal-body">
+              <div className="resumen-admin-box">
+                <span className="resumen-admin-label">Profesional Médico</span>
+                <span className="resumen-admin-valor">{vetSeleccionado?.nombreCompleto}</span>
+
+                <span className="resumen-admin-label">Período de Bloques</span>
+                <span className="resumen-admin-valor">{MESES[mes - 1]} de {anioSistema}</span>
+
+                <span className="resumen-admin-label">Intervalo Clínico</span>
+                <span className="resumen-admin-valor">Cada {duracion} minutos continuos</span>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-cancel" onClick={() => setShowResumenBloques(false)}>
+                Cancelar Ajustes
+              </button>
+              <button type="button" className="btn-submit" onClick={generarBloques}>
+                Confirmar y Generar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

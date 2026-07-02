@@ -331,6 +331,141 @@
   background-color: rgba(65, 100, 40, 0.2);
 }
 
+/* ─────────── Editar mascota (espejo de la pantalla móvil) ─────────── */
+.editar-mascota-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.editar-foto-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.editar-foto-label {
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+}
+
+.editar-foto-btn {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 2px solid var(--color-light-green);
+  background-color: var(--color-gray-100);
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.editar-foto-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 27, 13, 0.2);
+}
+
+.editar-foto-btn:disabled {
+  cursor: progress;
+}
+
+.editar-foto-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.editar-foto-placeholder {
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-dark-green);
+  text-align: center;
+  padding: var(--spacing-sm);
+}
+
+/* Overlay que aparece al pasar el mouse sobre la foto */
+.editar-foto-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 27, 13, 0.55);
+  color: var(--color-white);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.editar-foto-btn:hover:not(:disabled) .editar-foto-overlay {
+  opacity: 1;
+}
+
+/* Aviso de datos médicos bloqueados (misma política que el móvil) */
+.editar-info-bloqueada {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-light-green);
+  border-radius: 10px;
+  padding: var(--spacing-lg);
+}
+
+.editar-info-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-dark-green);
+  font-size: 15px;
+}
+
+.editar-info-bloqueada p {
+  margin: var(--spacing-sm) 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-dark-d-green);
+}
+
+.editar-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-gray-200);
+}
+
+/* Modal de recorte de imagen */
+.crop-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+}
+
+.crop-modal-area {
+  position: relative;
+  width: 90%;
+  max-width: 560px;
+  height: 60%;
+  background-color: #333;
+}
+
+.crop-modal-actions {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
 /* ─────────── Responsive ─────────── */
 @media (max-width: 720px) {
   .info-grid {
@@ -375,5 +510,13 @@
   .hist-diag {
     max-width: none;
     white-space: normal;
+  }
+
+  .editar-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .editar-form-actions button {
+    width: 100%;
   }
 }

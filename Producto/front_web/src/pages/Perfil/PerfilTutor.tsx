@@ -96,11 +96,22 @@ export default function PerfilTutor() {
     navigate('/login');
   };
 
+  // Cierre de sesión desde el botón del perfil, con confirmación (igual que el móvil)
+  const handleCerrarSesion = () => {
+    if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+      handleLogout();
+    }
+  };
+
   // ─── Cambio de foto de perfil ───
   const handleFotoSeleccionada = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ''; // permite volver a elegir la misma imagen
     if (!file) return;
+
+    if (!window.confirm('¿Deseas establecer esta imagen como tu nueva foto de perfil?')) {
+      return;
+    }
 
     setError('');
     setExito('');
@@ -366,6 +377,33 @@ export default function PerfilTutor() {
                       </div>
                     </dl>
                   )}
+                </section>
+
+                {/* ─── Cuenta (mismo menú que la app móvil) ─── */}
+                <section className="perfil-card">
+                  <div className="perfil-card-head">
+                    <h2>Cuenta</h2>
+                  </div>
+
+                  <div className="perfil-menu">
+                    <button type="button" className="perfil-menu-btn">
+                      Cambiar contraseña
+                    </button>
+                    <button type="button" className="perfil-menu-btn">
+                      Configurar recordatorios
+                    </button>
+                    <button type="button" className="perfil-menu-btn">
+                      Eliminar cuenta
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="perfil-logout-btn"
+                    onClick={handleCerrarSesion}
+                  >
+                    Cerrar Sesión
+                  </button>
                 </section>
               </>
             )}

@@ -107,7 +107,7 @@ export default function DashboardTutor() {
   const proximasCitas = reservas.filter(esProxima).sort(ordenarAsc);
 
   const handleEditMascota = (mascota: Mascota) => {
-    navigate('/agregar-mascota', { state: { mascota, isEditing: true } });
+    navigate(`/dashboard/tutor/mascota/${mascota.idMascota}/editar`, { state: { mascota } });
   };
 
   const handleDeleteMascota = async (id: number) => {

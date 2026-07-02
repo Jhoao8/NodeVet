@@ -1,32 +1,32 @@
 import { useState, useRef, useCallback } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Cropper from 'react-easy-crop';
 import api from '../api/client';
 import { subirImagenCloudinary } from '../services/cloudinaryService';
-import type { Mascota } from '../components/PetCard/PetCard.types';
 import getCroppedImg from '../utils/cropImage';
+import { PET_DATA } from '../utils/petData';
+import type { EspecieMascota } from '../utils/petData';
 import '../styles/Auth.css';
 
+const ESPECIES = Object.keys(PET_DATA) as EspecieMascota[];
+
+// La edición de mascotas vive en /dashboard/tutor/mascota/:id/editar
+// (EditarMascota.tsx); esta página solo registra mascotas nuevas.
 export default function AgregarMascota() {
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Extraer estado de navegación si venimos de "Editar"
-  const isEditing = location.state?.isEditing || false;
-  const mascotaToEdit: Mascota | undefined = location.state?.mascota;
 
-  const [nombre, setNombre] = useState(mascotaToEdit?.nomMascota || '');
-  const [tipo, setTipo] = useState(mascotaToEdit?.especie || '');
-  const [raza, setRaza] = useState(mascotaToEdit?.raza || '');
-  const [sexo, setSexo] = useState<number>(mascotaToEdit?.sexo ?? 1);
-  const [fecNac, setFecNac] = useState(mascotaToEdit?.fecNac || '');
-  const [estFecNac, setEstFecNac] = useState<number>(mascotaToEdit?.estFecNac ?? 0);
-  const [peso, setPeso] = useState<string>(mascotaToEdit?.peso?.toString() || '');
-  
+  const [nombre, setNombre] = useState('');
+  const [tipo, setTipo] = useState('');
+  const [raza, setRaza] = useState('');
+  const [sexo, setSexo] = useState<number>(1);
+  const [fecNac, setFecNac] = useState('');
+  const [fecNacEst, setFecNacEst] = useState<number>(0);
+  const [peso, setPeso] = useState<string>('');
+
   // Imagen final lista para subir a cloudinary (File u object)
   const [imagenCropped, setImagenCropped] = useState<File | null>(null);
-  const [imagenPreview, setImagenPreview] = useState<string | null>(mascotaToEdit?.imagenMascota || null);
+  const [imagenPreview, setImagenPreview] = useState<string | null>(null);
   
   // Estados para el modal de Cropper
   const [isCropping, setIsCropping] = useState(false);
@@ -80,8 +80,8 @@ export default function AgregarMascota() {
     e.preventDefault();
     setError('');
 
-    if (!nombre || !tipo) {
-      setError('Por favor completa todos los campos obligatorios.');
+    if (!nombre || !tipo || !peso) {
+      setError('Por favor completa el nombre, especie y peso.');
       return;
     }
 
@@ -103,23 +103,17 @@ export default function AgregarMascota() {
         raza: raza,
         sexo: sexo,
         fecNac: fecNac ? fecNac : null,
-        estFecNac: estFecNac,
+        fecNacEst: fecNacEst,
         peso: peso ? parseFloat(peso) : null,
-        // Si hay nueva imagen recortada usamos la nueva URL, sino mantenemos la existente (o undefined)
-        imagenMascota: imageUrl || mascotaToEdit?.imagenMascota || undefined
+        imagenMascota: imageUrl || undefined
       };
 
-      if (isEditing && mascotaToEdit?.idMascota) {
-        await api.put(`/v1/mascotas/${mascotaToEdit.idMascota}`, payload);
-        alert('Mascota actualizada correctamente');
-      } else {
-        await api.post('/v1/mascotas', payload);
-        alert('Mascota agregada correctamente');
-      }
-      
+      await api.post('/v1/mascotas', payload);
+      alert('Mascota agregada correctamente');
+
       navigate('/dashboard/tutor');
     } catch (err: any) {
-      setError(err.response?.data?.error || `Error al ${isEditing ? 'actualizar' : 'agregar'} la mascota`);
+      setError(err.response?.data?.error || 'Error al agregar la mascota');
     } finally {
       setLoading(false);
     }
@@ -155,7 +149,7 @@ export default function AgregarMascota() {
       )}
 
       <div className="auth-box">
-        <h1>{isEditing ? 'Editar Mascota' : 'Agregar Mascota'}</h1>
+        <h1>Agregar Mascota</h1>
         {error && <div className="error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
@@ -203,19 +197,39 @@ export default function AgregarMascota() {
             onChange={(e) => setNombre(e.target.value)}
             required
           />
-          <input
-            type="text"
-            placeholder="Especie (Ej: Perro, Gato) *"
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value)}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Raza"
-            value={raza}
-            onChange={(e) => setRaza(e.target.value)}
-          />
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', alignItems: 'center' }}>
+            <label style={{ width: '100px', textAlign: 'left', fontWeight: 'bold' }}>Especie: *</label>
+            <select
+              value={tipo}
+              onChange={(e) => {
+                setTipo(e.target.value);
+                // Al cambiar la especie se limpia la raza (igual que el móvil)
+                setRaza('');
+              }}
+              required
+              style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #ccc', backgroundColor: '#f9f9f9', color: '#333' }}
+            >
+              <option value="">Seleccionar...</option>
+              {ESPECIES.map((especie) => (
+                <option key={especie} value={especie}>{especie}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', alignItems: 'center' }}>
+            <label style={{ width: '100px', textAlign: 'left', fontWeight: 'bold' }}>Raza:</label>
+            <select
+              value={raza}
+              onChange={(e) => setRaza(e.target.value)}
+              disabled={!tipo}
+              style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #ccc', backgroundColor: tipo ? '#f9f9f9' : '#F3F4F6', color: '#333' }}
+            >
+              <option value="">{tipo ? 'Seleccionar...' : 'Elija especie'}</option>
+              {tipo &&
+                PET_DATA[tipo as EspecieMascota]?.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+            </select>
+          </div>
           <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', alignItems: 'center' }}>
             <label style={{ width: '100px', textAlign: 'left', fontWeight: 'bold' }}>Sexo:</label>
             <select 
@@ -238,24 +252,25 @@ export default function AgregarMascota() {
             <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px', gap: '8px' }}>
               <input
                 type="checkbox"
-                id="estFecNac"
-                checked={estFecNac === 1}
-                onChange={(e) => setEstFecNac(e.target.checked ? 1 : 0)}
+                id="fecNacEst"
+                checked={fecNacEst === 1}
+                onChange={(e) => setFecNacEst(e.target.checked ? 1 : 0)}
                 style={{ width: 'auto', margin: 0 }}
               />
-              <label htmlFor="estFecNac" style={{ fontSize: '14px', margin: 0, fontWeight: 'normal' }}>Fecha aproximada</label>
+              <label htmlFor="fecNacEst" style={{ fontSize: '14px', margin: 0, fontWeight: 'normal' }}>Fecha aproximada</label>
             </div>
           </div>
           <input
             type="number"
             step="0.01"
             min="0"
-            placeholder="Peso (kg)"
+            placeholder="Peso (kg) *"
             value={peso}
             onChange={(e) => setPeso(e.target.value)}
+            required
           />
           <button type="submit" disabled={loading} style={{ marginTop: '10px' }}>
-            {loading ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Agregar Mascota')}
+            {loading ? 'Guardando...' : 'Agregar Mascota'}
           </button>
         </form>
 

@@ -5,7 +5,7 @@ export interface Mascota {
   raza?: string;
   sexo: number;
   fecNac?: string;
-  estFecNac?: number;
+  fecNacEst?: number;
   peso?: number;
   imagenMascota?: string;
   estadoMasc?: number;

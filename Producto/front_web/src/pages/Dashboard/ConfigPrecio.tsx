@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getPrecioCita, setPrecioCita, formatCLP } from '../../config/precioCita';
 import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import UserMenu from '../../components/UserMenu';
+import AdminSidebar from '../../components/AdminSidebar';
 import '../../styles/Dashboard.css';
 
 export default function ConfigPrecio() {
@@ -50,14 +51,7 @@ export default function ConfigPrecio() {
       </header>
 
       <div className="dashboard-content">
-        <aside className="sidebar">
-          <h3>Menú</h3>
-          <nav className="sidebar-nav">
-            <button className="nav-item" onClick={() => navigate('/dashboard/admin')}>👥 Usuarios</button>
-            <button className="nav-item" onClick={() => navigate('/dashboard/admin/agenda')}>🗓️ Generar Agenda</button>
-            <button className="nav-item active">💲 Valor de citas</button>
-          </nav>
-        </aside>
+        <AdminSidebar active="precio" />
 
         <main className="main-content">
           <section className="dashboard-section">

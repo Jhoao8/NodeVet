@@ -187,8 +187,8 @@ export default function DetalleMascota() {
                     <button
                       className="mascota-hero-edit"
                       onClick={() =>
-                        navigate('/agregar-mascota', {
-                          state: { mascota, isEditing: true },
+                        navigate(`/dashboard/tutor/mascota/${mascota.idMascota}/editar`, {
+                          state: { mascota },
                         })
                       }
                     >
@@ -217,7 +217,7 @@ export default function DetalleMascota() {
                       <dt>Edad</dt>
                       <dd>
                         {calcularEdad(mascota.fecNac)}
-                        {mascota.estFecNac === 1 && mascota.fecNac ? ' (aprox.)' : ''}
+                        {mascota.fecNacEst === 1 && mascota.fecNac ? ' (aprox.)' : ''}
                       </dd>
                     </div>
                   </dl>

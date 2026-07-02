@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import '../../styles/Dashboard.css';
-import RegistrarVeterinarioForm from '../../components/forms/RegistrarVeterinarioForm';
 import EditarUsuarioForm from '../../components/forms/EditarUsuarioForm';
+import AdminSidebar from '../../components/AdminSidebar';
 import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import { getUserInfoFromToken } from '../../utils/authUtils';
 import UserMenu from '../../components/UserMenu';
@@ -21,8 +21,6 @@ export default function DashboardAdmin() {
   const nombreUsuario = useNombreUsuario();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [ultimoVet, setUltimoVet] = useState<{ idVeterinario?: number; nombreCompleto?: string } | null>(null);
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
@@ -55,15 +53,6 @@ export default function DashboardAdmin() {
     fetchUsers().finally(() => setLoading(false));
   }, []);
 
-  const handleSuccess = (vet?: { idVeterinario?: number; nombreCompleto?: string }) => {
-    setShowModal(false);
-    fetchUsers();
-    if (vet?.idVeterinario) {
-      setUltimoVet({ idVeterinario: vet.idVeterinario, nombreCompleto: vet.nombreCompleto });
-      localStorage.setItem('ultimoVetIdVet', String(vet.idVeterinario));
-    }
-  };
-
   const handleEditSuccess = () => {
     setEditingUser(null);
     fetchUsers();
@@ -94,12 +83,6 @@ export default function DashboardAdmin() {
 
   return (
     <>
-      {showModal && (
-        <RegistrarVeterinarioForm
-          onSuccess={handleSuccess}
-          onCancel={() => setShowModal(false)}
-        />
-      )}
       {editingUser && (
         <EditarUsuarioForm
           usuario={editingUser}
@@ -118,15 +101,7 @@ export default function DashboardAdmin() {
         </header>
 
         <div className="dashboard-content">
-          {/* Sidebar */}
-          <aside className="sidebar">
-            <h3>Menú</h3>
-            <nav className="sidebar-nav">
-              <button className="nav-item active" onClick={() => navigate('/dashboard/admin')}>👥 Usuarios</button>
-              <button className="nav-item" onClick={() => navigate('/dashboard/admin/agenda')}>🗓️ Generar Agenda</button>
-              <button className="nav-item" onClick={() => navigate('/dashboard/admin/precio')}>💲 Valor de citas</button>
-            </nav>
-          </aside>
+          <AdminSidebar active="usuarios" />
 
           {/* Main Content */}
           <main className="main-content">
@@ -141,14 +116,6 @@ export default function DashboardAdmin() {
                 <div className="admin-grid">
                   <section className="dashboard-section">
                     <h3>Usuarios</h3>
-                    {ultimoVet?.idVeterinario && (
-                      <div
-                        className="error-message"
-                        style={{ background: '#e6f4ea', color: '#1e4620', border: '1px solid #b7e1c4' }}
-                      >
-                        Veterinario creado: {ultimoVet.nombreCompleto} — <strong>ID de veterinario: {ultimoVet.idVeterinario}</strong>. Úsalo en "Generar Agenda".
-                      </div>
-                    )}
                     {actionError && <div className="error-message">{actionError}</div>}
                     <table className="data-table">
                       <thead>
@@ -204,9 +171,6 @@ export default function DashboardAdmin() {
                         )}
                       </tbody>
                     </table>
-                    <div className="action-buttons">
-                      <button className="btn-secondary" onClick={() => setShowModal(true)}>Crear Médico</button>
-                    </div>
                   </section>
                 </div>
               </>

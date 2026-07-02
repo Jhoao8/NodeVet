@@ -772,6 +772,392 @@
   transform: none;
 }
 
+/* ═══════ Administración de veterinarios (espejo de las pantallas móviles) ═══════ */
+
+.admin-back {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+  padding: 4px 0;
+  margin-bottom: var(--spacing-md);
+  transition: color 0.2s;
+}
+
+.admin-back:hover {
+  color: var(--color-light-green);
+}
+
+.vets-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-md);
+}
+
+.vets-head h2 {
+  margin: 0;
+}
+
+/* Buscador (espejo del search del móvil) */
+.vets-search {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-light-green);
+  border-radius: 12px;
+  padding: 0 var(--spacing-md);
+  height: 48px;
+  max-width: 480px;
+  margin-bottom: var(--spacing-lg);
+}
+
+.vets-search input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--color-dark-d-green);
+  background: transparent;
+}
+
+.vets-search-clear {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-dark-green);
+  font-size: 14px;
+  padding: 2px 4px;
+}
+
+/* Lista de veterinarios */
+.vets-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: var(--color-white);
+}
+
+.vets-list li + li {
+  border-top: 1px solid var(--color-gray-200);
+}
+
+.vet-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s;
+}
+
+.vet-row:hover {
+  background-color: rgba(158, 181, 125, 0.1);
+}
+
+.vet-row-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-light-green);
+  color: var(--color-dark-d-green);
+  font-weight: var(--font-weight-bold);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.vet-row-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.vet-row-nombre {
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-dark-d-green);
+}
+
+.vet-row-sub {
+  font-size: 13px;
+  color: var(--color-dark-green);
+}
+
+.vets-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xl);
+  color: var(--color-gray-600);
+  text-align: center;
+}
+
+.vets-empty-icon {
+  font-size: 40px;
+  opacity: 0.5;
+}
+
+/* Ficha del veterinario */
+.vet-ficha-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.vet-ficha-avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 20px;
+}
+
+.vet-ficha-nombre {
+  margin: 0 0 4px !important;
+}
+
+.vet-ficha-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+  margin: 0;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-gray-200);
+}
+
+.vet-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.vet-info-item dt {
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vet-info-item dd {
+  margin: 0;
+  font-size: 15px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-900);
+  word-break: break-word;
+}
+
+/* Acciones de gestión horaria */
+.vet-acciones-horario {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--spacing-lg);
+}
+
+.jornadas-subtitulo {
+  margin: 0 0 var(--spacing-md);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+}
+
+.jornadas-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.jornada-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--color-light-yellow);
+  border: 1px solid var(--color-dark-green);
+  border-radius: 12px;
+}
+
+.jornada-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jornada-dia {
+  font-size: 17px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-dark-d-green);
+}
+
+.jornada-horas {
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-dark-green);
+}
+
+/* Botón de desactivación (soft delete) */
+.btn-desactivar-vet {
+  padding: 12px 24px;
+  background-color: var(--color-red);
+  color: var(--color-white);
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-desactivar-vet:hover:not(:disabled) {
+  background-color: #B71C1C;
+}
+
+.btn-desactivar-vet:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Chips de días de la semana (espejo de CrearJornadaScreen) */
+.dias-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dia-chip {
+  padding: 8px 16px;
+  background-color: var(--color-light-yellow);
+  border: 1px solid var(--color-dark-green);
+  border-radius: 20px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-dark-d-green);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.dia-chip:hover:not(.selected) {
+  background-color: rgba(158, 181, 125, 0.25);
+}
+
+.dia-chip.selected {
+  background-color: var(--color-light-green);
+  border-color: var(--color-dark-d-green);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Modal compacto de jornadas y resúmenes admin */
+.modal-content.jornada-modal {
+  max-width: 460px;
+}
+
+.resumen-admin-box {
+  background-color: var(--color-light-yellow);
+  border: 1px solid var(--color-light-brown);
+  border-radius: 12px;
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+.resumen-admin-label {
+  font-size: 11px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-dark-green);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.resumen-admin-valor {
+  font-size: 17px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-dark-d-green);
+  margin-bottom: var(--spacing-md);
+}
+
+.resumen-admin-valor:last-child {
+  margin-bottom: 0;
+}
+
+/* Generador de correo institucional */
+.correo-gen-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.btn-generar-correo {
+  padding: 7px 14px;
+  background-color: var(--color-light-yellow);
+  border: 1px solid var(--color-light-brown);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-dark-d-green);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-generar-correo:hover {
+  background-color: #FFF7D6;
+}
+
+.btn-variante-correo {
+  border: none;
+  background: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--color-light-brown);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .vet-ficha-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vet-acciones-horario {
+    flex-direction: column;
+  }
+
+  .jornada-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 .error-message {
   display: flex;
   align-items: center;
