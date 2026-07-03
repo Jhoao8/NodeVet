@@ -68,6 +68,9 @@ export default function AgendarHora() {
   const [isProcessingPago, setIsProcessingPago] = useState(false);
   const [error, setError] = useState('');
 
+  // Aviso de pago obligatorio (espejo del modal móvil)
+  const [showPagoObligatorioAviso, setShowPagoObligatorioAviso] = useState(false);
+
   // Mascotas del tutor
   useEffect(() => {
     if (!token) {
@@ -89,6 +92,24 @@ export default function AgendarHora() {
     };
     // 'token' NO va en las dependencias: el backend lo renueva en cada respuesta
     // (cabecera New-Token) y tenerlo aquí provocaba un bucle infinito.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Si la clínica exige pago para reservar, se avisa al entrar (igual que el móvil)
+  useEffect(() => {
+    if (!token) return;
+    let cancelado = false;
+    api
+      .get('/v1/pagos/config/obligatorio/lectura')
+      .then((resp) => {
+        if (!cancelado && Boolean(resp.data?.pagoObligatorio)) {
+          setShowPagoObligatorioAviso(true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -167,13 +188,20 @@ export default function AgendarHora() {
 
       const resp = await api.post('/v1/reservas', payload);
       const urlPago: string | undefined = resp.data?.urlPago;
+      const pagoObligatorio: boolean | undefined = resp.data?.pagoObligatorio;
 
       if (urlPago) {
         // Adaptación web de Linking.openURL: Flow vuelve a /pago/resultado
         window.location.href = urlPago;
       } else {
-        setError('No se pudo generar el enlace de pago. Intenta nuevamente.');
+        // Sin pasarela: la reserva quedó creada directamente (pago no obligatorio)
         setReservaStep(0);
+        alert(
+          pagoObligatorio === false
+            ? 'Reserva confirmada: tu reserva fue creada sin pago obligatorio.'
+            : 'Reserva confirmada: tu reserva fue creada correctamente.',
+        );
+        navigate('/dashboard/tutor');
       }
     } catch (err) {
       const mensaje =
@@ -401,6 +429,39 @@ export default function AgendarHora() {
                   </span>
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Modal: aviso de pago obligatorio ─── */}
+      {showPagoObligatorioAviso && (
+        <div className="reserva-modal-overlay" onClick={() => setShowPagoObligatorioAviso(false)}>
+          <div className="reserva-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="reserva-modal-head">
+              <h3>Aviso de pago</h3>
+              <button
+                type="button"
+                className="reserva-modal-close"
+                onClick={() => setShowPagoObligatorioAviso(false)}
+                aria-label="Cerrar"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="reserva-modal-body">
+              <p className="reserva-pago-texto">
+                Se solicitará un pago al finalizar para completar la reserva de su cita.
+              </p>
+              <div className="reserva-botones">
+                <button
+                  type="button"
+                  className="reserva-btn-confirmar"
+                  onClick={() => setShowPagoObligatorioAviso(false)}
+                >
+                  Entendido
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -8,9 +8,9 @@ import AgendarHora from './pages/AgendarCita/AgendarHora';
 import PagoResultado from './pages/AgendarCita/PagoResultado';
 import DashboardTutor from './pages/Dashboard/DashboardTutor';
 import PerfilTutor from './pages/Perfil/PerfilTutor';
+import PerfilVeterinario from './pages/Perfil/PerfilVeterinario';
 import DetalleMascota from './pages/Mascota/DetalleMascota';
 import EditarMascota from './pages/Mascota/EditarMascota';
-import MisCitas from './pages/Citas/MisCitas';
 import DashboardMedico from './pages/Dashboard/DashboardMedico';
 import AtencionConsulta from './pages/Dashboard/AtencionConsulta';
 import DashboardAdmin from './pages/Dashboard/DashboardAdmin';
@@ -58,9 +58,10 @@ function App() {
           path="/dashboard/tutor/mascota/:id/editar"
           element={<EditarMascota />}
         />
+        {/* La lista de citas vive ahora en el dashboard (espejo del Home móvil) */}
         <Route
           path="/dashboard/tutor/citas"
-          element={<MisCitas />}
+          element={<Navigate to="/dashboard/tutor" replace />}
         />
         <Route
           path="/dashboard/medico"
@@ -69,6 +70,10 @@ function App() {
         <Route
           path="/dashboard/medico/atencion"
           element={<ProtectedRoute element={<AtencionConsulta />} requiredRole="VETERINARIO" />}
+        />
+        <Route
+          path="/dashboard/medico/perfil"
+          element={<ProtectedRoute element={<PerfilVeterinario />} requiredRole="VETERINARIO" />}
         />
         <Route
           path="/dashboard/admin"

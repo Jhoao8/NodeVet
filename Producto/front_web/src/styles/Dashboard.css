@@ -1391,3 +1391,70 @@
 .tabla-scroll {
   overflow-x: auto;
 }
+
+/* ═══════ Agenda del Día del veterinario (espejo móvil) ═══════ */
+
+.agenda-dia-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  max-width: 360px;
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: rgba(158, 181, 125, 0.12);
+  border: 1px solid var(--color-light-green);
+  border-radius: 12px;
+}
+
+.agenda-dia-flecha {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(65, 100, 40, 0.15);
+  font-size: 22px;
+  line-height: 1;
+  color: var(--color-dark-green);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.agenda-dia-flecha:hover:not(:disabled) {
+  background-color: rgba(65, 100, 40, 0.3);
+}
+
+.agenda-dia-flecha:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.agenda-dia-fecha {
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-dark-d-green);
+  letter-spacing: 0.5px;
+}
+
+/* Tarjeta de reserva clickeable (control de ingreso) */
+.reserva-vet-card {
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  border: 2px solid var(--color-light-green);
+}
+
+.reserva-vet-card:hover {
+  border-color: var(--color-dark-green);
+}
+
+/* Filtro por mascota de las órdenes médicas */
+.ordenes-filtro {
+  padding: 8px 12px;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--color-gray-700);
+  background-color: var(--color-white);
+}

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../api/client';
 import { getPrecioCita, setPrecioCita, formatCLP } from '../../config/precioCita';
 import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import UserMenu from '../../components/UserMenu';
@@ -16,6 +17,39 @@ export default function ConfigPrecio() {
   });
   const [ok, setOk] = useState('');
   const [error, setError] = useState('');
+
+  // Switch de pago obligatorio (espejo del AdminHomeScreen móvil)
+  const [pagoObligatorio, setPagoObligatorio] = useState<boolean | null>(null);
+  const [savingPagoConfig, setSavingPagoConfig] = useState(false);
+
+  useEffect(() => {
+    let cancelado = false;
+    api
+      .get('/v1/pagos/config/obligatorio')
+      .then((resp) => {
+        if (!cancelado) setPagoObligatorio(Boolean(resp.data?.pagoObligatorio));
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
+  const togglePagoObligatorio = async () => {
+    if (pagoObligatorio === null) return;
+    setSavingPagoConfig(true);
+    setError('');
+    try {
+      const resp = await api.put('/v1/pagos/config/obligatorio', {
+        pagoObligatorio: !pagoObligatorio,
+      });
+      setPagoObligatorio(Boolean(resp.data?.pagoObligatorio));
+    } catch {
+      setError('No se pudo actualizar la configuración de pago.');
+    } finally {
+      setSavingPagoConfig(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -89,6 +123,41 @@ export default function ConfigPrecio() {
               <button type="button" className="btn-submit" style={{ marginTop: '12px' }} onClick={handleGuardar}>
                 Guardar precio
               </button>
+            </div>
+
+            {/* Módulo de pagos Flow: pago obligatorio para reservar */}
+            <div className="form-section">
+              <h3 className="form-section-title">
+                <span className="step-badge">💳</span>
+                Módulo de Pagos (Flow)
+              </h3>
+              <p className="field-hint" style={{ display: 'block', marginBottom: '12px' }}>
+                Si el pago es obligatorio, el tutor deberá pagar en la pasarela para
+                confirmar su reserva. Si está desactivado, las reservas se confirman
+                directamente sin pago.
+              </p>
+
+              {pagoObligatorio === null ? (
+                <span className="field-hint">Cargando configuración...</span>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <span className={`status ${pagoObligatorio ? 'active' : 'inactive'}`}>
+                    {pagoObligatorio ? 'Pago obligatorio: ON' : 'Pago obligatorio: OFF'}
+                  </span>
+                  <button
+                    type="button"
+                    className="btn-submit"
+                    onClick={togglePagoObligatorio}
+                    disabled={savingPagoConfig}
+                  >
+                    {savingPagoConfig
+                      ? 'Guardando...'
+                      : pagoObligatorio
+                        ? 'Desactivar pago obligatorio'
+                        : 'Activar pago obligatorio'}
+                  </button>
+                </div>
+              )}
             </div>
           </section>
         </main>

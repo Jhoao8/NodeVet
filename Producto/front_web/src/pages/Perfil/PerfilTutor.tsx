@@ -49,6 +49,29 @@ export default function PerfilTutor() {
   const [correoUsr, setCorreoUsr] = useState('');
   const [telefonoUsr, setTelefonoUsr] = useState('');
 
+  // Cambio de contraseña (espejo del modal móvil)
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordActual, setPasswordActual] = useState('');
+  const [nuevaPassword, setNuevaPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [cambiandoPassword, setCambiandoPassword] = useState(false);
+  const [errorPassword, setErrorPassword] = useState('');
+
+  const [eliminandoCuenta, setEliminandoCuenta] = useState(false);
+
+  // Mismas reglas de contraseña que el móvil
+  const validacionesNuevaPassword = [
+    { id: 'min', mensaje: 'Mínimo 6 caracteres', cumple: nuevaPassword.length >= 6 },
+    { id: 'upper', mensaje: 'Al menos 1 mayúscula', cumple: /[A-Z]/.test(nuevaPassword) },
+    { id: 'lower', mensaje: 'Al menos 1 minúscula', cumple: /[a-z]/.test(nuevaPassword) },
+    {
+      id: 'special',
+      mensaje: 'Al menos 1 carácter especial (!@#$%...)',
+      cumple: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(nuevaPassword),
+    },
+  ];
+  const validacionesPendientes = validacionesNuevaPassword.filter((v) => !v.cumple);
+
   const rolLabel = ROLES_LABEL[localStorage.getItem('userRole') || ''] || 'Tutor';
 
   // Carga el perfil y precarga el formulario con los datos ya separados
@@ -100,6 +123,66 @@ export default function PerfilTutor() {
   const handleCerrarSesion = () => {
     if (window.confirm('¿Estás seguro de que quieres cerrar sesión?')) {
       handleLogout();
+    }
+  };
+
+  // ─── Cambio de contraseña (PUT /v1/usuarios/perfil/password) ───
+  const abrirModalCambioPassword = () => {
+    setPasswordActual('');
+    setNuevaPassword('');
+    setConfirmPassword('');
+    setErrorPassword('');
+    setShowPasswordModal(true);
+  };
+
+  const cambiarPassword = async () => {
+    setErrorPassword('');
+    if (!passwordActual || !nuevaPassword || !confirmPassword) {
+      setErrorPassword('Debes ingresar contraseña actual, nueva y confirmación.');
+      return;
+    }
+    if (validacionesPendientes.length > 0) {
+      setErrorPassword('La nueva contraseña no cumple todas las reglas requeridas.');
+      return;
+    }
+    if (nuevaPassword !== confirmPassword) {
+      setErrorPassword('La nueva contraseña y su confirmación no coinciden.');
+      return;
+    }
+
+    setCambiandoPassword(true);
+    try {
+      await api.put('/v1/usuarios/perfil/password', {
+        passwordActual,
+        nuevaPassword,
+      });
+      setShowPasswordModal(false);
+      setExito('Tu contraseña se cambió correctamente.');
+    } catch (err: any) {
+      const data = err?.response?.data;
+      setErrorPassword(
+        (typeof data === 'string' && data) || 'No se pudo cambiar la contraseña.',
+      );
+    } finally {
+      setCambiandoPassword(false);
+    }
+  };
+
+  // ─── Eliminación (desactivación) de la cuenta propia ───
+  const handleEliminarCuenta = async () => {
+    const confirmar = window.confirm(
+      '¿Estás seguro de que deseas desactivar tu cuenta? Esta acción cerrará tu sesión.',
+    );
+    if (!confirmar) return;
+
+    setEliminandoCuenta(true);
+    setError('');
+    try {
+      await api.delete('/v1/usuarios/perfil');
+      handleLogout();
+    } catch {
+      setError('No se pudo desactivar tu cuenta. Intenta nuevamente.');
+      setEliminandoCuenta(false);
     }
   };
 
@@ -220,8 +303,8 @@ export default function PerfilTutor() {
           <nav className="sidebar-nav">
             <button className="nav-item active">👤 Perfil</button>
             <button className="nav-item" onClick={() => navigate('/dashboard/tutor')}>🏠 Home</button>
-            <button className="nav-item" onClick={() => navigate('/dashboard/tutor/citas')}>📅 Citas</button>
-            <button className="nav-item" onClick={() => navigate('/dashboard/tutor', { state: { scrollTo: 'controles' } })}>🏥 Control Médico</button>
+            <button className="nav-item" onClick={() => navigate('/agendarCita')}>📅 Agendar Cita</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/tutor', { state: { scrollTo: 'ordenes' } })}>💊 Órdenes Médicas</button>
           </nav>
         </aside>
 
@@ -386,14 +469,16 @@ export default function PerfilTutor() {
                   </div>
 
                   <div className="perfil-menu">
-                    <button type="button" className="perfil-menu-btn">
+                    <button type="button" className="perfil-menu-btn" onClick={abrirModalCambioPassword}>
                       Cambiar contraseña
                     </button>
-                    <button type="button" className="perfil-menu-btn">
-                      Configurar recordatorios
-                    </button>
-                    <button type="button" className="perfil-menu-btn">
-                      Eliminar cuenta
+                    <button
+                      type="button"
+                      className="perfil-menu-btn"
+                      onClick={handleEliminarCuenta}
+                      disabled={eliminandoCuenta}
+                    >
+                      {eliminandoCuenta ? 'Eliminando cuenta...' : 'Eliminar cuenta'}
                     </button>
                   </div>
 
@@ -410,6 +495,94 @@ export default function PerfilTutor() {
           </div>
         </main>
       </div>
+
+      {/* ─── Modal: cambiar contraseña (espejo del modal móvil) ─── */}
+      {showPasswordModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => !cambiandoPassword && setShowPasswordModal(false)}
+        >
+          <div className="modal-content jornada-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Cambiar contraseña</h2>
+              <p>Ingresa tu contraseña actual y define una nueva.</p>
+            </div>
+
+            <div className="modal-body">
+              {errorPassword && <div className="error-message">{errorPassword}</div>}
+
+              <div className="form-grid">
+                <div className="form-field span-2">
+                  <label htmlFor="pass-actual">Contraseña actual</label>
+                  <input
+                    id="pass-actual"
+                    type="password"
+                    value={passwordActual}
+                    onChange={(e) => setPasswordActual(e.target.value)}
+                    disabled={cambiandoPassword}
+                  />
+                </div>
+                <div className="form-field span-2">
+                  <label htmlFor="pass-nueva">Nueva contraseña</label>
+                  <input
+                    id="pass-nueva"
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={nuevaPassword}
+                    onChange={(e) => setNuevaPassword(e.target.value)}
+                    disabled={cambiandoPassword}
+                  />
+                  {nuevaPassword.length > 0 && validacionesPendientes.length > 0 && (
+                    <div style={{ marginTop: '6px' }}>
+                      {validacionesPendientes.map((v) => (
+                        <span key={v.id} className="field-error">{v.mensaje}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="form-field span-2">
+                  <label htmlFor="pass-confirmar">Confirmar contraseña</label>
+                  <input
+                    id="pass-confirmar"
+                    type="password"
+                    placeholder="Repite la nueva contraseña"
+                    className={
+                      confirmPassword.length > 0 && confirmPassword !== nuevaPassword
+                        ? 'input-error'
+                        : ''
+                    }
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={cambiandoPassword}
+                  />
+                  {confirmPassword.length > 0 && confirmPassword !== nuevaPassword && (
+                    <span className="field-error">Las contraseñas no coinciden</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => setShowPasswordModal(false)}
+                disabled={cambiandoPassword}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-submit"
+                onClick={cambiarPassword}
+                disabled={cambiandoPassword}
+              >
+                {cambiandoPassword ? 'Guardando...' : 'Guardar contraseña'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
