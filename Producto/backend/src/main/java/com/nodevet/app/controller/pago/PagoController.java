@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.MediaType;
 
 import java.util.Map;
 
@@ -43,7 +44,7 @@ public class PagoController {
         return ResponseEntity.ok(Map.of("pagoObligatorio", estadoFinal));
     }
 
-    @PostMapping("/webhook")
+    @PostMapping(value = "/webhook", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @Operation(summary = "Webhook de confirmación (Uso Interno Flow)", description = "Endpoint consumido automáticamente y en segundo plano por los servidores de la pasarela de pagos. Recibe el token de transacción para validar y marcar la reserva como pagada en la base de datos.")
     public ResponseEntity<String> recibirConfirmacionFlow(@RequestParam("token") String token) {
         try {
