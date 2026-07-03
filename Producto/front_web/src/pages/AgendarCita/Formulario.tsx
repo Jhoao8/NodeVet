@@ -75,11 +75,14 @@ export default function FormularioAgendarCita() {
     setLoading(true);
     setError('');
     try {
+      const urlDinamica = window.location.origin + '/pago/resultado';
+      
       const resp = await api.post('/v1/reservas', {
         idMascota: Number(mascotaSeleccionada),
         idVet: citaSeleccionada.idVet,
         idBloque: citaSeleccionada.idBloque,
         idValor: ID_VALOR_PLACEHOLDER,
+        returnUrl: urlDinamica
       });
 
       const urlPago: string | undefined = resp.data?.urlPago;

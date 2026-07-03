@@ -7,4 +7,7 @@ public class PagoInitRequestDTO {
     // El frontend solo nos dirá: "Quiero pagar la reserva número X"
     // El backend se encargará de buscar en la BD cuánto cuesta esa reserva.
     private Integer idReserva; 
+
+    // La URL a la que Flow debe devolver a este usuario específico
+    private String returnUrl;
 }
