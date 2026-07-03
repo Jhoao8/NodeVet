@@ -30,7 +30,7 @@ public class FlowService {
     @Value("${flow.secret-key}")
     private String flowSecretKey;
 
-    @Value("${flow.confirm-url}")
+    @Value("${FLOW_CONFIRM_URL}")
     private String flowUrlConfirm;
 
     private final RestTemplate restTemplate;
@@ -41,6 +41,7 @@ public class FlowService {
     @SuppressWarnings("rawtypes")
     // CAMBIO 2: Agregamos "String returnUrlDinamica" como último parámetro
     public String crearOrdenDePago(String ordenComercio, Integer monto, String correoTutor, String descripcion, String returnUrlDinamica) {
+        System.out.println("DEBUG: El valor de flowUrlConfirm es: " + this.flowUrlConfirm);
         
         // 1. Usamos un TreeMap porque ordena automáticamente las llaves alfabéticamente (Requisito de Flow)
         Map<String, String> parametros = new TreeMap<>();
