@@ -146,7 +146,6 @@ export default function DetalleMascota() {
             <button className="nav-item" onClick={() => navigate('/dashboard/tutor/perfil')}>👤 Perfil</button>
             <button className="nav-item active" onClick={() => navigate('/dashboard/tutor')}>🏠 Home</button>
             <button className="nav-item" onClick={() => navigate('/agendarCita')}>📅 Agendar Cita</button>
-            <button className="nav-item" onClick={() => navigate('/dashboard/tutor', { state: { scrollTo: 'ordenes' } })}>💊 Órdenes Médicas</button>
           </nav>
         </aside>
 

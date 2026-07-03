@@ -134,10 +134,6 @@ export default function DashboardTutor() {
     }
   }, [loading, location.state]);
 
-  const scrollToSection = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   const scrollToTop = () => {
     document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -219,7 +215,6 @@ export default function DashboardTutor() {
             <button className="nav-item" onClick={() => navigate('/dashboard/tutor/perfil')}>👤 Perfil</button>
             <button className="nav-item active" onClick={scrollToTop}>🏠 Home</button>
             <button className="nav-item" onClick={() => navigate('/agendarCita')}>📅 Agendar Cita</button>
-            <button className="nav-item" onClick={() => scrollToSection('ordenes')}>💊 Órdenes Médicas</button>
           </nav>
         </aside>
 

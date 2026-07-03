@@ -17,7 +17,7 @@ import com.nodevet.app.repository.MascotaRepository;
 import com.nodevet.app.repository.ValorRepository;
 import com.nodevet.app.repository.VeterinarioRepository;
 import com.nodevet.app.repository.agenda.BloqueHorarioRepository;
-import com.nodevet.app.repository.agenda.EstadoBloqueRepository;
+import com.nodevet.app.repository.agenda.EstadoBloqueRepository; 
 import com.nodevet.app.repository.reserva.EstadoReservaRepository;
 import com.nodevet.app.repository.reserva.ReservaRepository;
 import com.nodevet.app.repository.pago.PagoRepository;
@@ -27,8 +27,8 @@ import com.nodevet.app.service.pago.FlowService;
 import com.nodevet.app.util.DtoMapper;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
 import java.util.Map;
+import java.util.List;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -50,7 +50,6 @@ public class ReservaService {
     private final ValorRepository valorRepository;
     private final EstadoReservaRepository estadoReservaRepository;
     private final EstadoBloqueRepository estadoBloqueRepository;
-
 
     // --- INYECCIONES PARA PAGOS Y FLOW ---
     private final PagoRepository pagoRepository;
@@ -229,9 +228,9 @@ public class ReservaService {
         // 6. Crear el registro en la tabla PAGO "congelando" el monto
         Pago nuevoPago = Pago.builder()
                 .reserva(reservaGuardada)
-                .monto(valor.getMonto())
+                .monto(valor.getMonto()) 
                 .estadoPago(estadoPagoPendiente)
-                .codTransaccion("ESPERANDO_A_FLOW")
+                .codTransaccion("ESPERANDO_A_FLOW") 
                 .build();
 
         pagoRepository.save(nuevoPago);
@@ -266,10 +265,10 @@ public class ReservaService {
         BloqueHorario bloque = pago.getReserva().getBloqueHorario();
 
         // 3. Procesar según la respuesta
-        if (statusFlow == 2) {
+        if (statusFlow == 2) { 
             // --- ¡EL CLIENTE PAGÓ! ---
             pago.setEstadoPago(estadoPagoRepository.findById(2).orElseThrow());
-            pago.setCodTransaccion(datosFlow.get("flowOrder").toString());
+            pago.setCodTransaccion(datosFlow.get("flowOrder").toString()); 
 
             // PRIMERO guardamos el pago para que Hibernate vacíe su memoria
             pagoRepository.save(pago);
@@ -281,11 +280,11 @@ public class ReservaService {
             // --- RECHAZADO O ANULADO ---
             pago.setEstadoPago(estadoPagoRepository.findById(3).orElseThrow());
             pagoRepository.save(pago); // Guardamos el pago primero
-
+            
             reservaRepository.actualizarEstadoNativo(idReserva, 4); // Ataque nativo
-
-            bloque.setEstadoBloque(estadoBloqueRepository.findById(1).orElseThrow());
-            bloqueHorarioRepository.save(bloque);
+            
+            bloque.setEstadoBloque(estadoBloqueRepository.findById(1).orElseThrow()); 
+            bloqueHorarioRepository.save(bloque); 
         }
     }
 
