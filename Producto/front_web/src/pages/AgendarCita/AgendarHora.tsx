@@ -184,6 +184,9 @@ export default function AgendarHora() {
         idVet: bloqueSeleccionado!.idVet,
         idBloque: bloqueSeleccionado!.idBloque,
         idValor: 1,
+        // Flow exige firmar la URL de retorno: cada cliente envía la suya
+        // (así funciona igual en localhost y en el despliegue en AWS)
+        returnUrl: window.location.origin + '/pago/resultado',
       };
 
       const resp = await api.post('/v1/reservas', payload);

@@ -11,15 +11,11 @@ import com.nodevet.app.model.agenda.EstadoBloque;
 import com.nodevet.app.model.reserva.EstadoReserva;
 import com.nodevet.app.model.reserva.Reserva;
 import com.nodevet.app.model.usuario.Veterinario;
-import com.nodevet.app.model.usuario.Tutor;
-import com.nodevet.app.model.usuario.Usuario;
 import com.nodevet.app.model.pago.Pago;
 import com.nodevet.app.model.pago.EstadoPago;
 import com.nodevet.app.repository.MascotaRepository;
 import com.nodevet.app.repository.ValorRepository;
 import com.nodevet.app.repository.VeterinarioRepository;
-import com.nodevet.app.repository.UsuarioRepository;
-import com.nodevet.app.repository.TutorRepository;
 import com.nodevet.app.repository.agenda.BloqueHorarioRepository;
 import com.nodevet.app.repository.agenda.EstadoBloqueRepository;
 import com.nodevet.app.repository.reserva.EstadoReservaRepository;
@@ -33,14 +29,12 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
-import java.util.List;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -57,9 +51,6 @@ public class ReservaService {
     private final EstadoReservaRepository estadoReservaRepository;
     private final EstadoBloqueRepository estadoBloqueRepository;
 
-    // --- INYECCIONES PARA RESOLVER EL ROL DEL USUARIO AUTENTICADO ---
-    private final UsuarioRepository usuarioRepository;
-    private final TutorRepository tutorRepository;
 
     // --- INYECCIONES PARA PAGOS Y FLOW ---
     private final PagoRepository pagoRepository;
@@ -257,36 +248,6 @@ public class ReservaService {
                 responseDTO.setPagoObligatorio(true);
 
         return responseDTO;
-    }
-
-    /**
-     * Devuelve las reservas del usuario autenticado según su rol:
-     * - Tutor: las citas de sus mascotas.
-     * - Veterinario: las citas que tiene asignadas.
-     * El mismo endpoint sirve a ambos roles (ver SecurityConfig).
-     */
-    @Transactional(readOnly = true)
-    public List<ReservaResponseDTO> listarMisReservas() {
-        String correo = SecurityContextHolder.getContext().getAuthentication().getName();
-        Usuario usuario = usuarioRepository.findByCorreoUsr(correo)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
-
-        // Tutor: las citas de sus mascotas
-        Optional<Tutor> tutor = tutorRepository.findByUsuario(usuario);
-        if (tutor.isPresent()) {
-            return reservaRepository.findByMascota_Tutor_IdTutor(tutor.get().getIdTutor())
-                    .stream().map(DtoMapper::toReservaResponseDTO).collect(Collectors.toList());
-        }
-
-        // Veterinario: las citas que tiene asignadas
-        Optional<Veterinario> veterinario = veterinarioRepository.findByUsuario(usuario);
-        if (veterinario.isPresent()) {
-            return reservaRepository.findByVeterinario_Id(veterinario.get().getId())
-                    .stream().map(DtoMapper::toReservaResponseDTO).collect(Collectors.toList());
-        }
-
-        // Otros roles (ej. Admin) no tienen reservas asociadas
-        return List.of();
     }
 
     @Transactional
