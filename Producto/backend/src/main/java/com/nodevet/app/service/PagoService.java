@@ -47,35 +47,41 @@ public class PagoService {
     @Value("${flow.secret-key}")
     private String flowSecretKey;
 
-    @Value("${flow.return-url}")
-    private String flowReturnUrl;
+    @Value("${flow.confirm-url}")
+    private String flowConfirmUrl;
+
+    // @Value("${flow.return-url}")
+    // private String flowReturnUrl;
 
     /**
      * MÉTODO 1: Iniciar el pago. 
      * Se comunica con Flow y devuelve la URL a la que debe ir el usuario.
      */
     public PagoInitResponseDTO iniciarPago(PagoInitRequestDTO request) {
-        // 1. Buscamos la reserva en la base de datos
+        // 1. Buscamos la reserva
         Reserva reserva = reservaRepository.findById(request.getIdReserva())
                 .orElseThrow(() -> new RuntimeException("Reserva no encontrada"));
 
-        // (Mock) Aquí deberías sacar el valor real cruzando con tu tabla VALOR. 
-        // Para que compile y pruebes, fijaremos 15000 por defecto.
         int montoCobro = 15000; 
 
-        // 2. Preparamos los parámetros exactos que exige Flow
+        // 2. Preparamos los parámetros
         Map<String, String> params = new HashMap<>();
         params.put("apiKey", flowApiKey);
         params.put("commerceOrder", "RES-" + reserva.getIdReserva() + "-" + UUID.randomUUID().toString().substring(0, 5));
         params.put("subject", "Pago Reserva Consulta Veterinaria NodeVet");
         params.put("currency", "CLP");
         params.put("amount", String.valueOf(montoCobro));
-        params.put("email", "cliente@correo.cl"); // Lo ideal es sacarlo del Usuario asociado a la Mascota/Reserva
-        params.put("paymentMethod", "9"); // 9 = Webpay Plus directo. (1 = Mostrar todas las opciones de Flow)
-        params.put("urlConfirmation", flowReturnUrl); // Flow nos avisará por detrás
-        params.put("urlReturn", flowReturnUrl); // Flow mandará al cliente de vuelta aquí
+        params.put("email", "cliente@correo.cl"); 
+        params.put("paymentMethod", "9");
 
-        // 3. Firmamos los parámetros con nuestra llave secreta (HMAC-SHA256)
+        // Usamos tu variable de entorno fija (Ngrok/AWS) para la confirmación
+        params.put("urlConfirmation", flowConfirmUrl); 
+        
+        // Usamos la URL que viene desde el Frontend (la que generamos con Linking.createURL)
+        params.put("urlReturn", request.getReturnUrl()); 
+        // --------------------
+
+        // 3. Firmamos y seguimos con el proceso igual que antes...
         String signature = FlowSignatureUtil.signParameters(params, flowSecretKey);
 
         // 4. Armamos la petición HTTP (Form-URL-Encoded)

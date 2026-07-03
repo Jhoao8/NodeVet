@@ -17,6 +17,9 @@ services:
     # Le pasamos el archivo con las credenciales de AWS
     env_file:
       - .env
+    
+    environment:
+      - FLOW_CONFIRM_URL=http://54.123.45.67:8080/api/v1/pagos/webhook
       
     # Si el contenedor se cae por algún error, Docker lo reiniciará automáticamente
     restart: unless-stopped

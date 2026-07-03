@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { 
     View, Text, StyleSheet, TouchableOpacity, ScrollView, 
-    ActivityIndicator, Modal, Image, Alert, Linking 
+    ActivityIndicator, Modal, Image, Alert, 
 } from 'react-native';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,6 +18,8 @@ import DashboardHeader from '../../../components/DashboardHeader';
 import ReservaModals from '@/src/screens/Tutor/Agendamiento/ReservaModal';
 import { useAuth } from '../../../context/AuthContext';
 import api from '../../../api/axiosInstance';
+
+import * as Linking from 'expo-linking';
 
 
 // ════════ INTERFACES DEFINIDAS PARA TYPESCRIPT ════════
@@ -142,11 +144,13 @@ export default function AgendarHoraScreen({ navigation }: any) {
     const handleEjecutarReservaYFlow = async () => {
         try {
             setIsProcessingPago(true);
+            const urlDinamica = Linking.createURL('/pago/resultado');
             const payload = {
                 idMascota: selectedPet!.idMascota,
                 idVet: bloqueSeleccionado!.idVet,
                 idBloque: bloqueSeleccionado!.idBloque,
-                idValor: 1 
+                idValor: 1,
+                returnUrl: String(urlDinamica)
             };
 
             // ════════ RUTA CORREGIDA: Restaurada a /v1/reservas ════════

@@ -1,13 +1,11 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DEVELOPER_IP = process.env.EXPO_PUBLIC_DEVELOPER_IP || "localhost";
-
 // Crear CancelToken para cancelar peticiones pendientes
 let cancelSource = axios.CancelToken.source();
 
 const api = axios.create({
-    baseURL: `http://${DEVELOPER_IP}:8080/api`, 
+    baseURL: `${process.env.EXPO_PUBLIC_DEVELOPER_IP}/api`,
     timeout: 10000,
     headers: {
         'Content-Type': 'application/json',

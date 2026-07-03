@@ -249,8 +249,7 @@ public class ReservaService {
         String ordenComercio = "RES-" + reservaGuardada.getIdReserva() + "-" + System.currentTimeMillis();
         String descripcion = "Reserva Veterinaria - Mascota: " + mascota.getNomMascota();
         String correoTutor = mascota.getTutor().getUsuario().getCorreoUsr();
-        String urlDePago = flowService.crearOrdenDePago(ordenComercio, valor.getMonto(), correoTutor, descripcion);
-
+        String urlDePago = flowService.crearOrdenDePago(ordenComercio, valor.getMonto(), correoTutor, descripcion, request.getReturnUrl());
         // --- FIN DE LÓGICA DE PAGOS ---
 
                 // 8. Convertimos a DTO y le adjuntamos la URL de Flow

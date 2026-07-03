@@ -30,9 +30,6 @@ public class FlowService {
     @Value("${flow.secret-key}")
     private String flowSecretKey;
 
-    @Value("${flow.return-url}")
-    private String flowUrlReturn;
-
     @Value("${flow.confirm-url}")
     private String flowUrlConfirm;
 
@@ -42,7 +39,8 @@ public class FlowService {
      * Genera la orden de pago en Flow y retorna la URL donde el usuario debe pagar.
      */
     @SuppressWarnings("rawtypes")
-    public String crearOrdenDePago(String ordenComercio, Integer monto, String correoTutor, String descripcion) {
+    // CAMBIO 2: Agregamos "String returnUrlDinamica" como último parámetro
+    public String crearOrdenDePago(String ordenComercio, Integer monto, String correoTutor, String descripcion, String returnUrlDinamica) {
         
         // 1. Usamos un TreeMap porque ordena automáticamente las llaves alfabéticamente (Requisito de Flow)
         Map<String, String> parametros = new TreeMap<>();
@@ -54,7 +52,9 @@ public class FlowService {
         parametros.put("email", correoTutor);
         parametros.put("paymentMethod", "9"); // 9 = Mostrar todas las opciones de pago (Webpay, Mach, Servipag)
         parametros.put("urlConfirmation", flowUrlConfirm);
-        parametros.put("urlReturn", flowUrlReturn);
+        
+        // CAMBIO 3: Usamos la variable que llega por parámetro en lugar de la estática
+        parametros.put("urlReturn", returnUrlDinamica); 
 
         // 2. Concatenar todas las llaves y valores para la firma
         StringBuilder dataParaFirmar = new StringBuilder();

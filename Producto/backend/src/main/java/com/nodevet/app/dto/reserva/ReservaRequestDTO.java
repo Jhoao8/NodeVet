@@ -12,4 +12,5 @@ public class ReservaRequestDTO {
     private Integer idVet;
     private Integer idBloque;
     private Integer idValor;
+    private String returnUrl;
 }
