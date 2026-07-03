@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
     View, Text, StyleSheet, TouchableOpacity, ScrollView, 
     ActivityIndicator, Modal, Image, Alert, 
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { Calendar } from 'react-native-calendars';
@@ -51,6 +52,8 @@ const getTodayString = () => {
     return date.toISOString().split('T')[0]; 
 };
 
+const AVISO_PAGO_STORAGE_VERSION = 'v1';
+
 export default function AgendarHoraScreen({ navigation }: any) {
     const { userToken } = useAuth();
     
@@ -73,6 +76,8 @@ export default function AgendarHoraScreen({ navigation }: any) {
     const [reservaStep, setReservaStep] = useState<number>(0);
     const [isProcessingPago, setIsProcessingPago] = useState(false);
     const [showPagoObligatorioAviso, setShowPagoObligatorioAviso] = useState(false);
+    const [noVolverAMostrarPagoAviso, setNoVolverAMostrarPagoAviso] = useState(false);
+    const [avisoPagoStorageKey, setAvisoPagoStorageKey] = useState<string>('');
 
     const formatearHora = (fechaIso: string) => {
         if (!fechaIso) return '';
@@ -104,11 +109,37 @@ export default function AgendarHoraScreen({ navigation }: any) {
 
             const verificarPagoObligatorio = async () => {
                 try {
-                    const response = await api.get('/v1/pagos/config/obligatorio/lectura');
+                    const [configResponse, perfilResponse] = await Promise.all([
+                        api.get('/v1/pagos/config/obligatorio/lectura'),
+                        api.get('/v1/usuarios/perfil'),
+                    ]);
+
+                    const correoUsuario = String(perfilResponse.data?.correoUsr || 'anonimo').toLowerCase();
+                    const userScopedKey = `pagoObligatorioAviso:${AVISO_PAGO_STORAGE_VERSION}:${correoUsuario}`;
+                    const dismissKey = `${userScopedKey}:dismissed`;
+                    const stateKey = `${userScopedKey}:lastState`;
+
+                    setAvisoPagoStorageKey(dismissKey);
+
+                    const response = configResponse;
                     const pagoObligatorioActivo = Boolean(response.data?.pagoObligatorio);
-                    setShowPagoObligatorioAviso(pagoObligatorioActivo);
+                    const previousState = await AsyncStorage.getItem(stateKey);
+
+                    // Si la política cambió, reseteamos la preferencia de ocultar aviso.
+                    if (previousState !== null && previousState !== String(pagoObligatorioActivo)) {
+                        await AsyncStorage.removeItem(dismissKey);
+                    }
+
+                    await AsyncStorage.setItem(stateKey, String(pagoObligatorioActivo));
+
+                    const dismissValue = await AsyncStorage.getItem(dismissKey);
+                    const ocultarAviso = dismissValue === 'true';
+
+                    setNoVolverAMostrarPagoAviso(false);
+                    setShowPagoObligatorioAviso(pagoObligatorioActivo && !ocultarAviso);
                 } catch (error) {
                     console.error('Error al consultar configuración de pago obligatorio:', error);
+                    setNoVolverAMostrarPagoAviso(false);
                     setShowPagoObligatorioAviso(false);
                 }
             };
@@ -117,24 +148,40 @@ export default function AgendarHoraScreen({ navigation }: any) {
         }, [userToken])
     );
 
-    // Consulta de la disponibilidad reactiva al cambiar el calendario
-    useEffect(() => {
-        const fetchDisponibilidad = async () => {
-            try {
-                setLoadingAgenda(true);
-                setBloqueSeleccionado(null); 
-                
-                const response = await api.get(`/v1/agendas/disponibilidad?fecha=${selectedDate}`);
-                setProfesionales(response.data);
-            } catch (error) {
-                console.error("Error al obtener la agenda diaria:", error);
-                setProfesionales([]); 
-            } finally {
-                setLoadingAgenda(false);
+    const handleCerrarAvisoPagoObligatorio = async () => {
+        try {
+            if (noVolverAMostrarPagoAviso && avisoPagoStorageKey) {
+                await AsyncStorage.setItem(avisoPagoStorageKey, 'true');
             }
-        };
-        fetchDisponibilidad();
-    }, [selectedDate]);
+        } catch (error) {
+            console.error('Error al guardar preferencia del aviso de pago:', error);
+        } finally {
+            setShowPagoObligatorioAviso(false);
+            setNoVolverAMostrarPagoAviso(false);
+        }
+    };
+
+    // Recarga la disponibilidad al cambiar fecha y al volver a enfocar la pantalla.
+    useFocusEffect(
+        useCallback(() => {
+            const fetchDisponibilidad = async () => {
+                try {
+                    setLoadingAgenda(true);
+                    setBloqueSeleccionado(null);
+
+                    const response = await api.get(`/v1/agendas/disponibilidad?fecha=${selectedDate}`);
+                    setProfesionales(response.data);
+                } catch (error) {
+                    console.error("Error al obtener la agenda diaria:", error);
+                    setProfesionales([]);
+                } finally {
+                    setLoadingAgenda(false);
+                }
+            };
+
+            fetchDisponibilidad();
+        }, [selectedDate])
+    );
 
     const handleContinuarFlujo = () => {
         if (!selectedPet || !bloqueSeleccionado) return;
@@ -366,7 +413,7 @@ export default function AgendarHoraScreen({ navigation }: any) {
                     <View style={globalStyles.detailModalContainer}>
                         <View style={globalStyles.detailModalHeader}>
                             <Text style={globalStyles.detailModalDate}>Aviso de pago</Text>
-                            <TouchableOpacity onPress={() => setShowPagoObligatorioAviso(false)}>
+                            <TouchableOpacity onPress={handleCerrarAvisoPagoObligatorio}>
                                 <Ionicons name="close" size={24} color={colors.lightYellow} />
                             </TouchableOpacity>
                         </View>
@@ -376,7 +423,20 @@ export default function AgendarHoraScreen({ navigation }: any) {
                                 Se solicitará un pago al finalizar para completar la reserva de su cita.
                             </Text>
 
-                            <TouchableOpacity style={styles.avisoPagoButton} onPress={() => setShowPagoObligatorioAviso(false)}>
+                            <TouchableOpacity
+                                style={styles.checkboxRow}
+                                activeOpacity={0.8}
+                                onPress={() => setNoVolverAMostrarPagoAviso((prev) => !prev)}
+                            >
+                                <View style={[styles.checkboxBase, noVolverAMostrarPagoAviso && styles.checkboxChecked]}>
+                                    {noVolverAMostrarPagoAviso && (
+                                        <Ionicons name="checkmark" size={14} color={colors.white} />
+                                    )}
+                                </View>
+                                <Text style={styles.checkboxText}>No volver a mostrar</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity style={styles.avisoPagoButton} onPress={handleCerrarAvisoPagoObligatorio}>
                                 <Text style={styles.avisoPagoButtonText}>Entendido</Text>
                             </TouchableOpacity>
                         </View>
@@ -409,6 +469,32 @@ const styles = StyleSheet.create({
         color: colors.darkDGreen,
         textAlign: 'center',
         marginBottom: spacing.lg,
+    },
+    checkboxRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        marginBottom: spacing.lg,
+    },
+    checkboxBase: {
+        width: 20,
+        height: 20,
+        borderRadius: 4,
+        borderWidth: 1.5,
+        borderColor: colors.darkGreen,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: spacing.sm,
+        backgroundColor: colors.white,
+    },
+    checkboxChecked: {
+        backgroundColor: colors.darkGreen,
+        borderColor: colors.darkGreen,
+    },
+    checkboxText: {
+        fontFamily: typography.family.main.medium,
+        fontSize: typography.size.sm,
+        color: colors.darkDGreen,
     },
     avisoPagoButton: {
         backgroundColor: colors.darkGreen,
