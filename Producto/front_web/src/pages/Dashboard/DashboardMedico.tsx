@@ -1,109 +1,181 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import UserMenu from '../../components/UserMenu';
 import '../../styles/Dashboard.css';
 
-interface Cita {
-  id: string;
+// Espejo web de las pantallas móviles del veterinario:
+// - DetalleCitaVetScreen: agenda del día (GET /v1/reservas/veterinario/agenda)
+//   con control de ingreso (¿el paciente se presentó?).
+// - VetHistorialScreen: historial clínico (GET /v1/consultas/veterinario/historial).
+
+interface ReservaVetDia {
+  idReserva: number;
+  hora: string;
+  tutor: string;
   mascota: string;
-  tipoConsulta: string;
-  horaInicio: string;
-  horaFin: string;
-  fecha: string;
 }
 
-interface Control {
-  id: string;
-  mascota: string;
-  hora: string;
-  tipoConsulta: string;
-  fecha: string;
+interface ConsultaHistorial {
+  idConsulta: number;
+  idReserva: number;
+  fecha?: string;
+  diagnostico?: string;
+  notas?: string;
+  indicacionReceta?: string;
+}
+
+function toApiDate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function toDisplayDate(date: Date): string {
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  return `${d}/${m}/${date.getFullYear()}`;
+}
+
+function inicioDeDia(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
 export default function DashboardMedico() {
   const navigate = useNavigate();
   const nombreUsuario = useNombreUsuario();
-  const [proximasCitas, setProximasCitas] = useState<Cita[]>([]);
-  const [proximosControles, setProximosControles] = useState<Control[]>([]);
-  const [, setCitasPasadas] = useState<Cita[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [vista, setVista] = useState<'dia' | 'semana' | 'mes'>('semana');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Verificar autenticación
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          console.warn('No hay token, redirigiendo a login');
-          navigate('/login');
-          return;
-        }
+  const hoy = inicioDeDia(new Date());
 
-        console.log('DashboardMedico - Token presente');
+  const [fechaSeleccionada, setFechaSeleccionada] = useState<Date>(new Date());
+  const [reservasDia, setReservasDia] = useState<ReservaVetDia[]>([]);
+  const [loadingAgenda, setLoadingAgenda] = useState(true);
 
-        // Intentar cargar datos de citas
-        try {
-          const citasData = await api.get('/v1/citas/medico/proximas');
-          setProximasCitas(citasData.data);
-        } catch (err) {
-          console.log('Endpoint /v1/citas/medico/proximas no disponible');
-        }
+  const [historial, setHistorial] = useState<ConsultaHistorial[]>([]);
+  const [loadingHistorial, setLoadingHistorial] = useState(true);
 
-        try {
-          const controlesData = await api.get('/v1/controles/medico/proximos');
-          setProximosControles(controlesData.data);
-        } catch (err) {
-          console.log('Endpoint /v1/controles/medico/proximos no disponible');
-        }
+  // Control de ingreso (¿asistió el paciente?)
+  const [reservaSeleccionada, setReservaSeleccionada] = useState<ReservaVetDia | null>(null);
+  const [registrandoAusencia, setRegistrandoAusencia] = useState(false);
 
-        try {
-          const citasPasadasData = await api.get('/v1/citas/medico/pasadas');
-          setCitasPasadas(citasPasadasData.data);
-        } catch (err) {
-          console.log('Endpoint /v1/citas/medico/pasadas no disponible');
-        }
-      } catch (error: any) {
-        console.error('Error al cargar datos:', error);
-        if (error.response?.status === 401) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('userRole');
-          navigate('/login');
-        }
-      } finally {
-        setLoading(false);
+  const [error, setError] = useState('');
+  const [exito, setExito] = useState('');
+
+  const fetchAgendaDia = useCallback(async (fecha: Date) => {
+    setLoadingAgenda(true);
+    try {
+      const resp = await api.get<ReservaVetDia[]>('/v1/reservas/veterinario/agenda', {
+        params: { fecha: toApiDate(fecha) },
+      });
+      setReservasDia(Array.isArray(resp.data) ? resp.data : []);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
+        navigate('/login');
+        return;
       }
-    };
-
-    fetchData();
+      setReservasDia([]);
+      if (err.response?.status !== 404) {
+        setError('No se pudo cargar la agenda diaria.');
+      }
+    } finally {
+      setLoadingAgenda(false);
+    }
   }, [navigate]);
 
+  const fetchHistorial = useCallback(async () => {
+    setLoadingHistorial(true);
+    try {
+      const resp = await api.get<ConsultaHistorial[]>('/v1/consultas/veterinario/historial');
+      setHistorial(Array.isArray(resp.data) ? resp.data : []);
+    } catch {
+      setHistorial([]);
+    } finally {
+      setLoadingHistorial(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!localStorage.getItem('token')) {
+      navigate('/login');
+      return;
+    }
+    fetchAgendaDia(fechaSeleccionada);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fechaSeleccionada]);
+
+  useEffect(() => {
+    fetchHistorial();
+  }, [fetchHistorial]);
+
+  const puedeRetroceder = inicioDeDia(fechaSeleccionada) > hoy;
+
+  const cambiarDia = (offset: number) => {
+    setFechaSeleccionada((prev) => {
+      const next = new Date(prev);
+      next.setDate(prev.getDate() + offset);
+      // No se permite navegar a días anteriores a hoy (igual que el móvil)
+      if (inicioDeDia(next) < hoy) return prev;
+      return next;
+    });
+  };
+
   const handleLogout = () => {
-    console.log('Logout');
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
     localStorage.removeItem('username');
     navigate('/login');
   };
 
-  const horariosDisponibles = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
-  const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  // "No se presentó": registra la inasistencia y libera el bloque clínico
+  const handleNoAsistio = async () => {
+    if (!reservaSeleccionada) return;
+    setRegistrandoAusencia(true);
+    setError('');
+    setExito('');
+    try {
+      await api.post('/v1/consultas', {
+        idReserva: reservaSeleccionada.idReserva,
+        asistio: false,
+        diagnostico: null,
+        indicacionReceta: null,
+        notas: null,
+      });
+      setReservaSeleccionada(null);
+      setExito('Se ha guardado el estado de ausencia y liberado el bloque clínico.');
+      fetchAgendaDia(fechaSeleccionada);
+      fetchHistorial();
+    } catch {
+      setError('No se pudo guardar el registro de inasistencia.');
+      setReservaSeleccionada(null);
+    } finally {
+      setRegistrandoAusencia(false);
+    }
+  };
+
+  // "Sí se presentó": va al formulario de atención con la reserva preseleccionada
+  const handleSiAsistio = () => {
+    if (!reservaSeleccionada) return;
+    navigate(
+      `/dashboard/medico/atencion?reserva=${reservaSeleccionada.idReserva}` +
+        `&mascota=${encodeURIComponent(reservaSeleccionada.mascota)}` +
+        `&tutor=${encodeURIComponent(reservaSeleccionada.tutor)}` +
+        `&hora=${encodeURIComponent(reservaSeleccionada.hora)}`,
+    );
+  };
 
   return (
     <div className="dashboard-container">
-      {/* Header */}
       <header className="dashboard-header">
         <div className="logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/home')}>NodeVet</div>
         <nav className="nav-tabs">
-          <button 
-            className="nav-tab"
-            onClick={() => navigate('/dashboard/medico')}
-            title="Mi Dashboard de Médico"
-          >
-            ⚕️ Mis Citas
+          <button className="nav-tab" onClick={() => navigate('/dashboard/medico')}>
+            ⚕️ Mi Agenda
           </button>
         </nav>
         <div className="user-section">
@@ -113,132 +185,156 @@ export default function DashboardMedico() {
       </header>
 
       <div className="dashboard-content">
-        {/* Sidebar */}
         <aside className="sidebar">
           <h3>Menú</h3>
           <nav className="sidebar-nav">
-            <button className="nav-item active">🏠 Home</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/medico/perfil')}>👤 Perfil</button>
+            <button className="nav-item active">🏠 Agenda del Día</button>
             <button className="nav-item" onClick={() => navigate('/dashboard/medico/atencion')}>🩺 Atender consulta</button>
           </nav>
         </aside>
 
-        {/* Main Content */}
         <main className="main-content">
-          {loading ? (
-            <div className="loading">Cargando...</div>
-          ) : (
-            <>
-              {/* Calendar Section */}
-              <section className="calendar-section">
-                <div className="calendar-header">
-                  <h3>Semana 13</h3>
-                  <div className="view-controls">
-                    <button
-                      className={vista === 'dia' ? 'active' : ''}
-                      onClick={() => setVista('dia')}
-                    >
-                      Día
-                    </button>
-                    <button
-                      className={vista === 'semana' ? 'active' : ''}
-                      onClick={() => setVista('semana')}
-                    >
-                      Semana
-                    </button>
-                    <button
-                      className={vista === 'mes' ? 'active' : ''}
-                      onClick={() => setVista('mes')}
-                    >
-                      Mes
-                    </button>
-                  </div>
-                </div>
+          {error && <div className="error-message">{error}</div>}
+          {exito && <div className="success-message">{exito}</div>}
 
-                <div className="calendar-grid">
-                  <div className="day-headers">
-                    {diasSemana.map((dia, idx) => (
-                      <div key={idx} className="day-header">
-                        {dia}
-                      </div>
-                    ))}
-                  </div>
+          {/* ─── Agenda del Día (espejo de DetalleCitaVetScreen) ─── */}
+          <section className="dashboard-section">
+            <h2>Agenda del Día</h2>
 
-                  <div className="time-slots">
-                    {horariosDisponibles.map((hora) => (
-                      <div key={hora} className="time-row">
-                        <div className="time-label">{hora}</div>
-                        {diasSemana.map((_, dayIdx) => (
-                          <div
-                            key={`${hora}-${dayIdx}`}
-                            className={`slot ${Math.random() > 0.6 ? 'occupied' : 'available'}`}
-                          >
-                            {Math.random() > 0.7 && <span className="mascota">[Mascota X]</span>}
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
+            <div className="agenda-dia-nav">
+              <button
+                type="button"
+                className="agenda-dia-flecha"
+                onClick={() => cambiarDia(-1)}
+                disabled={!puedeRetroceder}
+                aria-label="Día anterior"
+              >
+                ‹
+              </button>
+              <span className="agenda-dia-fecha">{toDisplayDate(fechaSeleccionada)}</span>
+              <button
+                type="button"
+                className="agenda-dia-flecha"
+                onClick={() => cambiarDia(1)}
+                aria-label="Día siguiente"
+              >
+                ›
+              </button>
+            </div>
 
-              <div className="dashboard-grid">
-                {/* Próximas Citas */}
-                <section className="dashboard-section">
-                  <h3>Próximas Citas</h3>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Mascota</th>
-                        <th>Tipo Consulta</th>
-                        <th>Hora Inicio</th>
-                        <th>Hora Término</th>
-                        <th>Fecha</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {proximasCitas.map((cita) => (
-                        <tr key={cita.id}>
-                          <td>{cita.mascota}</td>
-                          <td>{cita.tipoConsulta}</td>
-                          <td>{cita.horaInicio}</td>
-                          <td>{cita.horaFin}</td>
-                          <td>{cita.fecha}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </section>
-
-                {/* Próximos Controles */}
-                <section className="dashboard-section">
-                  <h3>Próximos Controles</h3>
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Mascota</th>
-                        <th>Hora</th>
-                        <th>Tipo Consulta</th>
-                        <th>Fecha</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {proximosControles.map((control) => (
-                        <tr key={control.id}>
-                          <td>{control.mascota}</td>
-                          <td>{control.hora}</td>
-                          <td>{control.tipoConsulta}</td>
-                          <td>{control.fecha}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <button className="btn-link">Ver Más</button>
-                </section>
+            {loadingAgenda ? (
+              <div className="loading">Cargando agenda...</div>
+            ) : reservasDia.length === 0 ? (
+              <div className="vets-empty">
+                <span className="vets-empty-icon" aria-hidden>🗓️</span>
+                <p>
+                  <strong>Sin reservas para este día.</strong> Avanza o retrocede con las
+                  flechas para revisar otras fechas.
+                </p>
               </div>
-            </>
-          )}
+            ) : (
+              <div className="citas-cards">
+                {reservasDia.map((reserva) => (
+                  <button
+                    type="button"
+                    key={reserva.idReserva}
+                    className="cita-card reserva-vet-card"
+                    onClick={() => setReservaSeleccionada(reserva)}
+                  >
+                    <h4>🕐 {reserva.hora}</h4>
+                    <p>🐾 {reserva.mascota}</p>
+                    <p>👤 {reserva.tutor}</p>
+                    <p className="field-hint">Haz clic para el control de ingreso</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* ─── Historial clínico (espejo de VetHistorialScreen) ─── */}
+          <section className="dashboard-section">
+            <h3>Historial Clínico de Consultas</h3>
+            <p className="field-hint" style={{ display: 'block', marginBottom: '12px' }}>
+              Solo se muestran atenciones médicas completadas con éxito.
+            </p>
+
+            {loadingHistorial ? (
+              <div className="loading">Cargando historial...</div>
+            ) : historial.length === 0 ? (
+              <div className="vets-empty">
+                <span className="vets-empty-icon" aria-hidden>📋</span>
+                <p>
+                  <strong>Sin consultas completadas.</strong> Las ausencias y reservas no
+                  atendidas no aparecen en este historial.
+                </p>
+              </div>
+            ) : (
+              <div className="tabla-scroll">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Fecha</th>
+                      <th>Reserva</th>
+                      <th>Diagnóstico</th>
+                      <th>Indicación de receta</th>
+                      <th>Notas</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historial.map((c) => (
+                      <tr key={c.idConsulta}>
+                        <td>{c.fecha || 'Sin fecha'}</td>
+                        <td>#{c.idReserva}</td>
+                        <td>{c.diagnostico || 'Sin diagnóstico registrado'}</td>
+                        <td>{c.indicacionReceta || 'Sin indicación registrada'}</td>
+                        <td>{c.notas || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
         </main>
       </div>
+
+      {/* ─── Modal: Control de Ingreso ─── */}
+      {reservaSeleccionada && (
+        <div className="modal-overlay" onClick={() => !registrandoAusencia && setReservaSeleccionada(null)}>
+          <div className="modal-content jornada-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Control de Ingreso</h2>
+              <p>
+                {reservaSeleccionada.hora} | {reservaSeleccionada.tutor} | {reservaSeleccionada.mascota}
+              </p>
+            </div>
+            <div className="modal-body">
+              <p style={{ textAlign: 'center', margin: 0 }}>
+                ¿El paciente se presentó a la hora del bloque médico?
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn-desactivar-vet"
+                onClick={handleNoAsistio}
+                disabled={registrandoAusencia}
+              >
+                {registrandoAusencia ? 'Registrando...' : 'No se presentó (Ausente)'}
+              </button>
+              <button
+                type="button"
+                className="btn-submit"
+                onClick={handleSiAsistio}
+                disabled={registrandoAusencia}
+              >
+                Sí, se presentó
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -91,6 +91,39 @@ export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props)
   const [creandoEspecialidad, setCreandoEspecialidad] = useState(false);
   const [errorEspecialidad, setErrorEspecialidad] = useState('');
 
+  // Generador de correo institucional @nodevet.com (misma lógica que el móvil)
+  const [nivelColision, setNivelColision] = useState(0);
+  const [errorCorreoGen, setErrorCorreoGen] = useState('');
+
+  const generarCorreo = (nivel = nivelColision) => {
+    const partes = `${nombreUsr} ${apellidoUsr}`.trim().split(/\s+/).filter(Boolean);
+    if (partes.length < 2) {
+      setErrorCorreoGen('Ingresa al menos nombre y apellido para generar el correo.');
+      return;
+    }
+    setErrorCorreoGen('');
+    const nombre = partes[0];
+    const apellidoP = partes[1];
+    const apellidoM = partes[2] || '';
+
+    let base = nombre.substring(0, 2).toLowerCase();
+    base += apellidoP.toLowerCase().replace(/\s/g, '');
+    if (apellidoM.length > 0) {
+      const letras = Math.min(1 + nivel, apellidoM.length);
+      base += apellidoM.substring(0, letras).toLowerCase();
+    } else if (nivel > 0) {
+      base += nivel;
+    }
+    const clean = base.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+    setCorreoUsr(`${clean}@nodevet.com`);
+  };
+
+  const generarVariante = () => {
+    const nuevoNivel = nivelColision + 1;
+    setNivelColision(nuevoNivel);
+    generarCorreo(nuevoNivel);
+  };
+
   const cargarEspecialidades = () => {
     return api.get<Especialidad[]>('/v1/especialidades')
       .then((response: AxiosResponse<Especialidad[]>) => {
@@ -238,15 +271,33 @@ export default function RegistrarVeterinarioForm({ onSuccess, onCancel }: Props)
                   />
                 </div>
                 <div className="form-field">
-                  <label htmlFor="correoUsr">Correo electrónico</label>
+                  <label htmlFor="correoUsr">Correo institucional</label>
                   <input
                     id="correoUsr"
                     type="email"
-                    placeholder="nombre@dominio.cl"
+                    placeholder="nombre@nodevet.com"
                     value={correoUsr}
                     onChange={e => setCorreoUsr(e.target.value)}
                     required
                   />
+                  <div className="correo-gen-row">
+                    <button
+                      type="button"
+                      className="btn-generar-correo"
+                      onClick={() => {
+                        setNivelColision(0);
+                        generarCorreo(0);
+                      }}
+                    >
+                      ✉️ Generar correo institucional
+                    </button>
+                    {correoUsr.endsWith('@nodevet.com') && (
+                      <button type="button" className="btn-variante-correo" onClick={generarVariante}>
+                        ↻ ¿Correo ya existe? Generar variante
+                      </button>
+                    )}
+                  </div>
+                  {errorCorreoGen && <span className="field-error">{errorCorreoGen}</span>}
                 </div>
                 <div className="form-field">
                   <label htmlFor="telefonoUsr">

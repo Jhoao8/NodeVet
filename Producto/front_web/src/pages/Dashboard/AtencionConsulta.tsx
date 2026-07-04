@@ -7,7 +7,9 @@ import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import UserMenu from '../../components/UserMenu';
 import '../../styles/Dashboard.css';
 
-const ID_VALOR_PLACEHOLDER = 1;
+// Espejo web de RegistrarConsultaScreen móvil: registra la ficha clínica de la
+// reserva atendida. Se llega desde la Agenda del Día con la reserva ya
+// seleccionada (control de ingreso: "Sí, se presentó").
 
 function parseIds(s: string): number[] {
   return s
@@ -41,8 +43,12 @@ export default function AtencionConsulta() {
   const [params] = useSearchParams();
   const nombreUsuario = useNombreUsuario();
 
-  const [idReserva, setIdReserva] = useState<string>(params.get('reserva') || '');
-  const [idValor, setIdValor] = useState<string>(String(ID_VALOR_PLACEHOLDER));
+  // Datos de la reserva seleccionada en la Agenda del Día
+  const idReserva = Number(params.get('reserva') || '');
+  const mascota = params.get('mascota') || '';
+  const tutor = params.get('tutor') || '';
+  const hora = params.get('hora') || '';
+  const reservaValida = Number.isInteger(idReserva) && idReserva > 0;
 
   const [notas, setNotas] = useState('');
   const [diagnostico, setDiagnostico] = useState('');
@@ -63,26 +69,24 @@ export default function AtencionConsulta() {
     navigate('/login');
   };
 
-  const idReservaNum = Number(idReserva);
-  const idReservaValido = idReserva.trim() !== '' && Number.isInteger(idReservaNum) && idReservaNum > 0;
-
   const handleCerrarConsulta = async () => {
     setError('');
     setOk('');
-    if (!idReservaValido) {
-      setError('Ingresa el ID de la reserva que estás atendiendo.');
+    if (!reservaValida) {
+      setError('No hay una reserva seleccionada. Vuelve a la Agenda del Día y elige la cita que estás atendiendo.');
       return;
     }
-    if (!diagnostico.trim() && !notas.trim() && !indicacionReceta.trim()) {
-      setError('No puedes cerrar una consulta vacía: ingresa al menos el diagnóstico, las notas o la receta.');
+    // Mismos campos obligatorios que el móvil
+    if (!diagnostico.trim() || !indicacionReceta.trim()) {
+      setError('Por favor, complete al menos el diagnóstico y la receta médica.');
       return;
     }
 
     setLoading(true);
     try {
       const resp = await api.post('/v1/consultas', {
-        idReserva: idReservaNum,
-        idValor: Number(idValor) || ID_VALOR_PLACEHOLDER,
+        idReserva,
+        asistio: true,
         notas: notas.trim() || null,
         diagnostico: diagnostico.trim() || null,
         indicacionReceta: indicacionReceta.trim() || null,
@@ -108,15 +112,10 @@ export default function AtencionConsulta() {
 
       const detalleArchivos =
         archivosValidos.length > 0 ? ` Archivos adjuntados: ${adjuntados}/${archivosValidos.length}.` : '';
-      setOk(`Consulta cerrada exitosamente (ID ${idConsulta}).${detalleArchivos}`);
-      setNotas('');
-      setDiagnostico('');
-      setIndicacionReceta('');
-      setExamenesIds('');
-      setVacunasIds('');
-      setArchivos([]);
+      alert(`La consulta médica ha sido guardada de forma exitosa en el historial del paciente.${detalleArchivos}`);
+      navigate('/dashboard/medico');
     } catch (err) {
-      setError(mensajeError(err, 'No se pudo cerrar la consulta.'));
+      setError(mensajeError(err, 'Ocurrió un problema al subir los datos al servidor.'));
     } finally {
       setLoading(false);
     }
@@ -138,81 +137,101 @@ export default function AtencionConsulta() {
         <aside className="sidebar">
           <h3>Menú</h3>
           <nav className="sidebar-nav">
-            <button className="nav-item" onClick={() => navigate('/dashboard/medico')}>🏠 Inicio</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/medico/perfil')}>👤 Perfil</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/medico')}>🏠 Agenda del Día</button>
             <button className="nav-item active">🩺 Atender consulta</button>
           </nav>
         </aside>
 
         <main className="main-content">
           <section className="dashboard-section">
-            <h2>Atención de consulta</h2>
+            <h2>Registrar Atención Médica</h2>
             <p style={{ color: '#555', marginTop: '-6px', marginBottom: '20px' }}>
-              Registra la ficha clínica de la reserva atendida. Requiere una reserva pagada/confirmada.
+              Registra la ficha clínica de la reserva atendida.
             </p>
 
             {error && <div className="error-message">{error}</div>}
             {ok && <div className="error-message" style={okStyle}>{ok}</div>}
 
-            {}
-            <div className="form-section">
-              <h3 className="form-section-title"><span className="step-badge">1</span>Reserva</h3>
-              <div className="form-grid">
-                <div className="form-field">
-                  <label htmlFor="idReserva">ID de la reserva</label>
-                  <input id="idReserva" type="number" min={1} placeholder="Ej. 5" value={idReserva} onChange={(e) => setIdReserva(e.target.value)} />
-                  <span className="field-hint">ID de la reserva que estás atendiendo (debe estar pagada).</span>
+            {!reservaValida ? (
+              <div className="vets-empty">
+                <span className="vets-empty-icon" aria-hidden>🩺</span>
+                <p>
+                  <strong>No hay una reserva seleccionada.</strong> Ve a tu Agenda del Día,
+                  elige la cita que estás atendiendo y confirma el ingreso del paciente.
+                </p>
+                <button className="btn-submit" onClick={() => navigate('/dashboard/medico')}>
+                  Ir a la Agenda del Día
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* Reserva en atención */}
+                <div className="form-section">
+                  <h3 className="form-section-title"><span className="step-badge">1</span>Reserva en atención</h3>
+                  <div className="resumen-admin-box">
+                    <span className="resumen-admin-label">Reserva</span>
+                    <span className="resumen-admin-valor">#{idReserva}{hora ? ` · ${hora} hrs` : ''}</span>
+                    {mascota && (
+                      <>
+                        <span className="resumen-admin-label">Paciente</span>
+                        <span className="resumen-admin-valor">{mascota}</span>
+                      </>
+                    )}
+                    {tutor && (
+                      <>
+                        <span className="resumen-admin-label">Tutor</span>
+                        <span className="resumen-admin-valor">{tutor}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="form-field">
-                  <label htmlFor="idValor">ID del valor</label>
-                  <input id="idValor" type="number" min={1} value={idValor} onChange={(e) => setIdValor(e.target.value)} />
-                  <span className="field-hint">Costo asociado (por defecto 1).</span>
+
+                {/* Diagnóstico y receta (obligatorios, como el móvil) */}
+                <div className="form-section">
+                  <h3 className="form-section-title"><span className="step-badge">2</span>Diagnóstico y receta</h3>
+                  <div className="form-field" style={{ marginBottom: '14px' }}>
+                    <label htmlFor="diagnostico">Diagnóstico Clínico *</label>
+                    <textarea id="diagnostico" style={textareaStyle} placeholder="Ingrese la patología u observaciones del examen físico..." value={diagnostico} onChange={(e) => setDiagnostico(e.target.value)} />
+                  </div>
+                  <div className="form-field" style={{ marginBottom: '14px' }}>
+                    <label htmlFor="receta">Indicación de Receta *</label>
+                    <textarea id="receta" style={textareaStyle} placeholder="Medicamentos, posología, dosis y duración del tratamiento..." value={indicacionReceta} onChange={(e) => setIndicacionReceta(e.target.value)} />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="notas">Notas Adicionales / Privadas</label>
+                    <textarea id="notas" style={textareaStyle} placeholder="Comentarios internos del box médico..." value={notas} onChange={(e) => setNotas(e.target.value)} />
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            {}
-            <div className="form-section">
-              <h3 className="form-section-title"><span className="step-badge">2</span>Diagnóstico y receta</h3>
-              <div className="form-field" style={{ marginBottom: '14px' }}>
-                <label htmlFor="diagnostico">Diagnóstico</label>
-                <textarea id="diagnostico" style={textareaStyle} placeholder="Ej. Gastroenteritis de origen alimentario." value={diagnostico} onChange={(e) => setDiagnostico(e.target.value)} />
-              </div>
-              <div className="form-field" style={{ marginBottom: '14px' }}>
-                <label htmlFor="notas">Notas de la atención</label>
-                <textarea id="notas" style={textareaStyle} placeholder="Ej. El paciente presenta decaimiento desde hace 2 días." value={notas} onChange={(e) => setNotas(e.target.value)} />
-              </div>
-              <div className="form-field">
-                <label htmlFor="receta">Indicaciones / receta</label>
-                <textarea id="receta" style={textareaStyle} placeholder="Ej. Viadil gotas cada 8 horas. Dieta blanda por 3 días." value={indicacionReceta} onChange={(e) => setIndicacionReceta(e.target.value)} />
-              </div>
-            </div>
-
-            {}
-            <div className="form-section">
-              <h3 className="form-section-title"><span className="step-badge">3</span>Exámenes y vacunas (opcional)</h3>
-              <div className="form-grid">
-                <div className="form-field">
-                  <label htmlFor="examenes">IDs de exámenes</label>
-                  <input id="examenes" type="text" placeholder="Ej. 1, 3" value={examenesIds} onChange={(e) => setExamenesIds(e.target.value)} />
-                  <span className="field-hint">IDs separados por coma.</span>
+                {/* Exámenes y vacunas (opcional) */}
+                <div className="form-section">
+                  <h3 className="form-section-title"><span className="step-badge">3</span>Exámenes y vacunas (opcional)</h3>
+                  <div className="form-grid">
+                    <div className="form-field">
+                      <label htmlFor="examenes">IDs de exámenes</label>
+                      <input id="examenes" type="text" placeholder="Ej. 1, 3" value={examenesIds} onChange={(e) => setExamenesIds(e.target.value)} />
+                      <span className="field-hint">IDs separados por coma.</span>
+                    </div>
+                    <div className="form-field">
+                      <label htmlFor="vacunas">IDs de vacunas</label>
+                      <input id="vacunas" type="text" placeholder="Ej. 2" value={vacunasIds} onChange={(e) => setVacunasIds(e.target.value)} />
+                      <span className="field-hint">IDs separados por coma.</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="form-field">
-                  <label htmlFor="vacunas">IDs de vacunas</label>
-                  <input id="vacunas" type="text" placeholder="Ej. 2" value={vacunasIds} onChange={(e) => setVacunasIds(e.target.value)} />
-                  <span className="field-hint">IDs separados por coma.</span>
+
+                {/* Archivos adjuntos (opcional) */}
+                <div className="form-section">
+                  <h3 className="form-section-title"><span className="step-badge">4</span>Archivos adjuntos (opcional)</h3>
+                  <ArchivoAdjuntoUploader archivos={archivos} onChange={setArchivos} />
                 </div>
-              </div>
-            </div>
 
-            {}
-            <div className="form-section">
-              <h3 className="form-section-title"><span className="step-badge">4</span>Archivos adjuntos (opcional)</h3>
-              <ArchivoAdjuntoUploader archivos={archivos} onChange={setArchivos} />
-            </div>
-
-            <button type="button" className="btn-submit" style={{ marginTop: '8px' }} onClick={handleCerrarConsulta} disabled={loading}>
-              {loading ? 'Cerrando consulta...' : 'Cerrar consulta'}
-            </button>
+                <button type="button" className="btn-submit" style={{ marginTop: '8px' }} onClick={handleCerrarConsulta} disabled={loading}>
+                  {loading ? 'Guardando consulta...' : 'Finalizar Consulta Médica'}
+                </button>
+              </>
+            )}
           </section>
         </main>
       </div>

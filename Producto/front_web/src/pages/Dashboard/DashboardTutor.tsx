@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../../api/client';
 import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import UserMenu from '../../components/UserMenu';
@@ -7,60 +7,106 @@ import PetCard from '../../components/PetCard';
 import type { Mascota } from '../../components/PetCard/PetCard.types';
 import '../../styles/Dashboard.css';
 import '../../styles/DashboardMascotas.css';
+import '../../styles/DetalleMascota.css';
 
-interface Cita {
-  id: string;
-  mascota: string;
-  medico: string;
+// Próxima cita del tutor tal como la entrega GET /v1/reservas/proximas
+interface ProximaCitaHome {
+  idReserva: number;
   fecha: string;
   hora: string;
+  mascota: string;
+  fechaHoraInicio: string;
+  cancelable: boolean;
 }
 
-interface Control {
-  id: string;
-  mascota: string;
-  medico: string;
-  tipoConsulta: string;
+// Consulta con receta, agregada por mascota (espejo de OrdenMedicaScreen móvil)
+interface OrdenMedicaItem {
+  idConsulta: number;
+  idMascota: number;
+  nombreMascota: string;
   fecha: string;
+  profesional: string;
+  diagnostico: string;
+  notas: string;
+  indicacionReceta: string;
 }
 
 export default function DashboardTutor() {
   const navigate = useNavigate();
+  const location = useLocation();
   const nombreUsuario = useNombreUsuario();
+
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
-  const [proximasCitas] = useState<Cita[]>([]);
-  const [ultimosControles] = useState<Control[]>([]);
+  const [proximasCitas, setProximasCitas] = useState<ProximaCitaHome[]>([]);
+  const [ordenes, setOrdenes] = useState<OrdenMedicaItem[]>([]);
+  const [filtroMascota, setFiltroMascota] = useState<string>('todas');
+  const [ordenSeleccionada, setOrdenSeleccionada] = useState<OrdenMedicaItem | null>(null);
+
+  const [cancelandoId, setCancelandoId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const cargarProximasCitas = useCallback(async () => {
+    try {
+      const resp = await api.get<ProximaCitaHome[]>('/v1/reservas/proximas');
+      setProximasCitas(Array.isArray(resp.data) ? resp.data : []);
+    } catch (err: any) {
+      if (err.response?.status === 401) throw err;
+      setProximasCitas([]);
+    }
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
       try {
-        // Verificar autenticación
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          console.warn('❌ No hay token en localStorage, redirigiendo a login');
-          navigate('/login');
-          return;
-        }
-
-        console.log('✓ DashboardTutor - Token presente');
-
-        // Intentar cargar mascotas
+        // Mascotas del tutor
+        let mascotasData: Mascota[] = [];
         try {
-          const mascotasData = await api.get('/v1/mascotas');
-          setMascotas(mascotasData.data);
-          console.log('✓ Mascotas cargadas:', mascotasData.data.length);
+          const resp = await api.get<Mascota[]>('/v1/mascotas');
+          mascotasData = Array.isArray(resp.data) ? resp.data : [];
+          setMascotas(mascotasData);
         } catch (err: any) {
-          console.error('Error al cargar mascotas:', err);
-          if (err.response?.status === 401) {
-            throw err; // Token inválido
-          }
+          if (err.response?.status === 401) throw err;
         }
 
+        // Próximas citas (el backend devuelve hasta 2, igual que el Home móvil)
+        await cargarProximasCitas();
+
+        // Órdenes médicas: consultas con receta de todas las mascotas
+        const historialPorMascota = await Promise.all(
+          mascotasData.map(async (mascota) => {
+            try {
+              const resp = await api.get(`/v1/consultas/mascota/${mascota.idMascota}`);
+              const historial: any[] = Array.isArray(resp.data) ? resp.data : [];
+              return historial
+                .filter((c) => String(c.indicacionReceta || '').trim().length > 0)
+                .map((c) => ({
+                  idConsulta: c.idConsulta,
+                  idMascota: mascota.idMascota!,
+                  nombreMascota: mascota.nomMascota,
+                  fecha: c.fecha || 'Sin fecha',
+                  profesional: c.profesional || 'Profesional no informado',
+                  diagnostico: c.diagnostico || 'Sin diagnóstico registrado',
+                  notas: c.notas || '',
+                  indicacionReceta: c.indicacionReceta || '',
+                }));
+            } catch {
+              return [];
+            }
+          }),
+        );
+        setOrdenes(
+          historialPorMascota
+            .flat()
+            .sort((a, b) => String(b.fecha).localeCompare(String(a.fecha))),
+        );
       } catch (error: any) {
-        console.error('❌ Error al cargar datos:', error);
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
           localStorage.removeItem('userRole');
@@ -74,10 +120,50 @@ export default function DashboardTutor() {
     };
 
     fetchData();
-  }, [navigate]);
+  }, [navigate, cargarProximasCitas]);
+
+  // Si llegamos desde otra página pidiendo bajar a una sección (ej. "Órdenes
+  // Médicas" del sidebar), hacemos scroll una vez cargados los datos.
+  useEffect(() => {
+    if (loading) return;
+    const target = (location.state as any)?.scrollTo;
+    if (target) {
+      requestAnimationFrame(() => {
+        document.getElementById(target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, [loading, location.state]);
+
+  const scrollToTop = () => {
+    document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Cancela una reserva propia (solo si el backend la marcó como cancelable:
+  // sin pago obligatorio y con al menos 24 horas de anticipación).
+  const handleCancelarCita = async (cita: ProximaCitaHome) => {
+    const confirmar = window.confirm(
+      `¿Cancelar la cita de ${cita.mascota} del ${cita.fecha} a las ${cita.hora}? Se liberará el bloque horario.`,
+    );
+    if (!confirmar) return;
+
+    setCancelandoId(cita.idReserva);
+    setError('');
+    try {
+      await api.delete(`/v1/reservas/${cita.idReserva}/cancelar`);
+      await cargarProximasCitas();
+    } catch (err: any) {
+      const data = err?.response?.data;
+      setError(
+        (typeof data === 'string' && data) || 'No se pudo cancelar la cita. Intenta nuevamente.',
+      );
+    } finally {
+      setCancelandoId(null);
+    }
+  };
 
   const handleEditMascota = (mascota: Mascota) => {
-    navigate('/agregar-mascota', { state: { mascota, isEditing: true } });
+    navigate(`/dashboard/tutor/mascota/${mascota.idMascota}/editar`, { state: { mascota } });
   };
 
   const handleDeleteMascota = async (id: number) => {
@@ -92,17 +178,20 @@ export default function DashboardTutor() {
   };
 
   const handlePetCardClick = (mascota: Mascota) => {
-    console.log('Ver detalles de:', mascota.nomMascota);
+    navigate(`/dashboard/tutor/mascota/${mascota.idMascota}`, { state: { mascota } });
   };
 
   const handleLogout = () => {
-    console.log('Logout iniciado');
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
     localStorage.removeItem('username');
-    console.log('✓ localStorage limpiado');
     navigate('/login');
   };
+
+  const ordenesFiltradas =
+    filtroMascota === 'todas'
+      ? ordenes
+      : ordenes.filter((o) => o.idMascota === Number(filtroMascota));
 
   return (
     <div className="dashboard-container">
@@ -123,11 +212,9 @@ export default function DashboardTutor() {
         <aside className="sidebar">
           <h3>Menú</h3>
           <nav className="sidebar-nav">
-            <button className="nav-item active">👤 Perfil</button>
-            <button className="nav-item">🏠 Home</button>
-            <button className="nav-item">🐾 Mascotas</button>
-            <button className="nav-item" onClick={() => navigate('/agendarCita')}>📅 Citas</button>
-            <button className="nav-item">🏥 Control Médico</button>
+            <button className="nav-item" onClick={() => navigate('/dashboard/tutor/perfil')}>👤 Perfil</button>
+            <button className="nav-item active" onClick={scrollToTop}>🏠 Home</button>
+            <button className="nav-item" onClick={() => navigate('/agendarCita')}>📅 Agendar Cita</button>
           </nav>
         </aside>
 
@@ -135,11 +222,11 @@ export default function DashboardTutor() {
         <main className="main-content">
           {loading ? (
             <div className="loading">Cargando...</div>
-          ) : error ? (
-            <div className="error-message">{error}</div>
           ) : (
             <>
-              {/* Próximas Citas */}
+              {error && <div className="error-message">{error}</div>}
+
+              {/* Próximas Citas (hasta 2, igual que el Home móvil) */}
               <section className="dashboard-section">
                 <div className="mascotas-header">
                   <h2>Próximas Citas</h2>
@@ -148,87 +235,113 @@ export default function DashboardTutor() {
                   </button>
                 </div>
                 {proximasCitas.length === 0 ? (
-                  <p className="hint-text">No tienes citas próximas. Agenda una nueva hora médica.</p>
+                  <p className="hint-text">Sin citas registradas. Agenda una nueva hora médica.</p>
                 ) : (
-                  <div className="citas-cards">
-                    {proximasCitas.slice(0, 2).map((cita) => (
-                      <div key={cita.id} className="cita-card">
-                        <h4>{cita.mascota}</h4>
-                        <p>📅 Fecha: {cita.fecha}</p>
-                        <p>🕐 Hora: {cita.hora}</p>
-                      </div>
-                    ))}
+                  <div className="tabla-scroll">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Hora</th>
+                          <th>Mascota</th>
+                          <th>Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {proximasCitas.map((cita) => (
+                          <tr key={cita.idReserva}>
+                            <td>{cita.fecha}</td>
+                            <td>{cita.hora}</td>
+                            <td>{cita.mascota}</td>
+                            <td>
+                              {cita.cancelable ? (
+                                <button
+                                  className="btn-row danger"
+                                  onClick={() => handleCancelarCita(cita)}
+                                  disabled={cancelandoId === cita.idReserva}
+                                >
+                                  {cancelandoId === cita.idReserva ? 'Cancelando...' : 'Cancelar'}
+                                </button>
+                              ) : (
+                                <span className="field-hint">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </section>
 
-              {/* Próximo Control */}
-              <section className="dashboard-section">
-                <h3>Próximo Control</h3>
-                {ultimosControles.length > 0 && (
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>Mascota</th>
-                        <th>Médico</th>
-                        <th>Tipo</th>
-                        <th>Fecha</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>{ultimosControles[0].mascota}</td>
-                        <td>{ultimosControles[0].medico}</td>
-                        <td>{ultimosControles[0].tipoConsulta}</td>
-                        <td>{ultimosControles[0].fecha}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+              {/* Órdenes Médicas (espejo de OrdenMedicaScreen móvil) */}
+              <section className="dashboard-section" id="ordenes" style={{ scrollMarginTop: '90px' }}>
+                <div className="mascotas-header">
+                  <h3>Órdenes Médicas</h3>
+                  {mascotas.length > 0 && ordenes.length > 0 && (
+                    <select
+                      className="ordenes-filtro"
+                      value={filtroMascota}
+                      onChange={(e) => setFiltroMascota(e.target.value)}
+                    >
+                      <option value="todas">Todas las mascotas</option>
+                      {mascotas.map((m) => (
+                        <option key={m.idMascota} value={m.idMascota}>{m.nomMascota}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+
+                {ordenesFiltradas.length === 0 ? (
+                  <p className="hint-text">Sin órdenes médicas registradas.</p>
+                ) : (
+                  <div className="tabla-scroll">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Fecha</th>
+                          <th>Mascota</th>
+                          <th>Profesional</th>
+                          <th>Diagnóstico</th>
+                          <th>Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ordenesFiltradas.map((orden) => (
+                          <tr key={orden.idConsulta}>
+                            <td>{orden.fecha}</td>
+                            <td>{orden.nombreMascota}</td>
+                            <td>{orden.profesional}</td>
+                            <td>{orden.diagnostico}</td>
+                            <td>
+                              <button className="btn-row edit" onClick={() => setOrdenSeleccionada(orden)}>
+                                Ver receta
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </section>
 
-              {/* Últimos Controles */}
-              <section className="dashboard-section">
-                <h3>Últimos Controles</h3>
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Mascota</th>
-                      <th>Médico</th>
-                      <th>Tipo Consulta</th>
-                      <th>Fecha</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ultimosControles.map((control) => (
-                      <tr key={control.id}>
-                        <td>{control.mascota}</td>
-                        <td>{control.medico}</td>
-                        <td>{control.tipoConsulta}</td>
-                        <td>{control.fecha}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <button className="btn-link">Ver Más</button>
-              </section>
-
               {/* Mascotas - PetCards */}
-              <section className="dashboard-section mascotas-section">
+              <section className="dashboard-section mascotas-section" id="mascotas" style={{ scrollMarginTop: '90px' }}>
                 <div className="mascotas-header">
                   <h2>Mis Mascotas</h2>
-                  <button 
+                  <button
                     className="btn-add-mascota"
                     onClick={() => navigate('/agregar-mascota')}
                   >
                     + Agregar Mascota
                   </button>
                 </div>
-                
+
                 {mascotas.length === 0 ? (
                   <div className="no-mascotas">
                     <p>No tienes mascotas registradas aún</p>
-                    <button 
+                    <button
                       className="btn-primary"
                       onClick={() => navigate('/agregar-mascota')}
                     >
@@ -253,6 +366,48 @@ export default function DashboardTutor() {
           )}
         </main>
       </div>
+
+      {/* Modal de detalle de la orden médica */}
+      {ordenSeleccionada && (
+        <div className="ficha-modal-overlay" onClick={() => setOrdenSeleccionada(null)}>
+          <div className="ficha-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="ficha-modal-head">
+              <div>
+                <h3>Orden médica · {ordenSeleccionada.nombreMascota}</h3>
+                <span className="ficha-modal-date">📅 {ordenSeleccionada.fecha}</span>
+              </div>
+              <button
+                className="ficha-modal-close"
+                onClick={() => setOrdenSeleccionada(null)}
+                aria-label="Cerrar"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="ficha-modal-body">
+              <div className="ficha-row">
+                <span className="ficha-label">Profesional</span>
+                <span className="ficha-value">{ordenSeleccionada.profesional}</span>
+              </div>
+              <div className="ficha-block">
+                <span className="ficha-label">Diagnóstico</span>
+                <p className="ficha-paragraph">{ordenSeleccionada.diagnostico}</p>
+              </div>
+              <div className="ficha-block">
+                <span className="ficha-label">Indicaciones / receta</span>
+                <p className="ficha-paragraph">{ordenSeleccionada.indicacionReceta}</p>
+              </div>
+              {ordenSeleccionada.notas && (
+                <div className="ficha-block">
+                  <span className="ficha-label">Notas</span>
+                  <p className="ficha-paragraph">{ordenSeleccionada.notas}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

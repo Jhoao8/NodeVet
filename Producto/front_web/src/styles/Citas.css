@@ -1,0 +1,165 @@
+/* ════════════════════════════════════════════ */
+/* Mis Citas (tutor)                             */
+/* ════════════════════════════════════════════ */
+
+.citas-wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.citas-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.citas-head h2 {
+  margin: 0;
+}
+
+.citas-section-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.citas-section-head h3 {
+  margin: 0;
+}
+
+.citas-count {
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+  background-color: rgba(65, 100, 40, 0.1);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+
+.citas-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* Fila de cita */
+.cita-row {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid var(--color-gray-200);
+  border-left: 4px solid var(--color-light-green);
+  border-radius: 10px;
+  background-color: var(--color-gray-50);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.cita-row:hover {
+  box-shadow: 0 4px 12px rgba(0, 27, 13, 0.1);
+  transform: translateY(-2px);
+}
+
+.cita-row-fecha {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cita-dia {
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-dark-green);
+}
+
+.cita-hora {
+  font-size: 13px;
+  color: var(--color-gray-600);
+}
+
+.cita-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cita-mascota {
+  font-size: 15px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-900);
+}
+
+.cita-vet {
+  font-size: 14px;
+  color: var(--color-gray-600);
+}
+
+.cita-row-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.cita-monto {
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+}
+
+/* Badge de estado */
+.cita-estado {
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  text-transform: capitalize;
+}
+
+.cita-estado--pendiente {
+  background-color: rgba(255, 167, 38, 0.18);
+  color: #B9690B;
+}
+
+.cita-estado--confirmada {
+  background-color: rgba(76, 175, 80, 0.18);
+  color: #1B7A3D;
+}
+
+.cita-estado--completada {
+  background-color: rgba(41, 182, 246, 0.18);
+  color: #0B6E9E;
+}
+
+.cita-estado--cancelada {
+  background-color: rgba(255, 107, 107, 0.18);
+  color: #B91C1C;
+}
+
+.cita-estado--otro {
+  background-color: var(--color-gray-200);
+  color: var(--color-gray-700);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .cita-row {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .cita-row-meta {
+    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+}

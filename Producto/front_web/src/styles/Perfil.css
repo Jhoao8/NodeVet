@@ -1,0 +1,318 @@
+/* ════════════════════════════════════════════ */
+/* Perfil del Tutor (web)                        */
+/* ════════════════════════════════════════════ */
+
+.perfil-wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* Mensaje de éxito (espeja el .error-message del dashboard) */
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: #1B7A3D;
+  background-color: rgba(76, 175, 80, 0.12);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  padding: var(--spacing-md);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+}
+
+.success-message::before {
+  content: '✓';
+  font-size: 15px;
+}
+
+/* ─────────── Hero / encabezado de identidad ─────────── */
+/* El verde es la barra de identidad de la marca: contiene el avatar, el nombre
+   y el rol en texto claro (alto contraste sobre el verde oscuro). */
+.perfil-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(158, 181, 125, 0.45), transparent 55%),
+    linear-gradient(135deg, var(--color-dark-d-green) 0%, var(--color-dark-green) 100%);
+  box-shadow: 0 4px 16px rgba(0, 27, 13, 0.18);
+}
+
+.perfil-hero-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.perfil-nombre {
+  font-size: 26px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-light-yellow);
+  margin: 0 0 8px;
+  line-height: 1.15;
+  word-break: break-word;
+}
+
+.perfil-role-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background-color: rgba(251, 239, 186, 0.2);
+  color: var(--color-light-yellow);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.02em;
+}
+
+.perfil-hero-email {
+  margin: var(--spacing-sm) 0 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  word-break: break-word;
+}
+
+.perfil-hero-actions {
+  flex-shrink: 0;
+}
+
+/* Botón "Editar perfil": amarillo sólido sobre el verde (contrasta y destaca) */
+.perfil-btn-edit {
+  padding: 11px 22px;
+  background-color: var(--color-light-yellow);
+  color: var(--color-dark-green);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.perfil-btn-edit:hover {
+  background-color: #FFF7D6;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 27, 13, 0.25);
+}
+
+/* ─────────── Avatar ─────────── */
+.perfil-avatar-wrap {
+  flex-shrink: 0;
+}
+
+.perfil-avatar {
+  position: relative;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  border: 4px solid var(--color-white);
+  background: linear-gradient(135deg, var(--color-light-green) 0%, var(--color-light-brown) 100%);
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 27, 13, 0.25);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.perfil-avatar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 27, 13, 0.35);
+}
+
+.perfil-avatar:disabled {
+  cursor: progress;
+}
+
+.perfil-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.perfil-avatar-iniciales {
+  font-size: 36px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-white);
+}
+
+/* Overlay que aparece al pasar el mouse (o siempre, mientras sube) */
+.perfil-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 27, 13, 0.55);
+  color: var(--color-white);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.perfil-avatar:hover:not(:disabled) .perfil-avatar-overlay,
+.perfil-avatar:disabled .perfil-avatar-overlay {
+  opacity: 1;
+}
+
+/* ─────────── Tarjeta de información ─────────── */
+.perfil-card {
+  background-color: var(--color-white);
+  border-radius: 16px;
+  padding: var(--spacing-xl);
+  box-shadow: 0 4px 16px rgba(0, 27, 13, 0.1);
+  border-left: 4px solid var(--color-light-green);
+}
+
+.perfil-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.perfil-card-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.perfil-card-tag {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background-color: rgba(255, 167, 38, 0.18);
+  color: #B9690B;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Vista de datos: grilla responsiva */
+.perfil-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+  margin: 0;
+}
+
+.perfil-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.perfil-info-item dt {
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.perfil-info-item dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-900);
+  word-break: break-word;
+}
+
+/* Formulario de edición */
+.perfil-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-gray-200);
+}
+
+/* ─────────── Menú de cuenta (espejo de la app móvil) ─────────── */
+.perfil-menu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.perfil-menu-btn {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: transparent;
+  border: 1.5px solid var(--color-dark-d-green);
+  color: var(--color-dark-d-green);
+  font-size: 15px;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.perfil-menu-btn:hover {
+  background-color: rgba(158, 181, 125, 0.15);
+}
+
+.perfil-logout-btn {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: transparent;
+  border: 1.5px solid var(--color-dark-d-green);
+  border-radius: 8px;
+  color: var(--color-dark-d-green);
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.perfil-logout-btn:hover {
+  background-color: var(--color-dark-d-green);
+  color: var(--color-light-yellow);
+}
+
+/* ─────────── Responsive ─────────── */
+@media (max-width: 720px) {
+  .perfil-hero {
+    flex-direction: column;
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-lg) var(--spacing-lg);
+  }
+
+  .perfil-hero-info {
+    width: 100%;
+  }
+
+  .perfil-hero-actions {
+    width: 100%;
+  }
+
+  .perfil-btn-edit {
+    width: 100%;
+  }
+
+  .perfil-info-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+}
+
+@media (max-width: 600px) {
+  .perfil-card {
+    padding: var(--spacing-lg);
+  }
+
+  .perfil-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .perfil-form-actions button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,522 @@
+/* ════════════════════════════════════════════ */
+/* Detalle de Mascota + Historial médico         */
+/* ════════════════════════════════════════════ */
+
+.mascota-wrap {
+  max-width: 880px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.mascota-back {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+  padding: 4px 0;
+  transition: color 0.2s;
+}
+
+.mascota-back:hover {
+  color: var(--color-light-green);
+}
+
+/* ─────────── Hero con foto ─────────── */
+.mascota-hero {
+  position: relative;
+  height: 240px;
+  border-radius: 16px;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--color-light-green);
+  box-shadow: 0 4px 16px rgba(0, 27, 13, 0.18);
+  display: flex;
+  align-items: flex-end;
+}
+
+.mascota-hero--noimg {
+  background:
+    radial-gradient(circle at 80% 20%, rgba(158, 181, 125, 0.5), transparent 60%),
+    linear-gradient(135deg, var(--color-dark-d-green) 0%, var(--color-dark-green) 100%);
+  align-items: center;
+  justify-content: center;
+}
+
+.mascota-hero-paw {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -70%);
+  font-size: 72px;
+  opacity: 0.55;
+}
+
+/* Degradado inferior para legibilidad del texto sobre la foto */
+.mascota-hero-overlay {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xl);
+  background: linear-gradient(to top, rgba(0, 27, 13, 0.82) 0%, rgba(0, 27, 13, 0.35) 55%, transparent 100%);
+}
+
+.mascota-hero-text h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-light-yellow);
+  line-height: 1.1;
+}
+
+.mascota-hero-text p {
+  margin: 6px 0 0;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.mascota-hero-edit {
+  flex-shrink: 0;
+  padding: 9px 18px;
+  background-color: rgba(251, 239, 186, 0.95);
+  color: var(--color-dark-green);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.mascota-hero-edit:hover {
+  background-color: var(--color-light-yellow);
+  transform: translateY(-2px);
+}
+
+/* ─────────── Grilla de datos ─────────── */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-lg);
+  margin: 0;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.info-item dt {
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.info-item dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-900);
+  word-break: break-word;
+}
+
+/* ─────────── Historial ─────────── */
+.hist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.hist-head h3 {
+  margin: 0 0 var(--spacing-lg);
+}
+
+.hist-count {
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+  background-color: rgba(65, 100, 40, 0.1);
+  padding: 3px 12px;
+  border-radius: 999px;
+}
+
+.hist-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.hist-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid var(--color-gray-200);
+  border-left: 4px solid var(--color-light-green);
+  border-radius: 10px;
+  background-color: var(--color-gray-50);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.hist-item:hover {
+  box-shadow: 0 4px 12px rgba(0, 27, 13, 0.1);
+  transform: translateY(-2px);
+}
+
+.hist-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hist-fecha {
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+}
+
+.hist-prof {
+  font-size: 15px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-900);
+}
+
+.hist-diag {
+  font-size: 14px;
+  color: var(--color-gray-600);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 420px;
+}
+
+/* ─────────── Modal de ficha clínica ─────────── */
+.ficha-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 27, 13, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  z-index: 1000;
+}
+
+.ficha-modal {
+  background-color: var(--color-white);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 27, 13, 0.35);
+}
+
+.ficha-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: linear-gradient(135deg, var(--color-dark-d-green) 0%, var(--color-dark-green) 100%);
+}
+
+.ficha-modal-head h3 {
+  margin: 0;
+  color: var(--color-light-yellow);
+  font-size: 20px;
+}
+
+.ficha-modal-date {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.ficha-modal-close {
+  background: none;
+  border: none;
+  color: var(--color-light-yellow);
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+
+.ficha-modal-body {
+  padding: var(--spacing-xl);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.ficha-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.ficha-label {
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ficha-value {
+  font-size: 15px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-gray-900);
+  text-align: right;
+}
+
+.ficha-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ficha-paragraph {
+  margin: 0;
+  font-size: 15px;
+  color: var(--color-gray-800);
+  line-height: 1.5;
+}
+
+.ficha-archivos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.ficha-archivo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  background-color: rgba(65, 100, 40, 0.1);
+  color: var(--color-dark-green);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.ficha-archivo:hover {
+  background-color: rgba(65, 100, 40, 0.2);
+}
+
+/* ─────────── Editar mascota (espejo de la pantalla móvil) ─────────── */
+.editar-mascota-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.editar-foto-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.editar-foto-label {
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-dark-green);
+}
+
+.editar-foto-btn {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 2px solid var(--color-light-green);
+  background-color: var(--color-gray-100);
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.editar-foto-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 27, 13, 0.2);
+}
+
+.editar-foto-btn:disabled {
+  cursor: progress;
+}
+
+.editar-foto-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.editar-foto-placeholder {
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-dark-green);
+  text-align: center;
+  padding: var(--spacing-sm);
+}
+
+/* Overlay que aparece al pasar el mouse sobre la foto */
+.editar-foto-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 27, 13, 0.55);
+  color: var(--color-white);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.editar-foto-btn:hover:not(:disabled) .editar-foto-overlay {
+  opacity: 1;
+}
+
+/* Aviso de datos médicos bloqueados (misma política que el móvil) */
+.editar-info-bloqueada {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-light-green);
+  border-radius: 10px;
+  padding: var(--spacing-lg);
+}
+
+.editar-info-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-dark-green);
+  font-size: 15px;
+}
+
+.editar-info-bloqueada p {
+  margin: var(--spacing-sm) 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--color-dark-d-green);
+}
+
+.editar-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-gray-200);
+}
+
+/* Modal de recorte de imagen */
+.crop-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-lg);
+}
+
+.crop-modal-area {
+  position: relative;
+  width: 90%;
+  max-width: 560px;
+  height: 60%;
+  background-color: #333;
+}
+
+.crop-modal-actions {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+/* ─────────── Responsive ─────────── */
+@media (max-width: 720px) {
+  .info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hist-diag {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 520px) {
+  .mascota-hero {
+    height: 200px;
+  }
+
+  .mascota-hero-overlay {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .mascota-hero-edit {
+    width: 100%;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .hist-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hist-item .btn-secondary {
+    width: 100%;
+  }
+
+  .hist-diag {
+    max-width: none;
+    white-space: normal;
+  }
+
+  .editar-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .editar-form-actions button {
+    width: 100%;
+  }
+}

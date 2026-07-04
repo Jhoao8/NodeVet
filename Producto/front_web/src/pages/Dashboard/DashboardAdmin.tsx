@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/client';
 import '../../styles/Dashboard.css';
-import RegistrarVeterinarioForm from '../../components/forms/RegistrarVeterinarioForm';
 import EditarUsuarioForm from '../../components/forms/EditarUsuarioForm';
+import AdminSidebar from '../../components/AdminSidebar';
 import { useNombreUsuario } from '../../hooks/useNombreUsuario';
 import { getUserInfoFromToken } from '../../utils/authUtils';
 import UserMenu from '../../components/UserMenu';
@@ -16,13 +16,20 @@ interface Usuario {
   estadoUsr: number;
 }
 
+// Métricas de reservas del tutor (GET /v1/usuarios/{id}/resumen-reservas)
+interface ResumenTutorReservas {
+  idUsuario: number;
+  nombreCompleto: string;
+  reservasRealizadas: number;
+  reservasAsistidas: number;
+  reservasAusentadas: number;
+}
+
 export default function DashboardAdmin() {
   const navigate = useNavigate();
   const nombreUsuario = useNombreUsuario();
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [ultimoVet, setUltimoVet] = useState<{ idVeterinario?: number; nombreCompleto?: string } | null>(null);
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
@@ -41,9 +48,9 @@ export default function DashboardAdmin() {
   };
 
   const fetchUsers = async () => {
-
     try {
-      const usuariosData = await api.get('/v1/usuarios');
+      // Incluye cuentas desactivadas, igual que la gestión de usuarios móvil
+      const usuariosData = await api.get('/v1/usuarios?incluirInactivos=true');
       setUsuarios(usuariosData.data);
     } catch (error) {
       console.error('Error al cargar lista de usuarios:', error);
@@ -55,18 +62,47 @@ export default function DashboardAdmin() {
     fetchUsers().finally(() => setLoading(false));
   }, []);
 
-  const handleSuccess = (vet?: { idVeterinario?: number; nombreCompleto?: string }) => {
-    setShowModal(false);
-    fetchUsers();
-    if (vet?.idVeterinario) {
-      setUltimoVet({ idVeterinario: vet.idVeterinario, nombreCompleto: vet.nombreCompleto });
-      localStorage.setItem('ultimoVetIdVet', String(vet.idVeterinario));
-    }
-  };
-
   const handleEditSuccess = () => {
     setEditingUser(null);
     fetchUsers();
+  };
+
+  // Reactiva una cuenta desactivada (PUT /v1/usuarios/{id}/activar)
+  const handleActivar = async (usuario: Usuario) => {
+    setActionError('');
+    setDeletingId(usuario.idUsuario);
+    try {
+      await api.put(`/v1/usuarios/${usuario.idUsuario}/activar`);
+      await fetchUsers();
+    } catch {
+      setActionError(`No se pudo reactivar la cuenta de ${usuario.nombreCompleto}.`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Resumen de reservas del tutor (espejo de GestionUsrScreen móvil)
+  const [resumen, setResumen] = useState<ResumenTutorReservas | null>(null);
+  const [loadingResumen, setLoadingResumen] = useState(false);
+
+  const abrirResumen = async (usuario: Usuario) => {
+    setLoadingResumen(true);
+    setActionError('');
+    try {
+      const resp = await api.get<ResumenTutorReservas>(
+        `/v1/usuarios/${usuario.idUsuario}/resumen-reservas`,
+      );
+      setResumen(resp.data);
+    } catch (err: any) {
+      const data = err?.response?.data;
+      setActionError(
+        (typeof data === 'string' && data) ||
+          data?.message ||
+          'No se pudo cargar el resumen de reservas del tutor.',
+      );
+    } finally {
+      setLoadingResumen(false);
+    }
   };
 
   const handleDelete = async (usuario: Usuario) => {
@@ -94,12 +130,6 @@ export default function DashboardAdmin() {
 
   return (
     <>
-      {showModal && (
-        <RegistrarVeterinarioForm
-          onSuccess={handleSuccess}
-          onCancel={() => setShowModal(false)}
-        />
-      )}
       {editingUser && (
         <EditarUsuarioForm
           usuario={editingUser}
@@ -118,15 +148,7 @@ export default function DashboardAdmin() {
         </header>
 
         <div className="dashboard-content">
-          {/* Sidebar */}
-          <aside className="sidebar">
-            <h3>Menú</h3>
-            <nav className="sidebar-nav">
-              <button className="nav-item active" onClick={() => navigate('/dashboard/admin')}>👥 Usuarios</button>
-              <button className="nav-item" onClick={() => navigate('/dashboard/admin/agenda')}>🗓️ Generar Agenda</button>
-              <button className="nav-item" onClick={() => navigate('/dashboard/admin/precio')}>💲 Valor de citas</button>
-            </nav>
-          </aside>
+          <AdminSidebar active="usuarios" />
 
           {/* Main Content */}
           <main className="main-content">
@@ -141,14 +163,6 @@ export default function DashboardAdmin() {
                 <div className="admin-grid">
                   <section className="dashboard-section">
                     <h3>Usuarios</h3>
-                    {ultimoVet?.idVeterinario && (
-                      <div
-                        className="error-message"
-                        style={{ background: '#e6f4ea', color: '#1e4620', border: '1px solid #b7e1c4' }}
-                      >
-                        Veterinario creado: {ultimoVet.nombreCompleto} — <strong>ID de veterinario: {ultimoVet.idVeterinario}</strong>. Úsalo en "Generar Agenda".
-                      </div>
-                    )}
                     {actionError && <div className="error-message">{actionError}</div>}
                     <table className="data-table">
                       <thead>
@@ -183,20 +197,38 @@ export default function DashboardAdmin() {
                               <td>
                                 <div className="table-actions">
                                   <button
+                                    className="btn-row"
+                                    onClick={() => abrirResumen(usuario)}
+                                    disabled={loadingResumen}
+                                    title="Resumen de reservas del tutor"
+                                  >
+                                    📊 Resumen
+                                  </button>
+                                  <button
                                     className="btn-row edit"
                                     onClick={() => setEditingUser(usuario)}
                                     disabled={deletingId === usuario.idUsuario}
                                   >
                                     Modificar
                                   </button>
-                                  <button
-                                    className="btn-row danger"
-                                    onClick={() => handleDelete(usuario)}
-                                    disabled={deletingId === usuario.idUsuario || esCuentaPropia(usuario)}
-                                    title={esCuentaPropia(usuario) ? 'No puedes eliminar tu propia cuenta' : undefined}
-                                  >
-                                    {deletingId === usuario.idUsuario ? 'Eliminando...' : 'Eliminar'}
-                                  </button>
+                                  {usuario.estadoUsr === 1 ? (
+                                    <button
+                                      className="btn-row danger"
+                                      onClick={() => handleDelete(usuario)}
+                                      disabled={deletingId === usuario.idUsuario || esCuentaPropia(usuario)}
+                                      title={esCuentaPropia(usuario) ? 'No puedes eliminar tu propia cuenta' : undefined}
+                                    >
+                                      {deletingId === usuario.idUsuario ? 'Eliminando...' : 'Eliminar'}
+                                    </button>
+                                  ) : (
+                                    <button
+                                      className="btn-row edit"
+                                      onClick={() => handleActivar(usuario)}
+                                      disabled={deletingId === usuario.idUsuario}
+                                    >
+                                      {deletingId === usuario.idUsuario ? 'Reactivando...' : 'Reactivar'}
+                                    </button>
+                                  )}
                                 </div>
                               </td>
                             </tr>
@@ -204,9 +236,6 @@ export default function DashboardAdmin() {
                         )}
                       </tbody>
                     </table>
-                    <div className="action-buttons">
-                      <button className="btn-secondary" onClick={() => setShowModal(true)}>Crear Médico</button>
-                    </div>
                   </section>
                 </div>
               </>
@@ -214,6 +243,35 @@ export default function DashboardAdmin() {
           </main>
         </div>
       </div>
+
+      {/* ─── Modal: resumen de reservas del tutor ─── */}
+      {resumen && (
+        <div className="modal-overlay" onClick={() => setResumen(null)}>
+          <div className="modal-content jornada-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Resumen de reservas</h2>
+              <p>{resumen.nombreCompleto}</p>
+            </div>
+            <div className="modal-body">
+              <div className="resumen-admin-box">
+                <span className="resumen-admin-label">Reservas realizadas</span>
+                <span className="resumen-admin-valor">{resumen.reservasRealizadas}</span>
+
+                <span className="resumen-admin-label">Reservas asistidas</span>
+                <span className="resumen-admin-valor">{resumen.reservasAsistidas}</span>
+
+                <span className="resumen-admin-label">Reservas ausentadas</span>
+                <span className="resumen-admin-valor">{resumen.reservasAusentadas}</span>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn-submit" onClick={() => setResumen(null)}>
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
